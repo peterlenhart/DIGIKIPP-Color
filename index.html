@@ -11,9 +11,14 @@
       --cell: 142px;      /* Rastergröße bleibt 142 */
       --grid-alpha: 0.18;
 
+      /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
+      --bg-off-x: -2px;   /* links(-) / rechts(+) */
+      --bg-off-y: -1px;   /* oben(-) / unten(+) */
+
       /* wird per JS gesetzt */
       --scale: 1;
       --gridW: calc(var(--cols) * var(--cell));
+      --gridH: 100vh;     /* wird per JS gesetzt */
     }
 
     html, body{
@@ -24,7 +29,7 @@
       touch-action: none; /* ✅ keine Scroll/Zoom Gesten */
     }
 
-    /* ✅ Holz-Hintergrund */
+    /* ✅ Holz-Hintergrund (damit NIE schwarz erscheint) */
     body{
       background:
         radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
@@ -41,7 +46,6 @@
       align-items: flex-start;
     }
 
-    /* Bühne ist die sichtbare Fläche */
     .stage{
       width: 100vw;
       height: 100vh;
@@ -49,14 +53,14 @@
       overflow: hidden; /* ✅ abschneiden statt scrollen */
     }
 
-    /* Layout: immer 8 Spalten breit, aber per scale in die Handybreite gepasst */
+    /* Layout: 8 Spalten breit, per scale in die Handybreite gepasst */
     .layout{
       position: absolute;
       left: 50%;
       top: 0;
 
       width: var(--gridW);
-      height: 100vh;
+      height: var(--gridH);
 
       transform-origin: top center;
       transform:
@@ -64,46 +68,57 @@
         scale(var(--scale));
     }
 
-    /* ✅ PNG: oben links verankert, unverzerrt, aber auf Grid-Breite gefittet */
+    /* ✅ PNG: oben links verankert, unverzerrt, Breite passend */
     .bgPNG{
       position:absolute;
       left: 0;
       top: 0;
 
       width: var(--gridW);
-      height: 9999px; /* lang genug – wird unten abgeschnitten */
+      height: var(--gridH);
 
       background-image: url("Box_m_Hgr.png");
       background-repeat: no-repeat;
-      background-position: left top;
 
       /* ✅ WICHTIG: Breite passt, Höhe bleibt proportional -> unverzerrt */
       background-size: 100% auto;
+
+      /* ✅ FEINJUSTAGE: hier greifen die Variablen */
+      background-position:
+        calc(0px + var(--bg-off-x))
+        calc(0px + var(--bg-off-y));
 
       pointer-events: none;
       z-index: 0;
     }
 
-    /* Grid-Layer */
+    /* ✅ Grid: keine Borders pro Zelle -> keine “komischen Linien” */
     .grid{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
-      height: 100vh;
-
-      display: grid;
-      grid-template-columns: repeat(var(--cols), var(--cell));
-      grid-auto-rows: var(--cell);
+      height: var(--gridH);
 
       z-index: 2;
       pointer-events: none;
-    }
 
-    .cell{
-      box-sizing: border-box;
-      border: 1px solid rgba(255,255,255,var(--grid-alpha));
-      background: transparent;
+      /* Linien als Background-Pattern */
+      background-image:
+        repeating-linear-gradient(
+          to right,
+          rgba(255,255,255,var(--grid-alpha)) 0px,
+          rgba(255,255,255,var(--grid-alpha)) 1px,
+          rgba(255,255,255,0) 1px,
+          rgba(255,255,255,0) var(--cell)
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,var(--grid-alpha)) 0px,
+          rgba(255,255,255,var(--grid-alpha)) 1px,
+          rgba(255,255,255,0) 1px,
+          rgba(255,255,255,0) var(--cell)
+        );
     }
 
     /* Debug Panel */
@@ -179,6 +194,8 @@
       const scale = Math.min(1, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
+      document.documentElement.style.setProperty("--gridW", gridW + "px");
+
       return { cols, cell, gridW, scale };
     }
 
@@ -192,23 +209,19 @@
       // wie viele 142er-Zeilen passen in diese Layout-Höhe?
       const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
 
-      gridEl.innerHTML = "";
-      const total = rows * cols;
-      for(let i=0;i<total;i++){
-        const d = document.createElement("div");
-        d.className = "cell";
-        gridEl.appendChild(d);
-      }
+      const gridH = rows * cell;
+      document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
-        `gridW=${gridW}px | scale=${scale.toFixed(3)}\n` +
+        `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
         `viewport=${window.innerWidth}x${window.innerHeight}\n` +
-        `scroll=OFF (fixed stage)`;
+        `scroll=OFF (fixed stage)\n` +
+        `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}`;
     }
 
     toggle.addEventListener("change", () => {
-      gridEl.style.display = toggle.checked ? "grid" : "none";
+      gridEl.style.display = toggle.checked ? "block" : "none";
     });
 
     window.addEventListener("load", rebuildGrid);
