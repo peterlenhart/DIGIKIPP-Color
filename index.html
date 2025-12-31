@@ -224,31 +224,29 @@
     /* ===== KSP Block ===== */
     .kspBlock{
       position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      top: 0;
+      width: var(--gridW);
       z-index: 10;
       pointer-events: auto;
-
-      display:flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      width: 100%; /* ✅ volle Breite für Zentrierung */
     }
 
     .kspTop{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: calc(24px * var(--uiscale)); /* ✅ mehr Abstand zwischen Play und OK */
+      gap: calc(24px * var(--uiscale));
     }
 
     .squareBtn{
       width: calc(44px * var(--uiscale));
       height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale)); /* ✅ gleich wie levelBtn */
-      border: 2px solid rgba(0,0,0,0.65); /* ✅ gleich wie levelBtn */
-      background: rgba(234,215,190,0.96); /* ✅ gleich wie levelBtn */
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
@@ -303,38 +301,33 @@
     }
 
     .sliderRow{
-      display:flex;
-      align-items:center;
-      width: var(--gridW); /* ✅ Breite = Grid-Breite */
-      position: relative;
-      transform: translateY(90px); /* ✅ 140px - 50px = 90px */
-      left: 50%;
-      margin-left: calc(-1 * var(--gridW) / 2); /* ✅ zentrieren */
+      position: absolute;
+      width: var(--gridW);
+      height: auto;
     }
 
     .speedIcon{
       width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
       height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
       opacity: 0.98;
-      flex: 0 0 auto;
+      position: absolute;
       filter:
         brightness(0) saturate(100%)
         invert(90%) sepia(16%) saturate(330%)
         hue-rotate(355deg) brightness(105%) contrast(95%)
         drop-shadow(0 1px 0 rgba(0,0,0,0.35))
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
-      position: absolute;
     }
 
-    /* ✅ Snail: zwischen Spalte A und B (Mitte = 0.5 * cell) */
-    .speedIcon:first-child{
-      left: calc(0.5 * var(--cell));
+    /* ✅ Schnecke: 1/3 links über Spalte B hinaus */
+    .speedIcon.snail{
+      left: calc(var(--cell) - var(--cell) / 3);
       transform: translateX(-50%);
     }
 
-    /* ✅ Hase: zwischen Spalte G und H (7.5 * cell) */
-    .speedIcon:last-child{
-      left: calc(7.5 * var(--cell));
+    /* ✅ Hase: 1/3 rechts über Spalte G hinaus */
+    .speedIcon.hase{
+      left: calc(7 * var(--cell) + var(--cell) / 3);
       transform: translateX(-50%);
     }
 
@@ -428,7 +421,7 @@
           <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
 
           <div class="kspBlock" id="kspBlock">
-            <div class="kspTop">
+            <div class="kspTop" id="kspTop">
               <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
                 <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
               </button>
@@ -438,8 +431,8 @@
               </button>
             </div>
 
-            <div class="sliderRow">
-              <img class="speedIcon" src="kippspeed_snail_tight.png" alt="langsam">
+            <div class="sliderRow" id="sliderRow">
+              <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
               
               <div class="sliderContainer">
                 <input id="speedSlider" type="range" min="0" max="9" value="3" step="1" aria-label="Speed Slider">
@@ -449,7 +442,7 @@
                 </div>
               </div>
 
-              <img class="speedIcon" src="kippspeed_hase_tight.png" alt="schnell">
+              <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
             </div>
           </div>
         </div>
@@ -467,6 +460,8 @@
     const kspView      = document.getElementById("kspView");
     const kspTitle     = document.getElementById("kspTitle");
     const kspBlock     = document.getElementById("kspBlock");
+    const kspTop       = document.getElementById("kspTop");
+    const sliderRow    = document.getElementById("sliderRow");
     const btnPlay      = document.getElementById("btnPlay");
     const btnOk        = document.getElementById("btnOk");
     const playGlyph    = document.getElementById("playGlyph");
@@ -552,9 +547,10 @@
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      // KSP View (gleiche Position)
+      // KSP View
       kspTitle.style.top = midY + "px";
-      kspBlock.style.top = (midY + 70) + "px";
+      kspTop.style.top = (midY + 70) + "px";
+      sliderRow.style.top = (midY + 140) + "px";
     }
 
     function rebuild(){
@@ -603,7 +599,6 @@
         demoRunning = true;
         setPlayGlyph(true);
         console.log("Demo gestartet");
-        // Hier deine Demo-Logik
       } else {
         demoRunning = false;
         setPlayGlyph(false);
@@ -613,7 +608,6 @@
 
     btnOk.addEventListener("click", () => {
       console.log("KSP bestätigt, Slider-Wert:", speedSlider.value);
-      // Hier weiter zum Spiel
     });
 
     speedSlider.addEventListener("input", () => {
