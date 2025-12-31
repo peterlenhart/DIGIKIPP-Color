@@ -443,12 +443,8 @@
       position: absolute;
       width: calc(56px * var(--uiscale));
       height: calc(56px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
+      background: none;
+      border: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -457,10 +453,11 @@
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
       z-index: 100;
+      padding: 0;
     }
     .navBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
+      transform: scale(0.95);
+      opacity: 0.8;
     }
 
     /* Zurück-Button (Zeile 8, Spalte H) */
@@ -473,22 +470,21 @@
       /* Spalte A = Spalte 1, zwischen Zeile 0 und 1 */
     }
 
-    /* Zurück-Icon: Rechtsoffenes Dreieck (zeigt nach links) */
+    /* Zurück-Icon: Rechtsoffenes Dreieck (zeigt nach links) - beige */
     .backIcon{
       width: 0;
       height: 0;
-      border-top: calc(14px * var(--uiscale)) solid transparent;
-      border-bottom: calc(14px * var(--uiscale)) solid transparent;
-      border-right: calc(22px * var(--uiscale)) solid #7a3f2b;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
-      transform: translateX(calc(-2px * var(--uiscale)));
+      border-top: calc(18px * var(--uiscale)) solid transparent;
+      border-bottom: calc(18px * var(--uiscale)) solid transparent;
+      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
 
-    /* Schließen-Icon: X */
+    /* Schließen-Icon: X - beige */
     .closeIcon{
       position: relative;
-      width: calc(28px * var(--uiscale));
-      height: calc(28px * var(--uiscale));
+      width: calc(32px * var(--uiscale));
+      height: calc(32px * var(--uiscale));
     }
     .closeIcon::before,
     .closeIcon::after{
@@ -496,11 +492,11 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: calc(28px * var(--uiscale));
-      height: calc(4px * var(--uiscale));
-      background: #7a3f2b;
-      border-radius: calc(2px * var(--uiscale));
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+      width: calc(32px * var(--uiscale));
+      height: calc(5px * var(--uiscale));
+      background: rgba(234,215,190,0.96);
+      border-radius: calc(2.5px * var(--uiscale));
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
     .closeIcon::before{
       transform: translate(-50%, -50%) rotate(45deg);
@@ -910,11 +906,8 @@
         const level = btn.dataset.level;
         console.log("Level gewählt:", level);
         
-        if(level === "trainee"){
-          showKippAnzahlView();
-        } else {
-          showKspView();
-        }
+        // ALLE Level führen zuerst zu KSP-Auswahl
+        showKspView();
       });
     });
 
@@ -962,13 +955,8 @@
     });
 
     backBtnAnzahl.addEventListener("click", () => {
-      console.log("Zurück von Anzahl zu KSP oder Level");
-      // Je nachdem, ob vorher KSP oder direkt von Level kam
-      // Für Trainee: direkt zu Level, für andere: zu KSP
-      if(currentView === "anzahl"){
-        // Einfache Logik: zurück zu Level (kann erweitert werden)
-        showLevelView();
-      }
+      console.log("Zurück von Anzahl zu KSP");
+      showKspView();
     });
 
     // ===== SCHLIESSEN BUTTONS =====
