@@ -18,7 +18,8 @@
       --orange:  rgb(249, 150, 30);
 
       /* ===== Farbfelder ===== */
-      --colorSize: 81px;  /* ✅ 81×81 */
+      /* ✅ 2px Rand rundum -> Farbfeld = cell - 4px (bei 142 => 138) */
+      --colorSize: calc(var(--cell) - 4px);
 
       /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
       --bg-off-x: 4px;   /* links(-) / rechts(+) */
@@ -116,7 +117,6 @@
       position:absolute;
       width: var(--colorSize);
       height: var(--colorSize);
-      /* exakt, kein Verlauf, kein Schatten */
       border-radius: 0;
     }
 
@@ -268,7 +268,7 @@
       colorsEl.innerHTML = "";
 
       const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 81;
+      const sizePx = numVar("--colorSize") || (cellPx - 4);
 
       // ===== DEINE FESTLEGUNG (nur diese Felder) =====
       const placements = [
@@ -302,13 +302,15 @@
 
       rebuildColors();
 
+      const sizePx = numVar("--colorSize") || (cell - 4);
+
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
         `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
         `viewport=${window.innerWidth}x${window.innerHeight}\n` +
         `scroll=OFF (fixed stage)\n` +
         `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}\n` +
-        `colors: 81x81 centered`;
+        `colors: ${Math.round(sizePx)}x${Math.round(sizePx)} centered (2px padding)`;
     }
 
     toggle.addEventListener("change", () => {
