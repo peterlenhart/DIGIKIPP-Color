@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI</title>
+  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI + KSP</title>
 
   <style>
     :root{
@@ -18,7 +18,7 @@
       --orange:  rgb(249, 150, 30);
 
       /* ===== Farbfelder: 142 -> 126 ===== */
-      --colorSize: 126px;     /* 126×126 */
+      --colorSize: 126px;
 
       /* ✅ PNG-FEINJUSTAGE */
       --bg-off-x: 4px;
@@ -26,9 +26,17 @@
 
       /* wird per JS gesetzt */
       --scale: 1;
-      --uiscale: 1;           /* 1/scale -> UI bleibt optisch groß */
+      --uiscale: 1;
       --gridW: calc(var(--cols) * var(--cell));
-      --gridH: 100vh;         /* wird per JS gesetzt */
+      --gridH: 100vh;
+
+      /* ===== KSP Farben ===== */
+      --ui-panel-bg: #4a2418;
+      --ui-text: #ead7be;
+      --btn-bg: #ead7be;
+      --btn-text: #2a160c;
+      --btn-border: rgba(0,0,0,0.35);
+      --slot-border: rgba(0,0,0,0.55);
     }
 
     html, body{
@@ -80,7 +88,7 @@
       height: var(--gridH);
       background-image: url("Box_m_Hgr.png");
       background-repeat: no-repeat;
-      background-size: 100% auto; /* unverzerrt */
+      background-size: 100% auto;
       background-position:
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
@@ -145,8 +153,8 @@
       pointer-events: none;
     }
 
-    /* ✅ LEVEL WÄHLEN: sichtbar + im Vordergrund */
-    .levelTitle{
+    /* ===== Gemeinsamer Titel-Style ===== */
+    .uiTitle{
       position:absolute;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -157,20 +165,16 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
 
-      /* HELL statt schwarz */
       color: rgba(255,255,255,0.96);
 
-      /* richtig sichtbar auf dunklem Hintergrund */
       text-shadow:
         0 2px 0 rgba(0,0,0,0.85),
         0 6px 18px rgba(0,0,0,0.70);
 
-      /* dezente „Pille“ dahinter, damit’s nie absäuft */
       padding: 10px 18px;
       border-radius: 999px;
       background: rgba(0,0,0,0.28);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.25);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
 
       white-space: nowrap;
       user-select: none;
@@ -182,7 +186,7 @@
       transform: translateX(-50%);
       display:flex;
       gap: 71px;
-      pointer-events: none;
+      pointer-events: auto;
       z-index: 10;
     }
 
@@ -193,7 +197,7 @@
       align-items:center;
       justify-content:center;
 
-      border-radius: 14px; /* ✅ abgerundet */
+      border-radius: 14px;
 
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -209,7 +213,170 @@
 
       user-select:none;
       white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .levelBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    /* ===== KSP Block ===== */
+    .kspBlock{
+      position:absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: auto;
+
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .kspTop{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+    }
+
+    .squareBtn{
+      width: calc(44px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
+      border-radius: 0;
+      border: 2px solid var(--slot-border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--btn-bg);
+      box-shadow:
+        0 18px 22px rgba(0,0,0,0.35),
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .squareBtn:active{
+      transform: scale(0.985);
+      filter: brightness(0.98);
+    }
+
+    .playIcon{
+      width: 0;
+      height: 0;
+      border-top: calc(11px * var(--uiscale)) solid transparent;
+      border-bottom: calc(11px * var(--uiscale)) solid transparent;
+      border-left: calc(18px * var(--uiscale)) solid #7a3f2b;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+      transform: translateX(calc(1px * var(--uiscale)));
+    }
+
+    .pauseIcon{
+      width: calc(18px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      position: relative;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+    }
+    .pauseIcon::before,
+    .pauseIcon::after{
+      content:"";
+      position:absolute;
+      top:0;
+      width: calc(6px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      background: #7a3f2b;
+      border-radius: 1px;
+    }
+    .pauseIcon::before{ left: 0; }
+    .pauseIcon::after { right: 0; }
+
+    .okText{
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      font-size: calc(16px * var(--uiscale));
+      line-height: 1;
+    }
+
+    .sliderRow{
+      display:flex;
+      align-items:center;
+      gap: calc(14px * var(--uiscale));
+    }
+
+    .speedIcon{
+      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      opacity: 0.98;
+      flex: 0 0 auto;
+      filter:
+        brightness(0) saturate(100%)
+        invert(90%) sepia(16%) saturate(330%)
+        hue-rotate(355deg) brightness(105%) contrast(95%)
+        drop-shadow(0 1px 0 rgba(0,0,0,0.35))
+        drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+    }
+
+    .speedScale{
+      display:flex;
+      justify-content: space-between;
+      width: calc(100% - (2 * (clamp(44px, 10vmin, 62px) * var(--uiscale) + 14px * var(--uiscale))));
+      color: var(--ui-text);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      font-size: calc(14px * var(--uiscale));
+      line-height: 1;
+      user-select:none;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      transform: translateY(calc(-2px * var(--uiscale)));
+    }
+
+    input[type="range"]{
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: calc(10px * var(--uiscale));
+      border-radius: 999px;
+      background: var(--ui-panel-bg);
+      outline: none;
+      border: 1px solid #000;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.10) inset,
+        0 1px 0 rgba(0,0,0,0.35) inset;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance: none;
+      appearance: none;
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--btn-bg);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb{
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--btn-bg);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+
+    /* ===== Visibility Control ===== */
+    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -221,12 +388,42 @@
       <div class="colors" id="colors" aria-hidden="true"></div>
 
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <div class="levelTitle" id="levelTitle">LEVEL WÄHLEN</div>
+        <!-- LEVEL WÄHLEN -->
+        <div id="levelView">
+          <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
-        <div class="levelBtns" id="levelBtns">
-          <div class="levelBtn">Trainee</div>
-          <div class="levelBtn">Brainy</div>
-          <div class="levelBtn">Brain</div>
+          <div class="levelBtns" id="levelBtns">
+            <button class="levelBtn" data-level="trainee">Trainee</button>
+            <button class="levelBtn" data-level="brainy">Brainy</button>
+            <button class="levelBtn" data-level="brain">Brain</button>
+          </div>
+        </div>
+
+        <!-- KSP BLOCK -->
+        <div id="kspView" class="hidden">
+          <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
+
+          <div class="kspBlock" id="kspBlock">
+            <div class="kspTop">
+              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
+                <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
+              </button>
+
+              <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
+                <span class="okText">OK</span>
+              </button>
+            </div>
+
+            <div class="sliderRow">
+              <img class="speedIcon" src="kippspeed_snail_tight.png" alt="langsam">
+              <input id="speedSlider" type="range" min="0" max="9" value="3" step="1" aria-label="Speed Slider">
+              <img class="speedIcon" src="kippspeed_hase_tight.png" alt="schnell">
+            </div>
+
+            <div class="speedScale" aria-label="Kippspeed Stufen">
+              <span>1</span><span>2</span><span>3</span><span>4</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -238,6 +435,14 @@
     const colorsEl = document.getElementById("colors");
     const levelTitleEl = document.getElementById("levelTitle");
     const levelBtnsEl  = document.getElementById("levelBtns");
+    const levelView    = document.getElementById("levelView");
+    const kspView      = document.getElementById("kspView");
+    const kspTitle     = document.getElementById("kspTitle");
+    const kspBlock     = document.getElementById("kspBlock");
+    const btnPlay      = document.getElementById("btnPlay");
+    const btnOk        = document.getElementById("btnOk");
+    const playGlyph    = document.getElementById("playGlyph");
+    const speedSlider  = document.getElementById("speedSlider");
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -247,7 +452,7 @@
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 142;
 
-      const gridW = cols * cell;      // 1136
+      const gridW = cols * cell;
       const vw = window.innerWidth;
 
       const targetW = vw * 0.94;
@@ -256,7 +461,6 @@
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
 
-      // UI optisch konstant halten
       const uiscale = 1 / (scale || 1);
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
 
@@ -308,7 +512,7 @@
       }
     }
 
-    function positionLevelUI(){
+    function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
@@ -316,8 +520,13 @@
 
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
+      // Level View
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
+
+      // KSP View (gleiche Position)
+      kspTitle.style.top = midY + "px";
+      kspBlock.style.top = (midY + 70) + "px";
     }
 
     function rebuild(){
@@ -331,9 +540,59 @@
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       rebuildColors();
-      positionLevelUI();
+      positionUI();
     }
 
+    // ===== VIEW SWITCHING =====
+    function showLevelView(){
+      levelView.classList.remove("hidden");
+      kspView.classList.add("hidden");
+    }
+
+    function showKspView(){
+      levelView.classList.add("hidden");
+      kspView.classList.remove("hidden");
+    }
+
+    // ===== LEVEL BUTTONS =====
+    document.querySelectorAll('.levelBtn').forEach(btn => {
+      btn.addEventListener("click", () => {
+        const level = btn.dataset.level;
+        console.log("Level gewählt:", level);
+        showKspView();
+      });
+    });
+
+    // ===== KSP LOGIC =====
+    let demoRunning = false;
+
+    function setPlayGlyph(isPause){
+      playGlyph.className = isPause ? "pauseIcon" : "playIcon";
+    }
+
+    btnPlay.addEventListener("click", () => {
+      if(!demoRunning){
+        demoRunning = true;
+        setPlayGlyph(true);
+        console.log("Demo gestartet");
+        // Hier deine Demo-Logik
+      } else {
+        demoRunning = false;
+        setPlayGlyph(false);
+        console.log("Demo pausiert");
+      }
+    });
+
+    btnOk.addEventListener("click", () => {
+      console.log("KSP bestätigt, Slider-Wert:", speedSlider.value);
+      // Hier weiter zum Spiel
+    });
+
+    speedSlider.addEventListener("input", () => {
+      console.log("Speed:", speedSlider.value);
+    });
+
+    // ===== INIT =====
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
