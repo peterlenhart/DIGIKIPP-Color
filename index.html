@@ -523,45 +523,46 @@
     .modalBox{
       background: rgba(234,215,190,0.98);
       border: 3px solid rgba(0,0,0,0.65);
-      border-radius: calc(20px * var(--uiscale));
-      padding: calc(32px * var(--uiscale)) calc(40px * var(--uiscale));
+      border-radius: 20px;
+      padding: 32px 40px;
       box-shadow:
         0 20px 40px rgba(0,0,0,0.35),
         0 0 0 1px rgba(255,255,255,0.15) inset;
       text-align: center;
-      max-width: calc(450px * var(--uiscale));
-      margin: 0 20px;
+      max-width: 420px;
+      width: 90%;
+      transform: scale(var(--scale));
     }
 
     .modalTitle{
-      font-size: calc(clamp(18px, 5vmin, 28px) * var(--uiscale));
+      font-size: clamp(20px, 5vmin, 32px);
       font-weight: 1000;
       letter-spacing: 0.08em;
       color: #2a160c;
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      margin-bottom: calc(20px * var(--uiscale));
+      margin-bottom: 20px;
       text-transform: uppercase;
     }
 
     .modalText{
-      font-size: calc(clamp(14px, 3.6vmin, 18px) * var(--uiscale));
+      font-size: clamp(15px, 3.8vmin, 20px);
       font-weight: 600;
       color: #4a2418;
-      margin-bottom: calc(28px * var(--uiscale));
+      margin-bottom: 28px;
       line-height: 1.4;
     }
 
     .modalBtns{
       display: flex;
-      gap: calc(16px * var(--uiscale));
+      gap: 16px;
       justify-content: center;
     }
 
     .modalBtn{
-      padding: calc(14px * var(--uiscale)) calc(32px * var(--uiscale));
-      border-radius: calc(12px * var(--uiscale));
+      padding: 14px 32px;
+      border-radius: 12px;
       border: 2px solid rgba(0,0,0,0.65);
-      font-size: calc(clamp(14px, 3.6vmin, 18px) * var(--uiscale));
+      font-size: clamp(15px, 3.8vmin, 20px);
       font-weight: 1000;
       letter-spacing: 0.06em;
       cursor: pointer;
