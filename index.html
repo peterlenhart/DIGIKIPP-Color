@@ -26,6 +26,7 @@
 
       /* wird per JS gesetzt */
       --scale: 1;
+      --uiscale: 1;           /* ✅ 1/scale -> UI bleibt optisch groß */
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;         /* wird per JS gesetzt */
     }
@@ -168,10 +169,16 @@
       position:absolute;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 14px;       /* ✅ “14-Punkt-Schrift” am Handy */
-      font-weight: 900;
+
+      /* ✅ NICHT mikroskopisch trotz Layout-Scale:
+         clamp bleibt wie bei deinem alten Code-Feeling (4.2),
+         *und* wird optisch durch uiscale kompensiert. */
+      font-size: calc(clamp(16px, 4.2vmin, 28px) * var(--uiscale));
+
+      font-weight: 1000;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+
       color: rgba(0,0,0,0.92);
       text-shadow: 0 1px 0 rgba(255,255,255,0.25);
       white-space: nowrap;
@@ -194,17 +201,24 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      border-radius: 0;
+
+      /* ✅ abgerundete Ecken */
+      border-radius: 14px;
+
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       color: rgba(0,0,0,0.92);
-      font-size: 14px;
-      font-weight: 900;
+
+      /* ✅ auch hier UI-Scale kompensieren */
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+
+      font-weight: 1000;
       letter-spacing: 0.06em;
       text-transform: none;  /* ✅ Schreibweise genau wie du vorgibst */
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
+
       user-select:none;
       white-space: nowrap;
     }
@@ -302,6 +316,10 @@
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
+
+      // ✅ UI soll optisch nicht kleiner werden -> uiscale = 1/scale
+      const uiscale = 1 / (scale || 1);
+      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
 
       return { cols, cell, gridW, scale };
     }
@@ -405,7 +423,7 @@
 
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
-        `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
+        `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)} | uiscale=${(1/scale).toFixed(3)}\n` +
         `viewport=${window.innerWidth}x${window.innerHeight}\n` +
         `scroll=OFF (fixed stage)\n` +
         `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}\n` +
