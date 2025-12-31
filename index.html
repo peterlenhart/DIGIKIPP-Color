@@ -165,12 +165,9 @@
 
     .navBtn{
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
       width: calc(46px * var(--uiscale));
       height: calc(46px * var(--uiscale));
-      border-radius: 0;
-      border: 1px solid rgba(234,215,190,0.4);
+      border: none;
       background: transparent;
       box-shadow: none;
       display: flex;
@@ -182,25 +179,27 @@
       pointer-events: auto;
     }
     .navBtn:active{
-      transform: translateY(-50%) scale(0.96);
-      filter: brightness(0.9);
+      transform: scale(0.92);
+      filter: brightness(0.85);
     }
     .navBtn svg{
-      width: calc(28px * var(--uiscale));
-      height: calc(28px * var(--uiscale));
+      width: calc(32px * var(--uiscale));
+      height: calc(32px * var(--uiscale));
       stroke: rgba(234,215,190,0.95);
-      stroke-width: 5;
+      stroke-width: 4;
       fill: none;
       stroke-linecap: square;
       stroke-linejoin: miter;
     }
 
     #backBtn{
-      left: calc(0.2 * var(--cell));
+      /* Position wird per JS gesetzt - Zeile 8, Spalte H, mittig */
     }
 
     #exitBtn{
       right: calc(0.2 * var(--cell));
+      top: 50%;
+      transform: translateY(-50%);
     }
 
     .headerTitle{
