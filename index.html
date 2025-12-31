@@ -300,6 +300,15 @@
       line-height: 1;
     }
 
+    .anzahlText{
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      font-size: calc(18px * var(--uiscale));
+      line-height: 1;
+    }
+
     .sliderRow{
       position: absolute;
       width: var(--gridW);
@@ -319,25 +328,25 @@
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
     }
 
-    /* ✅ Schnecke: 1/3 links über Spalte B hinaus, +71px relativ zu Buttons */
+    /* ✅ Schnecke: DEINE Justierung */
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px; /* ✅ 178 - 71 = 107px VOR dem Regler */
+      top: -77px;
     }
 
-    /* ✅ Hase: 1/3 rechts über Spalte G hinaus, +71px relativ zu Buttons */
+    /* ✅ Hase: DEINE Justierung */
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px; /* ✅ 178 - 71 = 107px VOR dem Regler */
+      top: -77px;
     }
 
     /* ✅ Regler Container: von Mitte B bis Mitte G */
     .sliderContainer{
       position: absolute;
-      left: calc(1.5 * var(--cell)); /* Mitte von Spalte B */
-      width: calc(5 * var(--cell)); /* B-Mitte bis G-Mitte = 5 Zellen */
+      left: calc(1.5 * var(--cell));
+      width: calc(5 * var(--cell));
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--uiscale));
@@ -399,6 +408,36 @@
       cursor: pointer;
     }
 
+    /* ===== KIPP ANZAHL WÄHLEN ===== */
+    .kippAnzahlSubtitle{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      
+      color: rgba(255,255,255,0.92);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 4px 12px rgba(0,0,0,0.60);
+      
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .kippAnzahlBtns{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: calc(24px * var(--uiscale));
+      pointer-events: auto;
+      z-index: 10;
+    }
+
     /* ===== Visibility Control ===== */
     .hidden{ display:none !important; }
   </style>
@@ -453,6 +492,27 @@
             </div>
           </div>
         </div>
+
+        <!-- KIPP ANZAHL WÄHLEN -->
+        <div id="kippAnzahlView" class="hidden">
+          <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
+          
+          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
+            Wähle <span style="font-weight:1000;">EINE</span> Taste
+          </div>
+
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns">
+            <button class="squareBtn" data-anzahl="3" type="button">
+              <span class="anzahlText">3</span>
+            </button>
+            <button class="squareBtn" data-anzahl="6" type="button">
+              <span class="anzahlText">6</span>
+            </button>
+            <button class="squareBtn" data-anzahl="9" type="button">
+              <span class="anzahlText">9</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="grid" id="grid" aria-hidden="true"></div>
@@ -473,6 +533,11 @@
     const btnOk        = document.getElementById("btnOk");
     const playGlyph    = document.getElementById("playGlyph");
     const speedSlider  = document.getElementById("speedSlider");
+
+    const kippAnzahlView     = document.getElementById("kippAnzahlView");
+    const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
+    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
+    const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -557,7 +622,12 @@
       // KSP View
       kspTitle.style.top = midY + "px";
       kspTop.style.top = (midY + 70) + "px";
-      sliderRow.style.top = (midY + 265) + "px"; /* ✅ Buttons+70 +178 = +248px */
+      sliderRow.style.top = (midY + 265) + "px"; /* ✅ DEINE Justierung */
+
+      // KIPP Anzahl View
+      kippAnzahlTitle.style.top = midY + "px";
+      kippAnzahlSubtitle.style.top = (midY + 70) + "px";
+      kippAnzahlBtns.style.top = (midY + 120) + "px";
     }
 
     function rebuild(){
@@ -578,11 +648,19 @@
     function showLevelView(){
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
+      kippAnzahlView.classList.add("hidden");
     }
 
     function showKspView(){
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
+      kippAnzahlView.classList.add("hidden");
+    }
+
+    function showKippAnzahlView(){
+      levelView.classList.add("hidden");
+      kspView.classList.add("hidden");
+      kippAnzahlView.classList.remove("hidden");
     }
 
     // ===== LEVEL BUTTONS =====
@@ -590,7 +668,12 @@
       btn.addEventListener("click", () => {
         const level = btn.dataset.level;
         console.log("Level gewählt:", level);
-        showKspView();
+        
+        if(level === "trainee"){
+          showKippAnzahlView();
+        } else {
+          showKspView();
+        }
       });
     });
 
@@ -619,6 +702,15 @@
 
     speedSlider.addEventListener("input", () => {
       console.log("Speed:", speedSlider.value);
+    });
+
+    // ===== KIPP ANZAHL BUTTONS =====
+    document.querySelectorAll('.kippAnzahlBtns .squareBtn').forEach(btn => {
+      btn.addEventListener("click", () => {
+        const anzahl = btn.dataset.anzahl;
+        console.log("Anzahl gewählt:", anzahl);
+        // Hier weiter zum Spiel
+      });
     });
 
     // ===== INIT =====
