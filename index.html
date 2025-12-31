@@ -177,7 +177,6 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
-      z-index: 25;
     }
     .navBtn:active{
       transform: scale(0.92);
@@ -194,12 +193,13 @@
     }
 
     #backBtn{
-      /* Position wird per JS gesetzt */
+      /* Position wird per JS gesetzt - Zeile 8, Spalte H, mittig */
     }
 
     #exitBtn{
-      left: calc(0.5 * var(--cell));
-      top: calc(1 * var(--cell));
+      right: calc(0.2 * var(--cell));
+      top: 50%;
+      transform: translateY(-50%);
     }
 
     .headerTitle{
@@ -510,7 +510,7 @@
     .exitOverlay{
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.80);
+      background: rgba(0,0,0,0.75);
       z-index: 100;
       display: flex;
       align-items: center;
@@ -522,23 +522,22 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: calc(40px * var(--uiscale));
-      max-width: 90vw;
+      gap: calc(30px * var(--uiscale));
     }
 
     .exitDialogTitle{
-      font-size: calc(clamp(16px, 4.2vmin, 26px) * var(--uiscale));
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
       font-weight: 1000;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: rgba(255,255,255,0.96);
       text-shadow:
         0 2px 0 rgba(0,0,0,0.85),
         0 6px 18px rgba(0,0,0,0.70);
-      padding: 12px 24px;
+      padding: 10px 18px;
       border-radius: 999px;
-      background: rgba(0,0,0,0.35);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.30);
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
       white-space: nowrap;
       user-select: none;
     }
@@ -546,18 +545,16 @@
     .exitDialogBtns{
       display: flex;
       gap: calc(30px * var(--uiscale));
-      flex-wrap: wrap;
-      justify-content: center;
     }
 
     .exitBtn{
-      width: calc(160px * var(--uiscale));
-      height: calc(70px * var(--uiscale));
+      width: calc(200px * var(--uiscale));
+      height: calc(80px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       color: rgba(0,0,0,0.92);
-      font-size: calc(clamp(16px, 4vmin, 22px) * var(--uiscale));
+      font-size: calc(clamp(16px, 4vmin, 24px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
       box-shadow:
@@ -568,8 +565,8 @@
       -webkit-tap-highlight-color: transparent;
     }
     .exitBtn:active{
-      transform: scale(0.96);
-      filter: brightness(0.95);
+      transform: scale(0.98);
+      filter: brightness(0.98);
     }
 
     /* ===== Visibility Control ===== */
@@ -587,7 +584,19 @@
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <!-- HEADER -->
         <div class="headerRow">
+          <button id="backBtn" class="navBtn" aria-label="Zurück" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 5L8 12l7 7"></path>
+            </svg>
+          </button>
+
           <div class="headerTitle">DIGIKIPP COLOR</div>
+
+          <button id="exitBtn" class="navBtn" aria-label="Beenden" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+          </button>
         </div>
 
         <!-- LEVEL WÄHLEN -->
@@ -652,24 +661,10 @@
             </button>
           </div>
         </div>
-
-        <!-- BACK BUTTON (Zeile 8, Spalte H) - INNERHALB .layout -->
-        <button id="backBtn" class="navBtn" aria-label="Zurück" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15 5L8 12l7 7"></path>
-          </svg>
-        </button>
       </div>
 
       <div class="grid" id="grid" aria-hidden="true"></div>
     </div>
-
-    <!-- EXIT BUTTON (außerhalb .layout, oben links) -->
-    <button id="exitBtn" class="navBtn exitBtnFixed" aria-label="Beenden" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M6 6l12 12M18 6L6 18"></path>
-      </svg>
-    </button>
   </div>
 
   <!-- EXIT DIALOG -->
@@ -781,44 +776,6 @@
 
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
-
-      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-
-      const midY = (row9VisualTop + row10VisualTop) / 2;
-
-      // Level View
-      levelTitleEl.style.top = midY + "px";
-      levelBtnsEl.style.top  = (midY + 70) + "px";
-
-      // KSP View
-      kspTitle.style.top = midY + "px";
-      kspTop.style.top = (midY + 70) + "px";
-      sliderRow.style.top = (midY + 265) + "px";
-
-      // KIPP Anzahl View
-      kippAnzahlTitle.style.top = midY + "px";
-      kippAnzahlSubtitle.style.top = (midY + 70) + "px";
-      kippAnzahlBtns.style.top = (midY + 120) + "px";
-
-      // Back Button: Zeile 8, Spalte H, mittig
-      if(backBtn){
-        // Zeile 8 im Spielfeld = (8 + HEADER_ROW_OFFSET - 1) = 9
-        const row8VisualTop = (8 + HEADER_ROW_OFFSET - 1) * cellPx; // = 9 * 142 = 1278
-        const row8Center = row8VisualTop + (cellPx / 2); // = 1278 + 71 = 1349
-        
-        // Spalte H = 8. Spalte = Index 7
-        const colHLeft = 7 * cellPx; // = 7 * 142 = 994
-        const colHCenter = colHLeft + (cellPx / 2); // = 994 + 71 = 1065
-        
-        backBtn.style.left = colHCenter + "px";
-        backBtn.style.top = row8Center + "px";
-        
-        console.log("Back button positioned at:", colHCenter, row8Center);
-      } else {
-        console.error("backBtn element not found!");
-      }
-    };
 
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
