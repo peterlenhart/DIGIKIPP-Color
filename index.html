@@ -438,6 +438,160 @@
       z-index: 10;
     }
 
+    /* ===== NAVIGATION BUTTONS (Zurück & Schließen) ===== */
+    .navBtn{
+      position: absolute;
+      width: calc(56px * var(--uiscale));
+      height: calc(56px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      z-index: 100;
+    }
+    .navBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    /* Zurück-Button (Zeile 8, Spalte H) */
+    .backBtn{
+      /* Spalte H = Spalte 8, Zeile 8 (visuell Zeile 10 wegen HEADER_ROW_OFFSET) */
+    }
+
+    /* Schließen-Button (Zeile 0.5, Spalte A) */
+    .closeBtn{
+      /* Spalte A = Spalte 1, zwischen Zeile 0 und 1 */
+    }
+
+    /* Zurück-Icon: Rechtsoffenes Dreieck (zeigt nach links) */
+    .backIcon{
+      width: 0;
+      height: 0;
+      border-top: calc(14px * var(--uiscale)) solid transparent;
+      border-bottom: calc(14px * var(--uiscale)) solid transparent;
+      border-right: calc(22px * var(--uiscale)) solid #7a3f2b;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+      transform: translateX(calc(-2px * var(--uiscale)));
+    }
+
+    /* Schließen-Icon: X */
+    .closeIcon{
+      position: relative;
+      width: calc(28px * var(--uiscale));
+      height: calc(28px * var(--uiscale));
+    }
+    .closeIcon::before,
+    .closeIcon::after{
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(28px * var(--uiscale));
+      height: calc(4px * var(--uiscale));
+      background: #7a3f2b;
+      border-radius: calc(2px * var(--uiscale));
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+    }
+    .closeIcon::before{
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .closeIcon::after{
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    /* ===== SICHERHEITSABFRAGE MODAL ===== */
+    .modalOverlay{
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      pointer-events: auto;
+    }
+
+    .modalBox{
+      background: rgba(234,215,190,0.98);
+      border: 3px solid rgba(0,0,0,0.65);
+      border-radius: calc(20px * var(--uiscale));
+      padding: calc(32px * var(--uiscale)) calc(40px * var(--uiscale));
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.15) inset;
+      text-align: center;
+      max-width: calc(450px * var(--uiscale));
+      margin: 0 20px;
+    }
+
+    .modalTitle{
+      font-size: calc(clamp(18px, 5vmin, 28px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      color: #2a160c;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      margin-bottom: calc(20px * var(--uiscale));
+      text-transform: uppercase;
+    }
+
+    .modalText{
+      font-size: calc(clamp(14px, 3.6vmin, 18px) * var(--uiscale));
+      font-weight: 600;
+      color: #4a2418;
+      margin-bottom: calc(28px * var(--uiscale));
+      line-height: 1.4;
+    }
+
+    .modalBtns{
+      display: flex;
+      gap: calc(16px * var(--uiscale));
+      justify-content: center;
+    }
+
+    .modalBtn{
+      padding: calc(14px * var(--uiscale)) calc(32px * var(--uiscale));
+      border-radius: calc(12px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      font-size: calc(clamp(14px, 3.6vmin, 18px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.18),
+        0 0 0 1px rgba(255,255,255,0.15) inset;
+    }
+    .modalBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    .modalBtn.cancel{
+      background: #a8927a;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+    }
+
+    .modalBtn.confirm{
+      background: #d64545;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    }
+
     /* ===== Visibility Control ===== */
     .hidden{ display:none !important; }
   </style>
@@ -460,6 +614,11 @@
             <button class="levelBtn" data-level="brainy">Brainy</button>
             <button class="levelBtn" data-level="brain">Brain</button>
           </div>
+
+          <!-- Schließen-Button für Level View -->
+          <button class="navBtn closeBtn" id="closeBtnLevel" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
         </div>
 
         <!-- KSP BLOCK -->
@@ -491,6 +650,16 @@
               <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
             </div>
           </div>
+
+          <!-- Zurück-Button für KSP View -->
+          <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
+            <div class="backIcon"></div>
+          </button>
+
+          <!-- Schließen-Button für KSP View -->
+          <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
         </div>
 
         <!-- KIPP ANZAHL WÄHLEN -->
@@ -498,7 +667,7 @@
           <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
           
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            Wähle <span style="font-weight:1000;">EINE</span> Taste
+            Tippe auf <span style="font-weight:1000;">EINE</span> Taste
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
@@ -512,10 +681,32 @@
               <span class="anzahlText">9</span>
             </button>
           </div>
+
+          <!-- Zurück-Button für Kipp Anzahl View -->
+          <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
+            <div class="backIcon"></div>
+          </button>
+
+          <!-- Schließen-Button für Kipp Anzahl View -->
+          <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
         </div>
       </div>
 
       <div class="grid" id="grid" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- SICHERHEITSABFRAGE MODAL -->
+  <div id="closeModal" class="modalOverlay hidden">
+    <div class="modalBox">
+      <div class="modalTitle">Spiel beenden?</div>
+      <div class="modalText">Möchtest du das Spiel wirklich beenden?<br>Der aktuelle Fortschritt geht verloren.</div>
+      <div class="modalBtns">
+        <button class="modalBtn cancel" id="modalCancel">Abbrechen</button>
+        <button class="modalBtn confirm" id="modalConfirm">Beenden</button>
+      </div>
     </div>
   </div>
 
@@ -538,6 +729,18 @@
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
     const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
+
+    const closeBtnLevel  = document.getElementById("closeBtnLevel");
+    const closeBtnKsp    = document.getElementById("closeBtnKsp");
+    const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
+    const backBtnKsp     = document.getElementById("backBtnKsp");
+    const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
+
+    const closeModal = document.getElementById("closeModal");
+    const modalCancel = document.getElementById("modalCancel");
+    const modalConfirm = document.getElementById("modalConfirm");
+
+    let currentView = "level"; // "level", "ksp", "anzahl"
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -622,12 +825,47 @@
       // KSP View
       kspTitle.style.top = midY + "px";
       kspTop.style.top = (midY + 70) + "px";
-      sliderRow.style.top = (midY + 265) + "px"; /* ✅ DEINE Justierung */
+      sliderRow.style.top = (midY + 265) + "px";
 
       // KIPP Anzahl View
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 70) + "px";
       kippAnzahlBtns.style.top = (midY + 120) + "px";
+
+      // Navigation Buttons positionieren
+      positionNavButtons(cellPx);
+    }
+
+    function positionNavButtons(cellPx){
+      // Zurück-Button: Zeile 8, Spalte H (zentriert im Feld)
+      // Spalte H = Spalte 8, Zeile 8 (visuell Zeile 10 wegen HEADER_ROW_OFFSET = 2)
+      const backCol = 8; // H
+      const backRow = 8;
+      const backVisualRow = backRow + HEADER_ROW_OFFSET;
+      
+      const backLeft = (backCol - 1) * cellPx + cellPx / 2;
+      const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
+
+      [backBtnKsp, backBtnAnzahl].forEach(btn => {
+        btn.style.left = backLeft + "px";
+        btn.style.top = backTop + "px";
+        btn.style.transform = "translate(-50%, -50%)";
+      });
+
+      // Schließen-Button: Zwischen Zeile 01 und 02 (Zeile 0.5), Spalte A
+      // Spalte A = Spalte 1
+      // Zwischen visueller Zeile 1 (01) und 2 (02) = Zeile 1.5 visuell
+      const closeCol = 1; // A
+      const closeVisualRow = 1.5; // Zwischen 01 und 02
+      
+      const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
+      const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
+
+      [closeBtnLevel, closeBtnKsp, closeBtnAnzahl].forEach(btn => {
+        btn.style.left = closeLeft + "px";
+        btn.style.top = closeTop + "px";
+        btn.style.transform = "translate(-50%, -50%)";
+      });
     }
 
     function rebuild(){
@@ -646,18 +884,21 @@
 
     // ===== VIEW SWITCHING =====
     function showLevelView(){
+      currentView = "level";
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
     }
 
     function showKspView(){
+      currentView = "ksp";
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
     }
 
     function showKippAnzahlView(){
+      currentView = "anzahl";
       levelView.classList.add("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
@@ -698,6 +939,7 @@
 
     btnOk.addEventListener("click", () => {
       console.log("KSP bestätigt, Slider-Wert:", speedSlider.value);
+      showKippAnzahlView();
     });
 
     speedSlider.addEventListener("input", () => {
@@ -711,6 +953,53 @@
         console.log("Anzahl gewählt:", anzahl);
         // Hier weiter zum Spiel
       });
+    });
+
+    // ===== ZURÜCK BUTTONS =====
+    backBtnKsp.addEventListener("click", () => {
+      console.log("Zurück von KSP zu Level");
+      showLevelView();
+    });
+
+    backBtnAnzahl.addEventListener("click", () => {
+      console.log("Zurück von Anzahl zu KSP oder Level");
+      // Je nachdem, ob vorher KSP oder direkt von Level kam
+      // Für Trainee: direkt zu Level, für andere: zu KSP
+      if(currentView === "anzahl"){
+        // Einfache Logik: zurück zu Level (kann erweitert werden)
+        showLevelView();
+      }
+    });
+
+    // ===== SCHLIESSEN BUTTONS =====
+    function showCloseModal(){
+      closeModal.classList.remove("hidden");
+    }
+
+    function hideCloseModal(){
+      closeModal.classList.add("hidden");
+    }
+
+    closeBtnLevel.addEventListener("click", showCloseModal);
+    closeBtnKsp.addEventListener("click", showCloseModal);
+    closeBtnAnzahl.addEventListener("click", showCloseModal);
+
+    modalCancel.addEventListener("click", hideCloseModal);
+
+    modalConfirm.addEventListener("click", () => {
+      console.log("Spiel wird beendet");
+      hideCloseModal();
+      // Hier kannst du zum Beispiel window.close() aufrufen oder zur Startseite navigieren
+      // window.close(); // Funktioniert nur bei Popups
+      // Alternativ: Zurück zur Level-Auswahl
+      showLevelView();
+    });
+
+    // Modal schließen bei Klick außerhalb
+    closeModal.addEventListener("click", (e) => {
+      if(e.target === closeModal){
+        hideCloseModal();
+      }
     });
 
     // ===== INIT =====
