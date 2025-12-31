@@ -177,6 +177,7 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
+      z-index: 25;
     }
     .navBtn:active{
       transform: scale(0.92);
@@ -193,15 +194,12 @@
     }
 
     #backBtn{
-      position: absolute;
-      /* Position wird per JS gesetzt - Zeile 8, Spalte H, mittig */
+      /* Position wird per JS gesetzt */
     }
 
     #exitBtn{
-      position: absolute;
       left: calc(0.5 * var(--cell));
-      top: var(--cell);
-      transform: translate(-50%, -50%);
+      top: calc(1 * var(--cell));
     }
 
     .headerTitle{
@@ -589,19 +587,7 @@
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <!-- HEADER -->
         <div class="headerRow">
-          <button id="backBtn" class="navBtn" aria-label="Zurück" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M15 5L8 12l7 7"></path>
-            </svg>
-          </button>
-
           <div class="headerTitle">DIGIKIPP COLOR</div>
-
-          <button id="exitBtn" class="navBtn" aria-label="Beenden" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18"></path>
-            </svg>
-          </button>
         </div>
 
         <!-- LEVEL WÄHLEN -->
@@ -666,10 +652,24 @@
             </button>
           </div>
         </div>
+
+        <!-- BACK BUTTON (Zeile 8, Spalte H) - INNERHALB .layout -->
+        <button id="backBtn" class="navBtn" aria-label="Zurück" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 5L8 12l7 7"></path>
+          </svg>
+        </button>
       </div>
 
       <div class="grid" id="grid" aria-hidden="true"></div>
     </div>
+
+    <!-- EXIT BUTTON (außerhalb .layout, oben links) -->
+    <button id="exitBtn" class="navBtn exitBtnFixed" aria-label="Beenden" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
   </div>
 
   <!-- EXIT DIALOG -->
@@ -781,6 +781,44 @@
 
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
+
+      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+
+      const midY = (row9VisualTop + row10VisualTop) / 2;
+
+      // Level View
+      levelTitleEl.style.top = midY + "px";
+      levelBtnsEl.style.top  = (midY + 70) + "px";
+
+      // KSP View
+      kspTitle.style.top = midY + "px";
+      kspTop.style.top = (midY + 70) + "px";
+      sliderRow.style.top = (midY + 265) + "px";
+
+      // KIPP Anzahl View
+      kippAnzahlTitle.style.top = midY + "px";
+      kippAnzahlSubtitle.style.top = (midY + 70) + "px";
+      kippAnzahlBtns.style.top = (midY + 120) + "px";
+
+      // Back Button: Zeile 8, Spalte H, mittig
+      if(backBtn){
+        // Zeile 8 im Spielfeld = (8 + HEADER_ROW_OFFSET - 1) = 9
+        const row8VisualTop = (8 + HEADER_ROW_OFFSET - 1) * cellPx; // = 9 * 142 = 1278
+        const row8Center = row8VisualTop + (cellPx / 2); // = 1278 + 71 = 1349
+        
+        // Spalte H = 8. Spalte = Index 7
+        const colHLeft = 7 * cellPx; // = 7 * 142 = 994
+        const colHCenter = colHLeft + (cellPx / 2); // = 994 + 71 = 1065
+        
+        backBtn.style.left = colHCenter + "px";
+        backBtn.style.top = row8Center + "px";
+        
+        console.log("Back button positioned at:", colHCenter, row8Center);
+      } else {
+        console.error("backBtn element not found!");
+      }
+    };
 
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
