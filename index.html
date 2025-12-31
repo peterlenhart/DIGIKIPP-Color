@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – Background + Grid (fixed)</title>
+  <title>DigiKipp – PNG + Grid + Farben + Level-Text</title>
 
   <style>
     :root{
       --cols: 8;
-      --cell: 142px;      /* Rastergröße bleibt 142 */
+      --cell: 142px;
       --grid-alpha: 0.18;
 
       /* ===== Farben (fix) ===== */
@@ -17,31 +17,39 @@
       --gruen:   rgb(0, 166, 82);
       --orange:  rgb(249, 150, 30);
 
-      /* ===== Farbfelder ===== */
-      --colorSize: 126px; /* ✅ 126×126 (12px insgesamt kleiner als 138) */
+      /* ===== Raster-Definition nach deiner Benennung =====
+         Zeile 01 = Index 0
+         Zeile 02 = Index 1
+         Zeile 1  = Index 2
+         ...
+      */
+      --header-rows: 2;
 
-      /* ===== HEADER-ZEILEN ===== */
-      --headerRows: 2;    /* ✅ 01 und 02 sind echte Rasterzeilen */
+      /* ===== Farbfelder =====
+         142 Raster, 8px Rand rundherum => 142 - 16 = 126
+      */
+      --colorPad: 8px;
+      --colorSize: calc(var(--cell) - (2 * var(--colorPad))); /* ✅ 126×126 */
 
-      /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
-      --bg-off-x: 3px;    /* links(-) / rechts(+) */
-      --bg-off-y: 5px;    /* oben(-) / unten(+) */
+      /* PNG-Feinjustage */
+      --bg-off-x: 4px;  /* links(-) / rechts(+) */
+      --bg-off-y: 5px;  /* oben(-) / unten(+) */
 
       /* wird per JS gesetzt */
       --scale: 1;
       --gridW: calc(var(--cols) * var(--cell));
-      --gridH: 100vh;     /* wird per JS gesetzt */
+      --gridH: 100vh;
     }
 
     html, body{
       height: 100%;
       margin: 0;
-      overflow: hidden;   /* ✅ kein Scroll */
+      overflow: hidden;     /* ✅ kein Scroll */
+      touch-action: none;   /* ✅ keine Scroll/Zoom Gesten */
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none; /* ✅ keine Scroll/Zoom Gesten */
     }
 
-    /* ✅ Holz-Hintergrund (damit NIE schwarz erscheint) */
+    /* Holz/Beige Hintergrund */
     body{
       background:
         radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
@@ -62,40 +70,30 @@
       width: 100vw;
       height: 100vh;
       position: relative;
-      overflow: hidden; /* ✅ abschneiden statt scrollen */
+      overflow: hidden;
     }
 
-    /* Layout: 8 Spalten breit, per scale in die Handybreite gepasst */
     .layout{
       position: absolute;
       left: 50%;
       top: 0;
-
       width: var(--gridW);
       height: var(--gridH);
 
       transform-origin: top center;
-      transform:
-        translateX(-50%)
-        scale(var(--scale));
+      transform: translateX(-50%) scale(var(--scale));
     }
 
-    /* ✅ PNG: oben links verankert, unverzerrt, Breite passend */
     .bgPNG{
       position:absolute;
       left: 0;
       top: 0;
-
       width: var(--gridW);
       height: var(--gridH);
 
       background-image: url("Box_m_Hgr.png");
       background-repeat: no-repeat;
-
-      /* ✅ WICHTIG: Breite passt, Höhe bleibt proportional -> unverzerrt */
       background-size: 100% auto;
-
-      /* ✅ FEINJUSTAGE */
       background-position:
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
@@ -104,7 +102,7 @@
       z-index: 0;
     }
 
-    /* ✅ Farbfelder-Layer */
+    /* Farbfelder */
     .colors{
       position:absolute;
       left: 0;
@@ -112,7 +110,7 @@
       width: var(--gridW);
       height: var(--gridH);
       pointer-events: none;
-      z-index: 1; /* über PNG */
+      z-index: 1;
     }
 
     .colorSq{
@@ -121,20 +119,18 @@
       height: var(--colorSize);
       border-radius: 0;
     }
-
     .c-gruen  { background: var(--gruen); }
     .c-orange { background: var(--orange); }
     .c-blau   { background: var(--blau); }
     .c-violett{ background: var(--violett); }
 
-    /* ✅ Grid-Linien als Background-Pattern */
+    /* Grid-Linien */
     .grid{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-
       z-index: 2;
       pointer-events: none;
 
@@ -155,6 +151,28 @@
         );
     }
 
+    /* ✅ Level-Text: exakt zwischen Zeile 9 und 10 (in Layout-Koordinaten) */
+    .levelText{
+      position:absolute;
+      left: 50%;
+      transform: translate(-50%, -50%); /* ✅ Box-Mitte sitzt exakt auf Ziel-Y */
+      z-index: 5;
+      pointer-events: none;
+
+      font-weight: 1000;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+
+      color: rgba(234,215,190,0.98);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      font-size: clamp(14px, 4.8vmin, 22px);
+
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Debug Panel */
     .debug{
       position: fixed;
@@ -171,7 +189,6 @@
       box-shadow: 0 14px 30px rgba(0,0,0,0.35);
       user-select: none;
     }
-
     .debug label{
       display:flex;
       align-items:center;
@@ -179,7 +196,6 @@
       font-weight: 700;
       margin-bottom: 10px;
     }
-
     .debug code{
       display:block;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -195,7 +211,12 @@
   <div class="stage" id="stage">
     <div class="layout" id="layout">
       <div class="bgPNG" aria-hidden="true"></div>
+
       <div class="colors" id="colors" aria-hidden="true"></div>
+
+      <!-- ✅ Level-Text (nur Anzeige, keine Funktion) -->
+      <div class="levelText" id="levelText">LEVEL WÄHLEN</div>
+
       <div class="grid" id="grid" aria-hidden="true"></div>
     </div>
   </div>
@@ -213,6 +234,7 @@
     const infoEl   = document.getElementById("info");
     const toggle   = document.getElementById("toggleGrid");
     const colorsEl = document.getElementById("colors");
+    const levelEl  = document.getElementById("levelText");
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -234,48 +256,26 @@
       return { cols, cell, gridW, scale };
     }
 
-    function parseCoord(coord){
-      // Unterstützt:
-      // - "1C".."8H"  -> Spielfläche (Zeilen 1..8), wird automatisch um headerRows verschoben
-      // - optional: "01C" / "02C" -> Headerzeilen direkt (ohne Verschiebung)
-      const mHeader = coord.match(/^0([12])([A-H])$/);
-      if(mHeader){
-        return { zone: "header", row: parseInt(mHeader[1],10), colLetter: mHeader[2] };
-      }
-      const mField = coord.match(/^([1-8])([A-H])$/);
-      if(mField){
-        return { zone: "field", row: parseInt(mField[1],10), colLetter: mField[2] };
-      }
-      throw new Error("Ungültige Koordinate: " + coord);
-    }
-
-    function colToIndex(letter){
-      const map = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-      return map[letter];
+    function coordToXY(coord){
+      // coord wie "1C" oder "8F" oder "3A"
+      const row = parseInt(coord, 10);
+      const colLetter = coord.replace(String(row), "");
+      const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
+      const col = colMap[colLetter];
+      return { row, col };
     }
 
     function placeColorSquare(coord, cls, cellPx, sizePx){
-      const headerRows = numVar("--headerRows") || 2;
-      const p = parseCoord(coord);
+      const { row, col } = coordToXY(coord);
+      const headerRows = numVar("--header-rows") || 2;
 
-      const col = colToIndex(p.colLetter);
+      // ✅ Zeilen 1..8 liegen ab Index 2 (wegen 01/02)
+      const rowIndex0 = headerRows + (row - 1);
 
-      // X immer normal 1..8 -> 0..7
       const leftCell = (col - 1) * cellPx;
+      const topCell  = rowIndex0 * cellPx;
 
-      // Y abhängig von Zone:
-      // Header: 01 -> Rasterreihe 0, 02 -> Rasterreihe 1
-      // Field : 1..8 -> Rasterreihe (headerRows + (row-1))
-      let gridRowIndex0;
-      if(p.zone === "header"){
-        gridRowIndex0 = (p.row - 1); // 01=>0, 02=>1
-      } else {
-        gridRowIndex0 = headerRows + (p.row - 1); // ✅ DAS ist dein Fix
-      }
-
-      const topCell = gridRowIndex0 * cellPx;
-
-      const pad = (cellPx - sizePx) / 2; // zentriert
+      const pad = (cellPx - sizePx) / 2;
       const x = leftCell + pad;
       const y = topCell  + pad;
 
@@ -292,16 +292,15 @@
       const cellPx = numVar("--cell") || 142;
       const sizePx = numVar("--colorSize") || 126;
 
-      // ===== DEINE FESTLEGUNG (nur diese Felder) =====
-      // WICHTIG: Diese Koordinaten sind Spielfläche 1..8 (werden automatisch um 01/02 nach unten geschoben)
+      // ✅ Deine Festlegung (Zeilen 1..8, Spalten A..H)
       const placements = [
-        // Zeile 1 (Spielfläche)
+        // Zeile 1
         ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
-        // Zeile 8 (Spielfläche)
+        // Zeile 8
         ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
-        // Spalte A (Spielfläche)
+        // Spalte A
         ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
-        // Spalte H (Spielfläche)
+        // Spalte H
         ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
       ];
 
@@ -310,35 +309,48 @@
       }
     }
 
-    function rebuildGrid(){
+    function placeLevelTextBetweenRow9And10(){
+      // ✅ Zwischen Zeile 9 und 10:
+      // Zeile 9 startet bei Index: headerRows + (9-1) = 2+8 = 10
+      // Trennlinie 9/10 ist bei (Index 10 + 1)*cell = 11*cell
+      // "zwischen" => + cell/2 (71px) => exakt 1633px bei 142
+      const cell = numVar("--cell") || 142;
+      const headerRows = numVar("--header-rows") || 2;
+
+      const row9Index0 = headerRows + (9 - 1);     // 10
+      const y = (row9Index0 + 1) * cell + (cell/2);
+
+      levelEl.style.top = y + "px";
+    }
+
+    function rebuildAll(){
       const { cols, cell, gridW, scale } = setScaleToFitWidth();
 
       const vh = window.innerHeight;
       const effectiveLayoutHeight = vh / scale;
-
       const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
 
       const gridH = rows * cell;
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       rebuildColors();
+      placeLevelTextBetweenRow9And10();
 
       infoEl.textContent =
-        `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
+        `cell=${cell}px | cols=${cols} | rows(vis)=${rows}\n` +
         `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
-        `viewport=${window.innerWidth}x${window.innerHeight}\n` +
-        `scroll=OFF (fixed stage)\n` +
-        `headerRows=${numVar("--headerRows")} (01,02)\n` +
-        `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}\n` +
-        `colors: ${numVar("--colorSize")}x${numVar("--colorSize")} centered`;
+        `headerRows=${numVar("--header-rows")} (01/02)\n` +
+        `colorSize=${(numVar("--colorSize")||126)}px (126x126)\n` +
+        `LEVEL zwischen 9/10: y=${levelEl.style.top}\n` +
+        `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}`;
     }
 
     toggle.addEventListener("change", () => {
       gridEl.style.display = toggle.checked ? "block" : "none";
     });
 
-    window.addEventListener("load", rebuildGrid);
-    window.addEventListener("resize", rebuildGrid);
+    window.addEventListener("load", rebuildAll);
+    window.addEventListener("resize", rebuildAll);
 
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
