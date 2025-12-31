@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI + Kippspeed</title>
+  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI</title>
 
   <style>
     :root{
       --cols: 8;
-      --cell: 142px;          /* Rastergröße bleibt 142 */
+      --cell: 142px;
       --grid-alpha: 0.18;
 
       /* ===== Farben (fix) ===== */
@@ -17,15 +17,16 @@
       --gruen:   rgb(0, 166, 82);
       --orange:  rgb(249, 150, 30);
 
-      /* ===== Farbfelder: 142 -> 126 (insgesamt 12px kleiner) ===== */
-      --colorSize: 126px;     /* ✅ 126×126 */
+      /* ===== Farbfelder: 142 -> 126 ===== */
+      --colorSize: 126px;     /* 126×126 */
 
-      /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
-      --bg-off-x: 4px;        /* links(-) / rechts(+) */
-      --bg-off-y: 5px;        /* oben(-) / unten(+) */
+      /* ✅ PNG-FEINJUSTAGE */
+      --bg-off-x: 4px;
+      --bg-off-y: 5px;
 
       /* wird per JS gesetzt */
       --scale: 1;
+      --uiscale: 1;           /* 1/scale -> UI bleibt optisch groß */
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;         /* wird per JS gesetzt */
     }
@@ -33,12 +34,11 @@
     html, body{
       height: 100%;
       margin: 0;
-      overflow: hidden;       /* ✅ kein Scroll */
+      overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none;     /* ✅ keine Scroll/Zoom Gesten */
+      touch-action: none;
     }
 
-    /* ✅ Holz-Hintergrund (damit NIE schwarz erscheint) */
     body{
       background:
         radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
@@ -59,49 +59,35 @@
       width: 100vw;
       height: 100vh;
       position: relative;
-      overflow: hidden; /* ✅ abschneiden statt scrollen */
+      overflow: hidden;
     }
 
-    /* Layout: 8 Spalten breit, per scale in die Handybreite gepasst */
     .layout{
       position: absolute;
       left: 50%;
       top: 0;
-
       width: var(--gridW);
       height: var(--gridH);
-
       transform-origin: top center;
-      transform:
-        translateX(-50%)
-        scale(var(--scale));
+      transform: translateX(-50%) scale(var(--scale));
     }
 
-    /* ✅ PNG: oben links verankert, unverzerrt, Breite passend */
     .bgPNG{
       position:absolute;
       left: 0;
       top: 0;
-
       width: var(--gridW);
       height: var(--gridH);
-
       background-image: url("Box_m_Hgr.png");
       background-repeat: no-repeat;
-
-      /* ✅ WICHTIG: Breite passt, Höhe bleibt proportional -> unverzerrt */
-      background-size: 100% auto;
-
-      /* ✅ FEINJUSTAGE: hier greifen die Variablen */
+      background-size: 100% auto; /* unverzerrt */
       background-position:
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
-
       pointer-events: none;
       z-index: 0;
     }
 
-    /* ✅ Farbfelder-Layer */
     .colors{
       position:absolute;
       left: 0;
@@ -109,7 +95,7 @@
       width: var(--gridW);
       height: var(--gridH);
       pointer-events: none;
-      z-index: 1; /* über PNG */
+      z-index: 1;
     }
 
     .colorSq{
@@ -118,23 +104,19 @@
       height: var(--colorSize);
       border-radius: 0;
     }
-
     .c-gruen   { background: var(--gruen); }
     .c-orange  { background: var(--orange); }
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
 
-    /* ✅ Grid-Layer */
     .grid{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-
       z-index: 2;
       pointer-events: none;
-
       background-image:
         repeating-linear-gradient(
           to right,
@@ -152,200 +134,81 @@
         );
     }
 
-    /* ===== UI Layer (LEVEL + KIPPSPEED) ===== */
+    /* ===== Level UI Layer ===== */
     .uiLayer{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 3;            /* über Grid */
-      pointer-events: auto;  /* ✅ jetzt klickbar */
-      user-select: none;
-    }
-
-    /* Überschrift: exakt wie LEVEL WÄHLEN (Größe/Style bleibt gleich) */
-    .uiTitle{
-      position:absolute;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: clamp(14px, 4.2vmin, 48px); /* ✅ dein “Wert 4,2” */
-      font-weight: 900;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.95);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.35),
-        0 10px 22px rgba(0,0,0,0.35);
-      white-space: nowrap;
+      z-index: 3;
       pointer-events: none;
     }
 
-    /* ===== LEVEL BUTTONS ===== */
+    /* ✅ LEVEL WÄHLEN: sichtbar + im Vordergrund */
+    .levelTitle{
+      position:absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+
+      /* HELL statt schwarz */
+      color: rgba(255,255,255,0.96);
+
+      /* richtig sichtbar auf dunklem Hintergrund */
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 18px rgba(0,0,0,0.70);
+
+      /* dezente „Pille“ dahinter, damit’s nie absäuft */
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.25);
+
+      white-space: nowrap;
+      user-select: none;
+    }
+
     .levelBtns{
       position:absolute;
       left: 50%;
       transform: translateX(-50%);
       display:flex;
-      gap: 71px;             /* ✅ Abstand zwischen Buttons */
-      pointer-events: auto;
+      gap: 71px;
+      pointer-events: none;
+      z-index: 10;
     }
 
     .levelBtn{
-      width: 284px;          /* ✅ */
-      height: 106px;         /* ✅ */
+      width: 284px;
+      height: 106px;
       display:flex;
       align-items:center;
       justify-content:center;
-      border-radius: 18px;   /* ✅ etwas abgerundet */
+
+      border-radius: 14px; /* ✅ abgerundet */
+
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       color: rgba(0,0,0,0.92);
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      text-transform: none;  /* ✅ Schreibweise exakt wie vorgegeben */
+
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
+
       user-select:none;
       white-space: nowrap;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .levelBtn:active{
-      transform: translateY(1px);
-      box-shadow:
-        0 7px 14px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-    }
-
-    /* ===== KIPPSPEED PANEL ===== */
-    .kspWrap{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(var(--gridW) * 0.92);
-      max-width: 1040px;
-      pointer-events: auto;
-      display: none; /* wird per JS eingeblendet */
-    }
-
-    .kspTopRow{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-
-    .kspBtnSquare, .kspBtnOk{
-      height: 84px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-radius: 16px;
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      color: rgba(0,0,0,0.92);
-      font-weight: 900;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .kspBtnSquare{
-      width: 84px; /* ✅ quadratisch */
-      font-size: 30px;
-    }
-
-    .kspBtnOk{
-      width: 140px;
-      font-size: 26px;
-      letter-spacing: 0.06em;
-    }
-
-    .kspSliderRow{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 18px;
-      padding: 16px 18px;
-      border-radius: 20px;
-      background: rgba(0,0,0,0.22);
-      box-shadow:
-        0 16px 34px rgba(0,0,0,0.28);
-    }
-
-    .kspIcon{
-      width: 78px;
-      height: 78px;
-      object-fit: contain;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
-      flex: 0 0 auto;
-      pointer-events: none;
-    }
-
-    /* Range Styling (sauber, groß, “Slot + Knopf”) */
-    .kspRange{
-      -webkit-appearance: none;
-      appearance: none;
-      width: min(680px, 62vw);
-      height: 16px;
-      border-radius: 999px;
-      background: rgba(234,215,190,0.92);
-      outline: none;
-      border: 2px solid rgba(0,0,0,0.55);
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.25),
-        0 0 0 1px rgba(255,255,255,0.15) inset;
-    }
-
-    .kspRange::-webkit-slider-thumb{
-      -webkit-appearance: none;
-      appearance: none;
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.95);
-      border: 3px solid rgba(0,0,0,0.65);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.30),
-        0 0 0 2px rgba(234,215,190,0.55) inset;
-      cursor: pointer;
-    }
-
-    .kspRange::-moz-range-thumb{
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.95);
-      border: 3px solid rgba(0,0,0,0.65);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.30),
-        0 0 0 2px rgba(234,215,190,0.55) inset;
-      cursor: pointer;
-    }
-
-    .kspNums{
-      display:flex;
-      justify-content:center;
-      gap: 0;
-      margin-top: 14px;
-      font-weight: 900;
-      letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.92);
-      text-shadow: 0 2px 0 rgba(0,0,0,0.35);
-      font-size: 24px;
-      pointer-events: none;
-    }
-
-    .kspNums span{
-      width: 25%;
-      text-align:center;
     }
   </style>
 </head>
@@ -355,38 +218,15 @@
     <div class="layout" id="layout">
       <div class="bgPNG" aria-hidden="true"></div>
 
-      <!-- ✅ Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- ✅ UI Layer -->
-      <div class="uiLayer" id="uiLayer">
-        <!-- ===== LEVEL SCREEN ===== -->
-        <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
+      <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <div class="levelTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
         <div class="levelBtns" id="levelBtns">
-          <div class="levelBtn" data-level="trainee">Trainee</div>
-          <div class="levelBtn" data-level="brainy">Brainy</div>
-          <div class="levelBtn" data-level="brain">Brain</div>
-        </div>
-
-        <!-- ===== KIPPSPEED SCREEN (wird eingeblendet) ===== -->
-        <div class="uiTitle" id="kspTitle" style="display:none;">KIPPSPEED (KSP)</div>
-
-        <div class="kspWrap" id="kspWrap" aria-hidden="true">
-          <div class="kspTopRow">
-            <button class="kspBtnSquare" id="kspPlay" type="button">▶</button>
-            <button class="kspBtnOk" id="kspOk" type="button">OK</button>
-          </div>
-
-          <div class="kspSliderRow">
-            <img class="kspIcon" src="kippspeed_snail_tight.png" alt="Snail">
-            <input class="kspRange" id="kspRange" type="range" min="1" max="4" step="1" value="2" />
-            <img class="kspIcon" src="kippspeed_hase_tight.png" alt="Hare">
-          </div>
-
-          <div class="kspNums" aria-hidden="true">
-            <span>1</span><span>2</span><span>3</span><span>4</span>
-          </div>
+          <div class="levelBtn">Trainee</div>
+          <div class="levelBtn">Brainy</div>
+          <div class="levelBtn">Brain</div>
         </div>
       </div>
 
@@ -396,14 +236,8 @@
 
   <script>
     const colorsEl = document.getElementById("colors");
-
     const levelTitleEl = document.getElementById("levelTitle");
     const levelBtnsEl  = document.getElementById("levelBtns");
-
-    const kspTitleEl = document.getElementById("kspTitle");
-    const kspWrapEl  = document.getElementById("kspWrap");
-
-    const kspOkBtn   = document.getElementById("kspOk");
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -413,37 +247,33 @@
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 142;
 
-      const gridW = cols * cell;          // 1136 bei 8*142
+      const gridW = cols * cell;      // 1136
       const vw = window.innerWidth;
 
-      // 8 Spalten komplett sichtbar (mit Rand)
       const targetW = vw * 0.94;
       const scale = Math.min(1, targetW / gridW);
 
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
 
+      // UI optisch konstant halten
+      const uiscale = 1 / (scale || 1);
+      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
+
       return { cols, cell, gridW, scale };
     }
 
-    /* ===== Koordinaten =====
-       Oben sind 2 Header-Zeilen: 01, 02
-       Dann beginnt die Spielfläche mit Zeile 1..8
-       => +2 Offset beim Platzieren.
-    */
     const HEADER_ROW_OFFSET = 2;
 
     function coordToXY(coord){
       const row = parseInt(coord, 10);
       const colLetter = coord.replace(String(row), "");
       const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-      const col = colMap[colLetter];
-      return { row, col };
+      return { row, col: colMap[colLetter] };
     }
 
     function placeColorSquare(coord, cls, cellPx, sizePx){
       const { row, col } = coordToXY(coord);
-
       const visualRow = row + HEADER_ROW_OFFSET;
 
       const leftCell = (col - 1) * cellPx;
@@ -467,13 +297,9 @@
       const sizePx = numVar("--colorSize") || 126;
 
       const placements = [
-        // Zeile 1
         ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
-        // Zeile 8
         ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
-        // Spalte A
         ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
-        // Spalte H
         ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
       ];
 
@@ -482,81 +308,34 @@
       }
     }
 
-    /* ===== Positionen: Überschrift zwischen Zeile 9 und 10 ===== */
-    function computeMidY(){
+    function positionLevelUI(){
       const cellPx = numVar("--cell") || 142;
 
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
 
-      return (row9VisualTop + row10VisualTop) / 2;
-    }
+      const midY = (row9VisualTop + row10VisualTop) / 2;
 
-    function positionLevelUI(){
-      const midY = computeMidY();
-
-      // LEVEL
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
-
-      // KSP
-      kspTitleEl.style.top = midY + "px";
-      kspWrapEl.style.top  = (midY + 70) + "px";
     }
 
-    function showKippspeed(){
-      // LEVEL aus
-      levelTitleEl.style.display = "none";
-      levelBtnsEl.style.display  = "none";
-
-      // KSP an
-      kspTitleEl.style.display = "block";
-      kspWrapEl.style.display  = "block";
-      kspWrapEl.setAttribute("aria-hidden", "false");
-    }
-
-    function showLevel(){
-      // KSP aus
-      kspTitleEl.style.display = "none";
-      kspWrapEl.style.display  = "none";
-      kspWrapEl.setAttribute("aria-hidden", "true");
-
-      // LEVEL an
-      levelTitleEl.style.display = "block";
-      levelBtnsEl.style.display  = "flex";
-    }
-
-    function rebuildGrid(){
-      const { cell, scale, gridW } = setScaleToFitWidth();
+    function rebuild(){
+      const { cell, scale } = setScaleToFitWidth();
 
       const vh = window.innerHeight;
       const effectiveLayoutHeight = vh / scale;
-
       const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
-      const gridH = rows * cell;
 
+      const gridH = rows * cell;
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       rebuildColors();
       positionLevelUI();
     }
 
-    // Klick auf irgendein Level => Kippspeed einblenden
-    levelBtnsEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".levelBtn");
-      if(!btn) return;
-      showKippspeed();
-    });
-
-    // OK => zurück zur Level-Auswahl (Funktion später)
-    kspOkBtn.addEventListener("click", () => {
-      showLevel();
-    });
-
-    window.addEventListener("load", rebuildGrid);
-    window.addEventListener("resize", rebuildGrid);
-
-    // verhindert “Rubberband” / Scroll-Anfang auf Mobile
+    window.addEventListener("load", rebuild);
+    window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
 </body>
