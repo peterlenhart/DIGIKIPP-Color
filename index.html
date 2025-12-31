@@ -159,47 +159,55 @@
       left: 0;
       width: var(--gridW);
       height: calc(2 * var(--cell));
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 calc(0.5 * var(--cell));
-      box-sizing: border-box;
       z-index: 20;
-      pointer-events: auto;
+      pointer-events: none;
     }
 
     .navBtn{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
       width: calc(46px * var(--uiscale));
       height: calc(46px * var(--uiscale));
       border-radius: 0;
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
+      border: 1px solid rgba(234,215,190,0.4);
+      background: transparent;
+      box-shadow: none;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
     }
     .navBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
+      transform: translateY(-50%) scale(0.96);
+      filter: brightness(0.9);
     }
     .navBtn svg{
       width: calc(28px * var(--uiscale));
       height: calc(28px * var(--uiscale));
-      stroke: rgba(0,0,0,0.85);
+      stroke: rgba(234,215,190,0.95);
       stroke-width: 5;
       fill: none;
       stroke-linecap: square;
       stroke-linejoin: miter;
     }
 
+    #backBtn{
+      left: calc(0.2 * var(--cell));
+    }
+
+    #exitBtn{
+      right: calc(0.2 * var(--cell));
+    }
+
     .headerTitle{
-      flex: 1;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       text-align: center;
       font-weight: 1000;
       letter-spacing: 0.08em;
@@ -211,6 +219,7 @@
       line-height: 1;
       white-space: nowrap;
       user-select: none;
+      pointer-events: none;
     }
 
     /* ===== Gemeinsamer Titel-Style ===== */
@@ -808,18 +817,21 @@
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
+      currentView = "level";
     }
 
     function showKspView(){
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
+      currentView = "ksp";
     }
 
     function showKippAnzahlView(){
       levelView.classList.add("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
+      currentView = "kippAnzahl";
     }
 
     // ===== LEVEL BUTTONS =====
@@ -870,6 +882,37 @@
         console.log("Anzahl gewählt:", anzahl);
         // Hier weiter zum Spiel
       });
+    });
+
+    // ===== BACK BUTTON =====
+    backBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("Back clicked, current view:", currentView);
+      
+      if(currentView === "ksp" || currentView === "kippAnzahl"){
+        showLevelView();
+      }
+    });
+
+    // ===== EXIT BUTTON =====
+    exitBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("Exit clicked");
+      exitOverlay.classList.remove("hidden");
+    });
+
+    exitNo.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      exitOverlay.classList.add("hidden");
+    });
+
+    exitYes.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = "about:blank";
     });
 
     // ===== INIT =====
