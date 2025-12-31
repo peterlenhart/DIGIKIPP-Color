@@ -18,12 +18,14 @@
       --orange:  rgb(249, 150, 30);
 
       /* ===== Farbfelder ===== */
-      /* ✅ 2px Rand rundum -> Farbfeld = cell - 4px (bei 142 => 138) */
-      --colorSize: calc(var(--cell) - 4px);
+      --colorSize: 126px; /* ✅ 126×126 (12px insgesamt kleiner als 138) */
+
+      /* ===== HEADER-ZEILEN ===== */
+      --headerRows: 2;    /* ✅ 01 und 02 sind echte Rasterzeilen */
 
       /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
-      --bg-off-x: 4px;   /* links(-) / rechts(+) */
-      --bg-off-y: 5px;   /* oben(-) / unten(+) */
+      --bg-off-x: 4px;    /* links(-) / rechts(+) */
+      --bg-off-y: 5px;    /* oben(-) / unten(+) */
 
       /* wird per JS gesetzt */
       --scale: 1;
@@ -93,7 +95,7 @@
       /* ✅ WICHTIG: Breite passt, Höhe bleibt proportional -> unverzerrt */
       background-size: 100% auto;
 
-      /* ✅ FEINJUSTAGE: hier greifen die Variablen */
+      /* ✅ FEINJUSTAGE */
       background-position:
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
@@ -125,7 +127,7 @@
     .c-blau   { background: var(--blau); }
     .c-violett{ background: var(--violett); }
 
-    /* ✅ Grid: keine Borders pro Zelle -> keine “komischen Linien” */
+    /* ✅ Grid-Linien als Background-Pattern */
     .grid{
       position:absolute;
       left: 0;
@@ -136,7 +138,6 @@
       z-index: 2;
       pointer-events: none;
 
-      /* Linien als Background-Pattern */
       background-image:
         repeating-linear-gradient(
           to right,
@@ -194,10 +195,7 @@
   <div class="stage" id="stage">
     <div class="layout" id="layout">
       <div class="bgPNG" aria-hidden="true"></div>
-
-      <!-- ✅ Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
-
       <div class="grid" id="grid" aria-hidden="true"></div>
     </div>
   </div>
@@ -224,10 +222,9 @@
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 142;
 
-      const gridW = cols * cell;          // 1136 bei 8*142
+      const gridW = cols * cell;
       const vw = window.innerWidth;
 
-      // Wir wollen die 8 Spalten komplett sehen, aber mit etwas Rand (94% der Breite)
       const targetW = vw * 0.94;
       const scale = Math.min(1, targetW / gridW);
 
@@ -237,23 +234,48 @@
       return { cols, cell, gridW, scale };
     }
 
-    function coordToXY(coord){
-      // coord wie "1C" oder "8F" oder "3A"
-      const row = parseInt(coord, 10);
-      const colLetter = coord.replace(String(row), "");
-      const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-      const col = colMap[colLetter];
-      return { row, col };
+    function parseCoord(coord){
+      // Unterstützt:
+      // - "1C".."8H"  -> Spielfläche (Zeilen 1..8), wird automatisch um headerRows verschoben
+      // - optional: "01C" / "02C" -> Headerzeilen direkt (ohne Verschiebung)
+      const mHeader = coord.match(/^0([12])([A-H])$/);
+      if(mHeader){
+        return { zone: "header", row: parseInt(mHeader[1],10), colLetter: mHeader[2] };
+      }
+      const mField = coord.match(/^([1-8])([A-H])$/);
+      if(mField){
+        return { zone: "field", row: parseInt(mField[1],10), colLetter: mField[2] };
+      }
+      throw new Error("Ungültige Koordinate: " + coord);
+    }
+
+    function colToIndex(letter){
+      const map = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
+      return map[letter];
     }
 
     function placeColorSquare(coord, cls, cellPx, sizePx){
-      const { row, col } = coordToXY(coord);
+      const headerRows = numVar("--headerRows") || 2;
+      const p = parseCoord(coord);
 
-      // 1-basiert -> 0-basiert in Pixel
+      const col = colToIndex(p.colLetter);
+
+      // X immer normal 1..8 -> 0..7
       const leftCell = (col - 1) * cellPx;
-      const topCell  = (row - 1) * cellPx;
 
-      const pad = (cellPx - sizePx) / 2; // ✅ zentriert
+      // Y abhängig von Zone:
+      // Header: 01 -> Rasterreihe 0, 02 -> Rasterreihe 1
+      // Field : 1..8 -> Rasterreihe (headerRows + (row-1))
+      let gridRowIndex0;
+      if(p.zone === "header"){
+        gridRowIndex0 = (p.row - 1); // 01=>0, 02=>1
+      } else {
+        gridRowIndex0 = headerRows + (p.row - 1); // ✅ DAS ist dein Fix
+      }
+
+      const topCell = gridRowIndex0 * cellPx;
+
+      const pad = (cellPx - sizePx) / 2; // zentriert
       const x = leftCell + pad;
       const y = topCell  + pad;
 
@@ -268,17 +290,18 @@
       colorsEl.innerHTML = "";
 
       const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || (cellPx - 4);
+      const sizePx = numVar("--colorSize") || 126;
 
       // ===== DEINE FESTLEGUNG (nur diese Felder) =====
+      // WICHTIG: Diese Koordinaten sind Spielfläche 1..8 (werden automatisch um 01/02 nach unten geschoben)
       const placements = [
-        // Zeile 1
+        // Zeile 1 (Spielfläche)
         ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
-        // Zeile 8
+        // Zeile 8 (Spielfläche)
         ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
-        // Spalte A
+        // Spalte A (Spielfläche)
         ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
-        // Spalte H
+        // Spalte H (Spielfläche)
         ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
       ];
 
@@ -290,11 +313,9 @@
     function rebuildGrid(){
       const { cols, cell, gridW, scale } = setScaleToFitWidth();
 
-      // sichtbare Höhe in Layout-Koordinaten (weil Layout skaliert wird)
       const vh = window.innerHeight;
       const effectiveLayoutHeight = vh / scale;
 
-      // wie viele 142er-Zeilen passen in diese Layout-Höhe?
       const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
 
       const gridH = rows * cell;
@@ -302,15 +323,14 @@
 
       rebuildColors();
 
-      const sizePx = numVar("--colorSize") || (cell - 4);
-
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
         `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
         `viewport=${window.innerWidth}x${window.innerHeight}\n` +
         `scroll=OFF (fixed stage)\n` +
+        `headerRows=${numVar("--headerRows")} (01,02)\n` +
         `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}\n` +
-        `colors: ${Math.round(sizePx)}x${Math.round(sizePx)} centered (2px padding)`;
+        `colors: ${numVar("--colorSize")}x${numVar("--colorSize")} centered`;
     }
 
     toggle.addEventListener("change", () => {
@@ -320,7 +340,6 @@
     window.addEventListener("load", rebuildGrid);
     window.addEventListener("resize", rebuildGrid);
 
-    // verhindert “Rubberband” / Scroll-Anfang auf Mobile
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
 </body>
