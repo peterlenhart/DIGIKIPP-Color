@@ -423,6 +423,17 @@
       user-select: none;
     }
 
+    /* Schwarzer Hintergrund für Brain Level (Zeile 12) */
+    .brainBlackBg{
+      position: absolute;
+      left: 0;
+      width: var(--gridW);
+      height: var(--cell);
+      background: rgb(18, 18, 18); /* C30 M30 Y30 K100 */
+      z-index: 5;
+      pointer-events: none;
+    }
+
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
@@ -433,6 +444,11 @@
       pointer-events: auto;
       z-index: 10;
       justify-content: center;
+    }
+
+    /* Brain Level: Engerer Abstand für 6 Buttons */
+    .kippAnzahlBtns.brain{
+      gap: calc(12px * var(--uiscale));
     }
 
     /* Brain Level: Extra Button unten */
@@ -659,6 +675,9 @@
 
         <!-- KIPP ANZAHL WÄHLEN -->
         <div id="kippAnzahlView" class="hidden">
+          <!-- Schwarzer Hintergrund für Brain Level -->
+          <div class="brainBlackBg hidden" id="brainBlackBg"></div>
+
           <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
           
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
@@ -722,6 +741,7 @@
     const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
     const kippAnzahlBtnsBottom = document.getElementById("kippAnzahlBtnsBottom");
+    const brainBlackBg       = document.getElementById("brainBlackBg");
 
     const closeBtnLevel  = document.getElementById("closeBtnLevel");
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
@@ -827,6 +847,10 @@
       kippAnzahlBtns.style.top = (midY + 145) + "px";
       kippAnzahlBtnsBottom.style.top = (midY + 220) + "px";
 
+      // Schwarzer Hintergrund für Brain Level (Zeile 12)
+      const row12VisualTop = ( (12 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      brainBlackBg.style.top = row12VisualTop + "px";
+
       // Navigation Buttons positionieren
       positionNavButtons(cellPx);
     }
@@ -904,6 +928,10 @@
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtnsBottom.innerHTML = "";
       kippAnzahlBtnsBottom.classList.add("hidden");
+      brainBlackBg.classList.add("hidden");
+
+      // Brain-spezifische Klasse entfernen
+      kippAnzahlBtns.classList.remove("brain");
 
       if(level === "trainee"){
         // TRAINEE: 3 Buttons (3, 6, 9)
@@ -936,6 +964,12 @@
       } else if(level === "brain"){
         // BRAIN: 6 Buttons oben (1-6) + 1 Button unten (0)
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">ZWEI</span> Tasten';
+        
+        // Schwarzen Hintergrund einblenden
+        brainBlackBg.classList.remove("hidden");
+        
+        // Engeren Abstand für Brain Level
+        kippAnzahlBtns.classList.add("brain");
         
         // Obere Reihe: 1-6
         [1, 2, 3, 4, 5, 6].forEach(num => {
