@@ -304,9 +304,9 @@
     .sliderRow{
       display:flex;
       align-items:center;
-      gap: calc(14px * var(--uiscale));
       width: 100%;
       position: relative;
+      transform: translateY(140px); /* ✅ 140px nach unten */
     }
 
     .speedIcon{
@@ -323,24 +323,26 @@
       position: absolute;
     }
 
-    /* ✅ Snail: 1/3 über Spalte B hinaus (links) */
+    /* ✅ Snail: zwischen Spalte A und B (Mitte = 0.5 * cell) */
     .speedIcon:first-child{
-      left: calc(-1 * var(--cell) / 3);
+      left: calc(0.5 * var(--cell));
+      transform: translateX(-50%);
     }
 
-    /* ✅ Hase: 1/3 über Spalte G hinaus (rechts) */
+    /* ✅ Hase: zwischen Spalte G und H (7.5 * cell) */
     .speedIcon:last-child{
-      right: calc(-1 * var(--cell) / 3);
+      left: calc(7.5 * var(--cell));
+      transform: translateX(-50%);
     }
 
-    /* ✅ Regler Container: zwischen Snail und Hase */
+    /* ✅ Regler Container: von Mitte B bis Mitte G */
     .sliderContainer{
-      flex: 1;
+      position: absolute;
+      left: calc(1.5 * var(--cell)); /* Mitte von Spalte B */
+      width: calc(5 * var(--cell)); /* B-Mitte bis G-Mitte = 5 Zellen */
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--uiscale));
-      margin-left: calc((clamp(44px, 10vmin, 62px) * var(--uiscale)) + (var(--cell) / 3) + 14px * var(--uiscale));
-      margin-right: calc((clamp(44px, 10vmin, 62px) * var(--uiscale)) + (var(--cell) / 3) + 14px * var(--uiscale));
     }
 
     .speedScale{
