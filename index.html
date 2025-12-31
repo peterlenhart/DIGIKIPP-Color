@@ -11,6 +11,15 @@
       --cell: 142px;      /* Rastergröße bleibt 142 */
       --grid-alpha: 0.18;
 
+      /* ===== Farben (fix) ===== */
+      --violett: rgb(164, 27, 133);
+      --blau:    rgb(0, 107, 179);
+      --gruen:   rgb(0, 166, 82);
+      --orange:  rgb(249, 150, 30);
+
+      /* ===== Farbfelder ===== */
+      --colorSize: 81px;  /* ✅ 81×81 */
+
       /* ✅ PNG-FEINJUSTAGE (HIER NUR DIESE 2 ZAHLEN ÄNDERN) */
       --bg-off-x: 4px;   /* links(-) / rechts(+) */
       --bg-off-y: 5px;   /* oben(-) / unten(+) */
@@ -92,6 +101,30 @@
       z-index: 0;
     }
 
+    /* ✅ Farbfelder-Layer */
+    .colors{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      pointer-events: none;
+      z-index: 1; /* über PNG */
+    }
+
+    .colorSq{
+      position:absolute;
+      width: var(--colorSize);
+      height: var(--colorSize);
+      /* exakt, kein Verlauf, kein Schatten */
+      border-radius: 0;
+    }
+
+    .c-gruen  { background: var(--gruen); }
+    .c-orange { background: var(--orange); }
+    .c-blau   { background: var(--blau); }
+    .c-violett{ background: var(--violett); }
+
     /* ✅ Grid: keine Borders pro Zelle -> keine “komischen Linien” */
     .grid{
       position:absolute;
@@ -161,6 +194,10 @@
   <div class="stage" id="stage">
     <div class="layout" id="layout">
       <div class="bgPNG" aria-hidden="true"></div>
+
+      <!-- ✅ Farbfelder -->
+      <div class="colors" id="colors" aria-hidden="true"></div>
+
       <div class="grid" id="grid" aria-hidden="true"></div>
     </div>
   </div>
@@ -174,9 +211,10 @@
   </div>
 
   <script>
-    const gridEl = document.getElementById("grid");
-    const infoEl = document.getElementById("info");
-    const toggle = document.getElementById("toggleGrid");
+    const gridEl   = document.getElementById("grid");
+    const infoEl   = document.getElementById("info");
+    const toggle   = document.getElementById("toggleGrid");
+    const colorsEl = document.getElementById("colors");
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -199,6 +237,56 @@
       return { cols, cell, gridW, scale };
     }
 
+    function coordToXY(coord){
+      // coord wie "1C" oder "8F" oder "3A"
+      const row = parseInt(coord, 10);
+      const colLetter = coord.replace(String(row), "");
+      const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
+      const col = colMap[colLetter];
+      return { row, col };
+    }
+
+    function placeColorSquare(coord, cls, cellPx, sizePx){
+      const { row, col } = coordToXY(coord);
+
+      // 1-basiert -> 0-basiert in Pixel
+      const leftCell = (col - 1) * cellPx;
+      const topCell  = (row - 1) * cellPx;
+
+      const pad = (cellPx - sizePx) / 2; // ✅ zentriert
+      const x = leftCell + pad;
+      const y = topCell  + pad;
+
+      const d = document.createElement("div");
+      d.className = "colorSq " + cls;
+      d.style.left = x + "px";
+      d.style.top  = y + "px";
+      colorsEl.appendChild(d);
+    }
+
+    function rebuildColors(){
+      colorsEl.innerHTML = "";
+
+      const cellPx = numVar("--cell") || 142;
+      const sizePx = numVar("--colorSize") || 81;
+
+      // ===== DEINE FESTLEGUNG (nur diese Felder) =====
+      const placements = [
+        // Zeile 1
+        ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
+        // Zeile 8
+        ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
+        // Spalte A
+        ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
+        // Spalte H
+        ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
+      ];
+
+      for(const [coord, cls] of placements){
+        placeColorSquare(coord, cls, cellPx, sizePx);
+      }
+    }
+
     function rebuildGrid(){
       const { cols, cell, gridW, scale } = setScaleToFitWidth();
 
@@ -212,12 +300,15 @@
       const gridH = rows * cell;
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
+      rebuildColors();
+
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
         `gridW=${gridW}px | gridH=${gridH}px | scale=${scale.toFixed(3)}\n` +
         `viewport=${window.innerWidth}x${window.innerHeight}\n` +
         `scroll=OFF (fixed stage)\n` +
-        `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}`;
+        `bg-off: x=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-x").trim()} | y=${getComputedStyle(document.documentElement).getPropertyValue("--bg-off-y").trim()}\n` +
+        `colors: 81x81 centered`;
     }
 
     toggle.addEventListener("change", () => {
