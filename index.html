@@ -233,6 +233,7 @@
       flex-direction: column;
       gap: 6px;
       align-items: center;
+      width: 100%; /* ✅ volle Breite für Zentrierung */
     }
 
     .kspTop{
@@ -304,9 +305,11 @@
     .sliderRow{
       display:flex;
       align-items:center;
-      width: 100%;
+      width: var(--gridW); /* ✅ Breite = Grid-Breite */
       position: relative;
-      transform: translateY(140px); /* ✅ 140px nach unten */
+      transform: translateY(90px); /* ✅ 140px - 50px = 90px */
+      left: 50%;
+      margin-left: calc(-1 * var(--gridW) / 2); /* ✅ zentrieren */
     }
 
     .speedIcon{
