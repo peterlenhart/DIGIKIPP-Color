@@ -8,24 +8,26 @@
   <style>
     :root{
       --cols: 8;
-      --cell: 142px;      /* Fixe Rastergröße, wie gewünscht */
-      --grid-alpha: 0.18; /* Linien-Transparenz */
+      --cell: 142px;      /* Rastergröße bleibt 142 */
+      --grid-alpha: 0.18;
+
+      /* wird per JS gesetzt */
+      --scale: 1;
+      --gridW: calc(var(--cols) * var(--cell));
     }
 
     html, body{
       height: 100%;
       margin: 0;
-      overflow: hidden; /* ✅ KEIN Scrollen */
+      overflow: hidden;   /* ✅ kein Scroll */
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none; /* ✅ verhindert “Rumwischen” (Browser-Scroll/Zoom Gesten) */
+      touch-action: none; /* ✅ keine Scroll/Zoom Gesten */
     }
 
-    /* ✅ “Holztisch”-Hintergrund (ohne Bilddatei) */
+    /* ✅ Holz-Hintergrund */
     body{
       background:
-        /* leichte Vignette */
         radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
-        /* Holzmaserung (sehr subtil) */
         repeating-linear-gradient(
           90deg,
           rgba(140,105,70,0.10) 0px,
@@ -33,60 +35,69 @@
           rgba(230,205,165,0.10) 10px,
           rgba(230,205,165,0.10) 22px
         ),
-        /* Grundton (goldbeige/hellbeige) */
         linear-gradient(180deg, #d9c3a2, #cdb28f);
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
 
-    /* “Viewport”-Bühne */
+    /* Bühne ist die sichtbare Fläche */
     .stage{
-      width: min(94vw, 688px);
-      height: 100vh;      /* ✅ fix */
+      width: 100vw;
+      height: 100vh;
       position: relative;
-      overflow: hidden;   /* ✅ alles was zu lang ist, wird abgeschnitten */
+      overflow: hidden; /* ✅ abschneiden statt scrollen */
     }
 
-    /* Layout ist exakt 8 Spalten breit, Zeilen so viele wie wir “ausrechnen” */
+    /* Layout: immer 8 Spalten breit, aber per scale in die Handybreite gepasst */
     .layout{
       position: absolute;
       left: 50%;
       top: 0;
-      transform: translateX(-50%);
-      width: calc(var(--cols) * var(--cell));
+
+      width: var(--gridW);
       height: 100vh;
+
+      transform-origin: top center;
+      transform:
+        translateX(-50%)
+        scale(var(--scale));
     }
 
-    /* ✅ PNG: oben links verankert, unverzerrt (keine 100%/100% Streckung) */
+    /* ✅ PNG: oben links verankert, unverzerrt, aber auf Grid-Breite gefittet */
     .bgPNG{
       position:absolute;
       left: 0;
       top: 0;
-      width: calc(var(--cols) * var(--cell));
-      height: 9999px; /* “lang genug”; unten wird sowieso abgeschnitten */
+
+      width: var(--gridW);
+      height: 9999px; /* lang genug – wird unten abgeschnitten */
+
       background-image: url("Box_m_Hgr.png");
       background-repeat: no-repeat;
       background-position: left top;
-      background-size: auto; /* ✅ unverzerrt */
-      image-rendering: auto;
+
+      /* ✅ WICHTIG: Breite passt, Höhe bleibt proportional -> unverzerrt */
+      background-size: 100% auto;
+
       pointer-events: none;
       z-index: 0;
     }
 
-    /* Grid Layer (optional einblendbar) */
+    /* Grid-Layer */
     .grid{
       position:absolute;
       left: 0;
       top: 0;
-      width: calc(var(--cols) * var(--cell));
+      width: var(--gridW);
       height: 100vh;
+
       display: grid;
       grid-template-columns: repeat(var(--cols), var(--cell));
       grid-auto-rows: var(--cell);
+
       z-index: 2;
       pointer-events: none;
-      opacity: 1;
     }
 
     .cell{
@@ -95,7 +106,7 @@
       background: transparent;
     }
 
-    /* Debug Panel unten */
+    /* Debug Panel */
     .debug{
       position: fixed;
       left: 14px;
@@ -152,13 +163,34 @@
     const infoEl = document.getElementById("info");
     const toggle = document.getElementById("toggleGrid");
 
-    function rebuildGrid(){
-      // Rows so viele, wie in 100vh reinpassen (plus 1 als Reserve)
-      const cell = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cell"), 10) || 142;
-      const cols = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--cols"), 10) || 8;
+    function numVar(name){
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
+    }
 
+    function setScaleToFitWidth(){
+      const cols = numVar("--cols") || 8;
+      const cell = numVar("--cell") || 142;
+
+      const gridW = cols * cell;          // 1136 bei 8*142
+      const vw = window.innerWidth;
+
+      // Wir wollen die 8 Spalten komplett sehen, aber mit etwas Rand (94% der Breite)
+      const targetW = vw * 0.94;
+      const scale = Math.min(1, targetW / gridW);
+
+      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
+      return { cols, cell, gridW, scale };
+    }
+
+    function rebuildGrid(){
+      const { cols, cell, gridW, scale } = setScaleToFitWidth();
+
+      // sichtbare Höhe in Layout-Koordinaten (weil Layout skaliert wird)
       const vh = window.innerHeight;
-      const rows = Math.ceil(vh / cell) + 1;
+      const effectiveLayoutHeight = vh / scale;
+
+      // wie viele 142er-Zeilen passen in diese Layout-Höhe?
+      const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
 
       gridEl.innerHTML = "";
       const total = rows * cols;
@@ -168,10 +200,10 @@
         gridEl.appendChild(d);
       }
 
-      const vw = window.innerWidth;
       infoEl.textContent =
         `cell=${cell}px | cols=${cols} | rows=${rows}\n` +
-        `viewport=${vw}x${vh}\n` +
+        `gridW=${gridW}px | scale=${scale.toFixed(3)}\n` +
+        `viewport=${window.innerWidth}x${window.innerHeight}\n` +
         `scroll=OFF (fixed stage)`;
     }
 
@@ -182,7 +214,7 @@
     window.addEventListener("load", rebuildGrid);
     window.addEventListener("resize", rebuildGrid);
 
-    // Extra: verhindert iOS/Android “rubber band” / Scroll-Start
+    // verhindert “Rubberband” / Scroll-Anfang auf Mobile
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
 </body>
