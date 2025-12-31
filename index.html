@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DigiKipp – Basis: PNG + 142er Raster</title>
+
+  <style>
+    :root{
+      /* ✅ Design-Atom: 12mm @ 300dpi ≈ 142px */
+      --cell: 142px;
+
+      /* ✅ wird per JS gesetzt */
+      --scale: 1;
+      --rows: 12;
+
+      /* ✅ Außenrand: damit links/rechts nix „anpickt“ */
+      --pad: 14px;
+
+      /* Debug */
+      --grid-line: rgba(255,255,255,0.18);
+      --grid-line-strong: rgba(255,255,255,0.30);
+    }
+
+    html, body{
+      height:100%;
+      margin:0;
+      background:#000;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Bühne zentriert, mit safe padding */
+    .stage{
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding: var(--pad);
+      box-sizing:border-box;
+    }
+
+    /* Wir skalieren den kompletten Raster-Block (NICHT einzelne Teile) */
+    .scaled{
+      transform: scale(var(--scale));
+      transform-origin: top center;
+    }
+
+    /* Rasterfläche: 8 Spalten × N Zeilen */
+    .gridWrap{
+      position: relative;
+      width: calc(8 * var(--cell));
+      height: calc(var(--rows) * var(--cell));
+      overflow: hidden; /* wichtig: nichts darf rausfallen */
+      background: transparent;
+    }
+
+    /* ✅ PNG als unterste Ebene, unverzerrt */
+    .bg{
+      position:absolute;
+      inset:0;
+      background-image: url("Box_m_Hgr.png");
+      background-repeat: no-repeat;
+      background-position: left top;
+      background-size: contain; /* ✅ unverzerrt */
+      z-index: 0;
+      pointer-events:none;
+    }
+
+    /* Debug-Grid-Overlay */
+    .grid{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(var(--rows), 1fr);
+      z-index: 5;
+      pointer-events:none;
+      opacity: 0; /* default aus */
+    }
+    .grid.show{ opacity: 1; }
+
+    .cell{
+      box-sizing:border-box;
+      border: 1px solid var(--grid-line);
+    }
+    .cell.edge{
+      border-color: var(--grid-line-strong);
+    }
+
+    /* Kleines Debug-UI */
+    .hud{
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 999;
+      color: #e8d9c6;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      user-select:none;
+      backdrop-filter: blur(4px);
+    }
+    .hud label{ display:flex; gap:8px; align-items:center; }
+    .hud .meta{ margin-top:8px; opacity:0.9; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+
+<body>
+  <div class="stage">
+    <div class="scaled" id="scaled">
+      <div class="gridWrap" id="gridWrap" aria-label="Rasterfläche">
+        <div class="bg" aria-hidden="true"></div>
+
+        <!-- Debug Grid -->
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug HUD -->
+  <div class="hud">
+    <label>
+      <input type="checkbox" id="toggleGrid" />
+      Grid anzeigen
+    </label>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <script>
+    const CELL = 142;                  // px (Design-Atom)
+    const COLS = 8;
+    const PAD  = 14;                   // px Außenrand (links/rechts Luft)
+    const gridEl = document.getElementById("grid");
+    const metaEl = document.getElementById("meta");
+    const toggleGrid = document.getElementById("toggleGrid");
+
+    function buildGrid(rows){
+      gridEl.innerHTML = "";
+      gridEl.style.setProperty("--rows", rows);
+      for(let r=0; r<rows; r++){
+        for(let c=0; c<COLS; c++){
+          const d = document.createElement("div");
+          d.className = "cell" + ((r===0 || c===0 || r===rows-1 || c===COLS-1) ? " edge" : "");
+          gridEl.appendChild(d);
+        }
+      }
+    }
+
+    function layout(){
+      // verfügbare Breite/Höhe unter Berücksichtigung vom Padding
+      const vw = Math.max(320, window.innerWidth);
+      const vh = Math.max(480, window.innerHeight);
+      const availW = Math.max(200, vw - 2*PAD);
+      const availH = Math.max(200, vh - 2*PAD);
+
+      // ✅ Scale nur nach BREITE (damit links/rechts nie abgeschnitten wird)
+      const baseW = COLS * CELL;
+      const scale = Math.min(1, availW / baseW);
+
+      // ✅ Rows nach verfügbarer Höhe (unter Berücksichtigung vom Scale)
+      const rows = Math.max(4, Math.floor(availH / (CELL * scale)));
+
+      // CSS Variablen setzen
+      document.documentElement.style.setProperty("--cell", CELL + "px");
+      document.documentElement.style.setProperty("--scale", scale.toFixed(6));
+      document.documentElement.style.setProperty("--rows", rows);
+
+      // Grid ggf. neu bauen
+      buildGrid(rows);
+
+      // Debug-Text
+      metaEl.textContent =
+        `cell=${CELL}px | cols=${COLS} | rows=${rows} | scale=${scale.toFixed(3)} | viewport=${vw}×${vh}`;
+    }
+
+    toggleGrid.addEventListener("change", () => {
+      gridEl.classList.toggle("show", toggleGrid.checked);
+    });
+
+    window.addEventListener("load", layout);
+    window.addEventListener("resize", () => {
+      // kleines Debounce
+      clearTimeout(window.__t);
+      window.__t = setTimeout(layout, 50);
+    });
+  </script>
+</body>
+</html>
