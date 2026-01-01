@@ -909,12 +909,12 @@
       const totalWidthCompact = 6 * btnWidth + 5 * gapCompact;
       const startXCompact = (gridW - totalWidthCompact) / 2;
       
-      // KIPP BILANZ linksbündig mit Taste 1 Position
-      kippBilanzBtn.style.left = startXCompact + "px";
+      // KIPP BILANZ linksbündig mit Taste 1 Position + 70px nach innen
+      kippBilanzBtn.style.left = (startXCompact + 70) + "px";
       
-      // P00/80 rechtsbündig mit Taste 6 Position  
+      // P00/80 rechtsbündig mit Taste 6 Position + 70px nach innen
       const endXCompact = startXCompact + totalWidthCompact;
-      punkteAnzeige.style.right = (gridW - endXCompact) + "px";
+      punkteAnzeige.style.right = (gridW - endXCompact + 70) + "px";
 
       // Navigation Buttons positionieren
       positionNavButtons(cellPx);
