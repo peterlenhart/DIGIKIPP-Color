@@ -453,7 +453,7 @@
     /* KIPP BILANZ Button (links, linksbündig mit Taste 1) */
     .kippBilanzBtn{
       position: absolute;
-      left: 0;
+      left: 70px;
       top: 50%;
       transform: translateY(-50%);
       
@@ -490,7 +490,7 @@
     /* P00/80 Punkteanzeige (rechts, rechtsbündig mit Taste 6) */
     .punkteAnzeige{
       position: absolute;
-      right: 0;
+      right: 70px;
       top: 50%;
       transform: translateY(-50%);
       
@@ -506,6 +506,29 @@
       user-select: none;
       white-space: nowrap;
       line-height: 1;
+    }
+
+    /* ===== DIGIKIPP TITEL (zwischen Zeile 01 und 02) ===== */
+    .digiKippTitle{
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      
+      font-size: clamp(80px, 16vmin, 120px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 4px 0 rgba(0,0,0,0.85),
+        0 10px 24px rgba(0,0,0,0.70);
+      
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      text-align: center;
     }
 
     /* ===== NAVIGATION BUTTONS (Zurück & Schließen) ===== */
@@ -663,6 +686,11 @@
       <div class="colors" id="colors" aria-hidden="true"></div>
 
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <!-- ===== DIGIKIPP TITEL ===== -->
+        <div class="digiKippTitle" id="digiKippTitle">
+          DIGIKIPP<br><span style="font-size: 0.5em; text-transform: lowercase;">color</span>
+        </div>
+
         <!-- ===== PERMANENTE UI - ZEILE 13 ===== -->
         <div class="permanentRow13" id="permanentRow13">
           <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
@@ -795,6 +823,7 @@
     const permanentRow13 = document.getElementById("permanentRow13");
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
     const punkteAnzeige  = document.getElementById("punkteAnzeige");
+    const digiKippTitle  = document.getElementById("digiKippTitle");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
@@ -897,24 +926,11 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      // KIPP BILANZ: Linksbündig mit Position von Taste "1" (bei Brainy/Brain)
-      // Bei Brainy/Brain mit compact-Klasse (gap: 12px)
-      // Buttons sind 44px breit, centered in der Zeile
-      // Wir nutzen die gleiche Logik wie kippAnzahlBtns
-      const btnWidth = 44 * (1 / (numVar("--scale") || 1)); // uiscale berücksichtigen
-      const gapCompact = 12 * (1 / (numVar("--scale") || 1));
-      const gapNormal = 24 * (1 / (numVar("--scale") || 1));
-      
-      // 6 Buttons mit compact gap
-      const totalWidthCompact = 6 * btnWidth + 5 * gapCompact;
-      const startXCompact = (gridW - totalWidthCompact) / 2;
-      
-      // KIPP BILANZ linksbündig mit Taste 1 Position + 70px nach innen
-      kippBilanzBtn.style.left = (startXCompact + 70) + "px";
-      
-      // P00/80 rechtsbündig mit Taste 6 Position + 70px nach innen
-      const endXCompact = startXCompact + totalWidthCompact;
-      punkteAnzeige.style.right = (gridW - endXCompact + 70) + "px";
+      // DIGIKIPP Titel zwischen Zeile 01 und 02 (visuell 1 und 2)
+      const row1VisualTop = ( (1 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row2VisualTop = ( (2 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const titleY = (row1VisualTop + row2VisualTop) / 2;
+      digiKippTitle.style.top = titleY + "px";
 
       // Navigation Buttons positionieren
       positionNavButtons(cellPx);
