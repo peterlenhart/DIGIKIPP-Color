@@ -946,6 +946,10 @@
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
+        <button class="navBtn closeBtn" id="exitBtnPermanent" aria-label="Spiel beenden">
+          <div class="closeIcon"></div>
+        </button>
+
         <div class="permanentRow13" id="permanentRow13">
           <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
           <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
@@ -1069,6 +1073,7 @@
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
     const punkteAnzeige  = document.getElementById("punkteAnzeige");
     const digiKippTitle  = document.getElementById("digiKippTitle");
+    const exitBtnPermanent = document.getElementById("exitBtnPermanent");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
@@ -1136,11 +1141,19 @@
       if(!span) return;
       if(n === null || n === undefined){
         span.textContent = "";
+        span.style.letterSpacing = ""; // Reset
         return;
       }
       // ✅ 9 und 6 mit Punkt
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
+      
+      // ✅ 10 und 12: Engeres letter-spacing für optische Mitte
+      if(n === 10 || n === 12){
+        span.style.letterSpacing = "-0.15em"; // Ziffern näher zusammen
+      } else {
+        span.style.letterSpacing = ""; // Standard (-0.05em aus CSS)
+      }
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1441,6 +1454,15 @@
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
+      // Exit-Button rechts oben (Column 15)
+      const exitCol = 15;
+      const exitVisualRow = 1.5;
+      const exitLeft = (exitCol - 1) * cellPx + cellPx / 2;
+      const exitTop = (exitVisualRow - 1) * cellPx + cellPx / 2;
+      exitBtnPermanent.style.left = exitLeft + "px";
+      exitBtnPermanent.style.top = exitTop + "px";
+      exitBtnPermanent.style.transform = "translate(-50%, -50%)";
+
       positionNavButtons(cellPx);
     }
 
@@ -1521,9 +1543,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 9 und 6
-          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1538,9 +1558,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
-          const displayNum = (num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1555,9 +1573,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
-          const displayNum = (num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1636,6 +1652,7 @@
     closeBtnLevel.addEventListener("click", showCloseModal);
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
+    exitBtnPermanent.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
 
