@@ -914,10 +914,10 @@
         <div class="cubeShadow" aria-hidden="true"></div>
         <div class="cubeFace" aria-label="Würfelfläche"></div>
 
-        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9.</span></div></div>
-        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
-        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
-        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
+        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
+        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span></span></div></div>
+        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span></span></div></div>
+        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
       </div>
 
       <!-- ===== KIPP GRUPPE (Zwischenkipps) ===== -->
@@ -1245,10 +1245,28 @@
 
     let runningPreview = false;
     let previewToken = 0;
+    let previewPaused = false;
+
+    async function waitOrPause(ms, myToken){
+      const slice = 40;
+      let elapsed = 0;
+      while(elapsed < ms){
+        if(myToken !== previewToken) return false;
+        if(previewPaused){
+          await sleep(60);
+          continue;
+        }
+        const step = Math.min(slice, ms - elapsed);
+        await sleep(step);
+        elapsed += step;
+      }
+      return (myToken === previewToken);
+    }
 
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
+      previewPaused = false;
       const myToken = ++previewToken;
 
       reroll12_keepEmpty();
@@ -1257,64 +1275,66 @@
 
       // Zyklus 1: W leer → W mit Zahlen → KIP
       showW(); renderWEmpty();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       ensureAssigned(0); renderW();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      await sleep(T.kipMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
       // Zyklus 2: Rotation → W leer → W mit Zahlen → KIP
       advanceFullCW(); showW(); renderWEmpty();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      await sleep(T.kipMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
       // Zyklus 3: Rotation → W leer → W mit Zahlen → KIP
       advanceFullCW(); showW(); renderWEmpty();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      await sleep(T.kipMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
       // Final: Rotation zurück zu Start
       advanceFullCW();
       showW();
       renderW();
 
-      // 3 Extra-Zyklen am Ende
+      // 3 Extra-Zyklen
       const EXTRA_CYCLES = 3;
-      await sleep(T.wMs);
-      if(myToken !== previewToken){ runningPreview=false; return; }
+      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
         showKip();
         renderKip();
-        await sleep(T.kipMs);
-        if(myToken !== previewToken){ runningPreview=false; return; }
+        if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
         advanceFullCW();
         showW();
         renderW();
-        await sleep(T.wMs);
-        if(myToken !== previewToken){ runningPreview=false; return; }
+        if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      }
+
+      // ✅ ENDLOS-SCHLEIFE: Weiter kippen, bis OK geklickt wird
+      while(myToken === previewToken){
+        const T = getTiming(); // ✅ Speed-Änderungen berücksichtigen
+        
+        showKip();
+        renderKip();
+        if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+
+        advanceFullCW();
+        showW();
+        renderW();
+        if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
@@ -1562,11 +1582,17 @@
 
     btnPlay.addEventListener("click", async () => {
       if(!runningPreview){
+        // ✅ STARTEN
         setPlayGlyph(true);
         console.log("Zahlen-Vorschau gestartet");
         await runSetNumbersCycle();
         setPlayGlyph(false);
         console.log("Zahlen-Vorschau beendet");
+      } else {
+        // ✅ PAUSE / RESUME
+        previewPaused = !previewPaused;
+        setPlayGlyph(!previewPaused);
+        console.log(previewPaused ? "Vorschau pausiert" : "Vorschau fortgesetzt");
       }
     });
 
@@ -1574,6 +1600,10 @@
       const speedValue = speedSlider.value;
       const speedLabels = ["1", "2", "3", "4", "5"];
       console.log(`KSP bestätigt, Stufe: ${speedLabels[speedValue]} (Wert: ${speedValue})`);
+      
+      // ✅ Stoppt Endlosschleife
+      cancelPreview();
+      
       showKippAnzahlView();
     });
 
@@ -1585,6 +1615,7 @@
 
     backBtnKsp.addEventListener("click", () => {
       console.log("Zurück von KSP zu Level");
+      cancelPreview();
       showLevelView();
     });
 
@@ -1594,6 +1625,7 @@
     });
 
     function showCloseModal(){
+      cancelPreview();
       closeModal.classList.remove("hidden");
     }
 
