@@ -511,14 +511,15 @@
     /* ===== DIGIKIPP TITEL (zwischen Zeile 01 und 02) ===== */
     .digiKippTitle{
       position: absolute;
-      left: 50%;
+      left: calc(50% + 25px);
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
       
-      font-size: 80px;
+      font-size: 90px;
       font-weight: 1000;
       letter-spacing: 0.05em;
+      word-spacing: -0.3em;
       
       color: rgba(234,215,190,0.96);
       text-shadow:
@@ -532,7 +533,7 @@
     }
     
     .digiKippTitle .color{
-      font-size: 53px;
+      font-size: 60px;
       font-weight: 600;
       text-transform: lowercase;
     }
