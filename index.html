@@ -516,7 +516,7 @@
       transform: translate(-50%, -50%);
       z-index: 20;
       
-      font-size: 140px;
+      font-size: 80px;
       font-weight: 1000;
       letter-spacing: 0.05em;
       
@@ -532,9 +532,8 @@
     }
     
     .digiKippTitle .color{
-      font-size: 93px;
+      font-size: 53px;
       font-weight: 600;
-      font-style: italic;
       text-transform: lowercase;
     }
 
@@ -931,10 +930,9 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      // DIGIKIPP Titel zwischen Zeile 01 und 02 (visuell 1 und 2)
-      const row1VisualTop = ( (1 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row2VisualTop = ( (2 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const titleY = (row1VisualTop + row2VisualTop) / 2;
+      // DIGIKIPP Titel zwischen Zeile 01 und 02 (genau wie Schließen-Button)
+      const titleVisualRow = 1.5; // Zwischen 01 und 02
+      const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
       // Navigation Buttons positionieren
