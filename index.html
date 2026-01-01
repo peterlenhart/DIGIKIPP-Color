@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI + KSP</title>
+  <title>DigiKipp – Option 2 (funktionierende Version)</title>
 
   <style>
     :root{
@@ -37,19 +37,6 @@
       --btn-text: #2a160c;
       --btn-border: rgba(0,0,0,0.35);
       --slot-border: rgba(0,0,0,0.55);
-
-      /* ===== WÜRFEL-LAYER ===== */
-      --cube-size: calc(3 * var(--cell)); /* 3×3 Zellen */
-      --cube-border: rgba(0,0,0,0.55);
-      --cube-fill: rgba(234,215,190,0.95);
-      --cube-shadow: rgba(0,0,0,0.35);
-
-      /* Würfel-Positionen (Top-Left in Grid-Koordinaten) – bewusst als Zellen-Coords,
-         damit du später nur diese 4 Werte feinjustieren musst. */
-      --q0-row: 3;  --q0-col: 3;  /* C3 */
-      --q1-row: 3;  --q1-col: 6;  /* F3 */
-      --q2-row: 6;  --q2-col: 6;  /* F6 */
-      --q3-row: 6;  --q3-col: 3;  /* C6 */
     }
 
     html, body{
@@ -153,94 +140,6 @@
           rgba(255,255,255,0) 1px,
           rgba(255,255,255,0) var(--cell)
         );
-    }
-
-    /* ===== WÜRFEL-LAYER (SICHTBAR, unabhängig von Views) ===== */
-    .cubeLayer{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 2; /* über Farben, unter UI */
-      pointer-events: none;
-    }
-
-    .cube{
-      position:absolute;
-      width: var(--cube-size);
-      height: var(--cube-size);
-      border-radius: 18px;
-      background: var(--cube-fill);
-      border: 3px solid var(--cube-border);
-      box-shadow:
-        0 18px 30px rgba(0,0,0,0.22),
-        0 0 0 2px rgba(255,255,255,0.10) inset;
-      transform-origin: center;
-      transition: transform 220ms ease, left 220ms ease, top 220ms ease;
-      overflow: hidden;
-    }
-
-    /* Innenschatten – wirkt wie "in der Box" */
-    .cube::before{
-      content:"";
-      position:absolute;
-      inset: 0;
-      box-shadow:
-        0 18px 24px rgba(0,0,0,0.18) inset,
-        0 -12px 18px rgba(255,255,255,0.12) inset;
-      pointer-events:none;
-    }
-
-    .cubeFace{
-      position:absolute;
-      inset: 16px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.04);
-      border: 2px solid rgba(0,0,0,0.28);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.08) inset;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 14px;
-      padding: 14px;
-    }
-
-    .slot{
-      border-radius: 12px;
-      border: 2px solid rgba(0,0,0,0.35);
-      background: rgba(0,0,0,0.06);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      font-size: clamp(28px, 6vmin, 58px);
-      color: rgba(0,0,0,0.88);
-      text-shadow: 0 1px 0 rgba(255,255,255,0.25);
-    }
-
-    .slot.empty{
-      color: rgba(0,0,0,0);
-      text-shadow: none;
-    }
-
-    .cubeBadge{
-      position:absolute;
-      right: 12px;
-      bottom: 12px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.28);
-      color: rgba(255,255,255,0.92);
-      font-weight: 900;
-      letter-spacing: 0.10em;
-      font-size: 14px;
-      user-select:none;
-      pointer-events:none;
-      text-transform: uppercase;
-      box-shadow: 0 8px 14px rgba(0,0,0,0.20);
     }
 
     /* ===== Level UI Layer ===== */
@@ -363,19 +262,6 @@
       filter: brightness(0.98);
     }
 
-    /* Play wird nach Klick braun & inaktiv */
-    .squareBtn.playLocked{
-      background: #7a4a34;
-      cursor: default;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.18),
-        0 0 0 1px rgba(255,255,255,0.08) inset;
-    }
-    .squareBtn.playLocked .playIcon{
-      border-left-color: rgba(234,215,190,0.96);
-      filter: none;
-    }
-
     .playIcon{
       width: 0;
       height: 0;
@@ -385,6 +271,25 @@
       filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
       transform: translateX(calc(1px * var(--uiscale)));
     }
+
+    .pauseIcon{
+      width: calc(18px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      position: relative;
+      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
+    }
+    .pauseIcon::before,
+    .pauseIcon::after{
+      content:"";
+      position:absolute;
+      top:0;
+      width: calc(6px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      background: #7a3f2b;
+      border-radius: 1px;
+    }
+    .pauseIcon::before{ left: 0; }
+    .pauseIcon::after { right: 0; }
 
     .okText{
       font-weight: 1000;
@@ -423,21 +328,18 @@
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
     }
 
-    /* ✅ Schnecke: DEINE Justierung */
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
       top: -77px;
     }
 
-    /* ✅ Hase: DEINE Justierung */
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
       top: -77px;
     }
 
-    /* ✅ Regler Container: von Mitte B bis Mitte G */
     .sliderContainer{
       position: absolute;
       left: calc(1.5 * var(--cell));
@@ -504,16 +406,16 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
-
+      
       font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
       font-weight: 600;
       letter-spacing: 0.08em;
-
+      
       color: rgba(255,255,255,0.92);
       text-shadow:
         0 2px 0 rgba(0,0,0,0.75),
         0 4px 12px rgba(0,0,0,0.60);
-
+      
       white-space: nowrap;
       user-select: none;
     }
@@ -534,6 +436,148 @@
       gap: calc(12px * var(--uiscale));
     }
 
+    /* ===== WÜRFEL SYSTEM ===== */
+    
+    :root {
+      --cube-wood-base: #d7c2a4;
+      --cube-wood-deep: #c9b08f;
+      --cube-wood-warm: rgba(155, 70, 110, 0.10);
+      --cube-wood-gold: rgba(249, 150, 30, 0.10);
+      --w1-innerframe: rgba(122, 74, 52, 1);
+      --slot-fill: #ead7be;
+      --slot-border-w: 4px;  /* ✅ VERSTÄRKT: 3→4px */
+      --rotSign: 1;
+      --rot: 0deg;
+    }
+
+    .wFaceGroup,
+    .kipGroup{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 4;
+      pointer-events: none;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    .cubeShadow{
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      z-index: 1;
+      background: transparent;
+      box-shadow:
+        0 45px 55px rgba(0,0,0,0.45),  /* ✅ VERSTÄRKT: Schlagschatten auf Boden */
+        0 22px 35px rgba(0,0,0,0.28);  /* ✅ VERSTÄRKT: Zusätzliche Tiefe */
+    }
+
+    .cubeFace{
+      position: absolute;
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
+        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
+        repeating-linear-gradient(
+          20deg,
+          rgba(0,0,0,0.02) 0px,
+          rgba(0,0,0,0.02) 17px,                    /* ✅ Skaliert: 10→17 */
+          rgba(255,255,255,0.02) 17px,
+          rgba(255,255,255,0.02) 30px               /* ✅ Skaliert: 18→30 */
+        ),
+        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
+        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
+      box-shadow:
+        inset 0 0 0 5px var(--w1-innerframe),       /* ✅ VERSTÄRKT: 3→5px */
+        0 0 0 2px rgba(255,255,255,0.08) inset;
+      z-index: 2;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+    }
+
+    .ball{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((4 + 2) * var(--cell));
+      width: calc(var(--cell) * 0.55);
+      height: calc(var(--cell) * 0.55);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
+        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
+        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.28);  /* ✅ Skaliert: 3→5, 6→10 */
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .slot{
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      box-sizing: border-box;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      border: var(--slot-border-w) solid var(--slot-border);
+      border-radius: 0;
+      z-index: 7;
+      box-shadow:
+        2px 2px 0 rgba(255,255,255,0.25) inset,     /* ✅ VERSTÄRKT: 0.18→0.25 */
+        -2px -2px 0 rgba(0,0,0,0.15) inset,          /* ✅ VERSTÄRKT: 0.08→0.15 */
+        0 6px 12px rgba(0,0,0,0.35),                 /* ✅ VERSTÄRKT: 5→6, 8→12, 0.22→0.35 */
+        4px 4px 7px -2px rgba(0,0,0,0.30);           /* ✅ VERSTÄRKT: 3→4, 5→7, 0.20→0.30 */
+    }
+
+    .slot .num{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      z-index: 9;
+    }
+
+    .slot .num > span{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.70);  /* ✅ 70% = ~100px bei 142px Cell - RIESIG wie ALT */
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);  /* ✅ Skaliert: 1→2 */
+      transform: rotate(var(--num-rot, 0deg));
+      transform-origin: 50% 50%;
+      position: relative;
+      line-height: 1;
+    }
+
+    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
+    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
+    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
+    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
+
+    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
     /* ===== PERMANENTE UI - ZEILE 13 ===== */
     .permanentRow13{
       position: absolute;
@@ -549,18 +593,23 @@
       left: 55px;
       top: 50%;
       transform: translateY(-50%);
+      
       width: calc(180px * var(--uiscale));
       height: calc(44px * var(--uiscale));
+      
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgb(198, 168, 128);
       color: rgba(0,0,0,0.92);
+      
       font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
+      
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
+      
       display: flex;
       align-items: center;
       justify-content: center;
@@ -579,13 +628,16 @@
       right: 70px;
       top: 50%;
       transform: translateY(-50%);
+      
       font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
+      
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
         0 8px 20px rgba(0,0,0,0.70);
+      
       user-select: none;
       white-space: nowrap;
       line-height: 1;
@@ -593,30 +645,33 @@
 
     .digiKippTitle{
       position: absolute;
-      left: calc(50% + 92px);
+      left: calc(50% + 25px);
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
+      
       font-size: 90px;
       font-weight: 1000;
       letter-spacing: 0.05em;
       word-spacing: -0.3em;
+      
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 4px 0 rgba(0,0,0,0.85),
         0 10px 24px rgba(0,0,0,0.70);
+      
       user-select: none;
       white-space: nowrap;
       line-height: 1;
       text-align: center;
     }
+    
     .digiKippTitle .color{
       font-size: 60px;
       font-weight: 600;
       text-transform: lowercase;
     }
 
-    /* ===== NAVIGATION BUTTONS (Zurück & Schließen) ===== */
     .navBtn{
       position: absolute;
       width: calc(56px * var(--uiscale));
@@ -664,10 +719,13 @@
       border-radius: calc(2.5px * var(--uiscale));
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
-    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
-    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
+    .closeIcon::before{
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .closeIcon::after{
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
 
-    /* ===== SICHERHEITSABFRAGE MODAL ===== */
     .modalOverlay{
       position: fixed;
       top: 0;
@@ -752,7 +810,6 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
-    /* ===== Visibility Control ===== */
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -764,30 +821,27 @@
 
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- ✅ WÜRFEL LAYER -->
-      <div class="cubeLayer" id="cubeLayer" aria-hidden="true">
-        <div class="cube" id="cube">
-          <div class="cubeFace" id="cubeFace">
-            <div class="slot empty" id="s0"></div>
-            <div class="slot empty" id="s1"></div>
-            <div class="slot empty" id="s2"></div>
-            <div class="slot empty" id="s3"></div>
-          </div>
-          <div class="cubeBadge" id="cubeBadge">W1</div>
-        </div>
+      <!-- ===== WÜRFEL SYSTEM ===== -->
+      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
+        <div class="cubeShadow" aria-hidden="true"></div>
+        <div class="cubeFace" aria-label="Würfelfläche"></div>
+
+        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9.</span></div></div>
+        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
+        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
+        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
       </div>
 
+      <div class="ball" aria-label="Kugel"></div>
+
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <!-- ===== DIGIKIPP TITEL ===== -->
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
-        <!-- ===== PERMANENTE UI - ZEILE 13 ===== -->
         <div class="permanentRow13" id="permanentRow13">
           <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
           <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
         </div>
 
-        <!-- LEVEL WÄHLEN -->
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
@@ -802,13 +856,12 @@
           </button>
         </div>
 
-        <!-- KSP BLOCK -->
         <div id="kspView" class="hidden">
           <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
 
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
-              <button id="btnPlay" class="squareBtn" aria-label="Zahlenbelegung starten" type="button">
+              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
                 <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
               </button>
 
@@ -819,10 +872,10 @@
 
             <div class="sliderRow" id="sliderRow">
               <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
-
+              
               <div class="sliderContainer">
                 <input id="speedSlider" type="range" min="0" max="4" value="2" step="1" aria-label="Speed Slider">
-
+                
                 <div class="speedScale" aria-label="Kippspeed Stufen">
                   <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                 </div>
@@ -841,15 +894,16 @@
           </button>
         </div>
 
-        <!-- KIPP ANZAHL WÄHLEN -->
         <div id="kippAnzahlView" class="hidden">
           <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
-
+          
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
             Wähle <span style="font-weight:1000;">EINE</span> Taste
           </div>
 
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns">
+            <!-- Buttons werden dynamisch generiert -->
+          </div>
 
           <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
             <div class="backIcon"></div>
@@ -865,7 +919,6 @@
     </div>
   </div>
 
-  <!-- SICHERHEITSABFRAGE MODAL -->
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalBox">
       <div class="modalTitle">Spiel beenden?</div>
@@ -912,18 +965,8 @@
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
 
-    // Würfel
-    const cube = document.getElementById("cube");
-    const cubeBadge = document.getElementById("cubeBadge");
-    const slots = [
-      document.getElementById("s0"),
-      document.getElementById("s1"),
-      document.getElementById("s2"),
-      document.getElementById("s3")
-    ];
-
-    let currentView = "level"; // "level", "ksp", "anzahl"
-    let selectedLevel = null; // "trainee", "brainy", "brain"
+    let currentView = "level";
+    let selectedLevel = null;
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -1001,40 +1044,32 @@
 
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
-      // Level View
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      // KSP View
       kspTitle.style.top = midY + "px";
       kspTop.style.top = (midY + 70) + "px";
       sliderRow.style.top = (midY + 265) + "px";
 
-      // KIPP Anzahl View
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
       kippAnzahlBtns.style.top = (midY + 145) + "px";
 
-      // Permanente Zeile 13 UI
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      // DIGIKIPP Titel
       const titleVisualRow = 1.5;
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
       positionNavButtons(cellPx);
-
-      // Würfel nach Rebuild neu positionieren (bleibt im aktuellen Q)
-      applyCubePosition(cubeState.q, cubeState.isMid ? 0.5 : 0);
     }
 
     function positionNavButtons(cellPx){
-      const backCol = 8; // H
+      const backCol = 8;
       const backRow = 8;
       const backVisualRow = backRow + HEADER_ROW_OFFSET;
-
+      
       const backLeft = (backCol - 1) * cellPx + cellPx / 2;
       const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
 
@@ -1044,9 +1079,9 @@
         btn.style.transform = "translate(-50%, -50%)";
       });
 
-      const closeCol = 1; // A
+      const closeCol = 1;
       const closeVisualRow = 1.5;
-
+      
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
 
@@ -1071,7 +1106,6 @@
       positionUI();
     }
 
-    // ===== VIEW SWITCHING =====
     function showLevelView(){
       currentView = "level";
       levelView.classList.remove("hidden");
@@ -1084,10 +1118,6 @@
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
-
-      // ✅ Sobald man in KSP ist: Würfel leer sichtbar, W1 in Q0
-      resetDemoUI();
-      setCubeEmptyW1Q0();
     }
 
     function showKippAnzahlView(){
@@ -1095,43 +1125,60 @@
       levelView.classList.add("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
+      
       buildKippAnzahlButtons(selectedLevel);
     }
 
-    // ===== KIPP ANZAHL BUTTONS =====
     function buildKippAnzahlButtons(level){
       kippAnzahlBtns.innerHTML = "";
+      
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
+        
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
+          btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 9 und 6
+          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
+
       } else if(level === "brainy"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
+        
         kippAnzahlBtns.classList.add("compact");
+        
         [1, 2, 3, 4, 5, 6].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
+          btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
+
       } else if(level === "brain"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> oder <span style="font-weight:1000;">ZWEI</span> Tasten';
+        
         kippAnzahlBtns.classList.add("compact");
+        
         [1, 2, 3, 4, 5, 6].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
+          btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1140,10 +1187,8 @@
 
     function handleAnzahlClick(anzahl){
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
-      // Hier weiter zum Spiel
     }
 
-    // ===== LEVEL BUTTONS =====
     document.querySelectorAll('.levelBtn').forEach(btn => {
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
@@ -1152,211 +1197,39 @@
       });
     });
 
-    // ==========================================================
-    // ✅ WÜRFEL + "ZAHLENBELEG-ZYKLUS" (Play startet, läuft weiter)
-    // ==========================================================
-
-    // Würfelzustand
-    const cubeState = {
-      q: 0,            // 0..3 (Q0..Q3)
-      isMid: false,    // Zwischenkippdarstellung ja/nein
-      face: "W1",      // nur Badge-Text (W1..)
-      numbers: [null,null,null,null] // 4 Slots
-    };
-
-    // Speed-Map (Stufe 1..5 => ms) – kann später feinjustiert werden,
-    // Slider-UI bleibt exakt wie bei dir.
-    const SPEED_MS = [1200, 900, 650, 450, 300]; // index 0..4
-
-    // Animation-Dauer für die "Kipp"-Bewegung (nicht die Pause dazwischen)
-    const MOVE_MS = 240;
-
     let demoRunning = false;
-    let demoTimer = null;
-    let demoBusy = false;        // verhindert Überlappung
-    let playLocked = false;      // Play darf nur einmal starten
 
-    function setCubeEmptyW1Q0(){
-      cubeState.q = 0;
-      cubeState.isMid = false;
-      cubeState.face = "W1";
-      cubeState.numbers = [null,null,null,null];
-      renderCube();
-      applyCubePosition(0, 0);
+    function setPlayGlyph(isPause){
+      playGlyph.className = isPause ? "pauseIcon" : "playIcon";
     }
 
-    function renderCube(){
-      cubeBadge.textContent = cubeState.face;
-
-      for(let i=0;i<4;i++){
-        const v = cubeState.numbers[i];
-        if(v === null || v === undefined){
-          slots[i].classList.add("empty");
-          slots[i].textContent = "";
-        }else{
-          slots[i].classList.remove("empty");
-          slots[i].textContent = String(v);
-        }
-      }
-    }
-
-    function cellToPxTopLeft(row, col){
-      const cellPx = numVar("--cell") || 142;
-      const visualRow = row + HEADER_ROW_OFFSET;
-      const left = (col - 1) * cellPx;
-      const top  = (visualRow - 1) * cellPx;
-      return { left, top };
-    }
-
-    function getQTopLeft(q){
-      const style = getComputedStyle(document.documentElement);
-      const r = parseInt(style.getPropertyValue(q===0?"--q0-row":q===1?"--q1-row":q===2?"--q2-row":"--q3-row"),10) || 3;
-      const c = parseInt(style.getPropertyValue(q===0?"--q0-col":q===1?"--q1-col":q===2?"--q2-col":"--q3-col"),10) || 3;
-      return cellToPxTopLeft(r, c);
-    }
-
-    function applyCubePosition(q, midT){
-      // midT: 0 = vollflächig, 0.5 = Zwischenkippdarstellung
-      const p = getQTopLeft(q);
-      cube.style.left = p.left + "px";
-      cube.style.top  = p.top + "px";
-
-      // Optische Zwischenstellung
-      if(midT > 0){
-        cubeState.isMid = true;
-        cube.style.transform = "rotate(-7deg) scale(0.985)";
-      }else{
-        cubeState.isMid = false;
-        cube.style.transform = "rotate(0deg) scale(1)";
-      }
-    }
-
-    function randFromSet(set){
-      return set[Math.floor(Math.random()*set.length)];
-    }
-
-    // "Zahlenbelegung" – hier bewusst simpel/robust:
-    // 4 unterschiedliche Zahlen aus 0..11, damit sichtbar ist: Belegung läuft.
-    function nextNumberSet(){
-      const pool = Array.from({length:12}, (_,i)=>i);
-      const pick = [];
-      while(pick.length < 4){
-        const idx = Math.floor(Math.random()*pool.length);
-        pick.push(pool.splice(idx,1)[0]);
-      }
-      return pick;
-    }
-
-    function nextFaceLabel(){
-      // nur fürs Badge (W1..W4) – frei drehend
-      const faces = ["W1","W2","W3","W4"];
-      return faces[(faces.indexOf(cubeState.face)+1) % faces.length];
-    }
-
-    function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-    async function oneDemoStep(){
-      if(demoBusy) return;
-      demoBusy = true;
-
-      // Zwischenkippdarstellung
-      applyCubePosition(cubeState.q, 0.5);
-      await sleep(MOVE_MS);
-
-      // Nächster Quadrant
-      cubeState.q = (cubeState.q + 1) % 4;
-
-      // Vollflächig ankommen
-      applyCubePosition(cubeState.q, 0);
-      await sleep(MOVE_MS);
-
-      // Zahlen "belegen" (sichtbar machen)
-      cubeState.numbers = nextNumberSet();
-      cubeState.face = nextFaceLabel();
-      renderCube();
-
-      demoBusy = false;
-    }
-
-    function startDemo(){
-      if(demoRunning) return;
-      demoRunning = true;
-
-      const ms = SPEED_MS[parseInt(speedSlider.value,10) || 2];
-      demoTimer = setInterval(oneDemoStep, ms);
-      // Sofort den ersten Step (damit man direkt was sieht)
-      oneDemoStep();
-    }
-
-    function stopDemo(){
-      demoRunning = false;
-      if(demoTimer){
-        clearInterval(demoTimer);
-        demoTimer = null;
-      }
-    }
-
-    async function finishToFullAndThen(cb){
-      // Wenn wir gerade in Zwischenstellung sind, erst zur Vollfläche "auskippen"
-      if(cubeState.isMid){
-        applyCubePosition(cubeState.q, 0);
-        await sleep(MOVE_MS);
-      }
-      cb && cb();
-    }
-
-    function resetDemoUI(){
-      stopDemo();
-      demoBusy = false;
-      playLocked = false;
-      btnPlay.disabled = false;
-      btnPlay.classList.remove("playLocked");
-      // Glyph bleibt Play
-      playGlyph.className = "playIcon";
-    }
-
-    // ===== KSP BUTTONS =====
     btnPlay.addEventListener("click", () => {
-      // ✅ Play startet nur EINMAL, wird braun & inaktiv
-      if(playLocked) return;
-
-      playLocked = true;
-      btnPlay.disabled = true;
-      btnPlay.classList.add("playLocked");
-
-      console.log("Play: Zahlenbelegung startet (läuft weiter)");
-      startDemo();
+      if(!demoRunning){
+        demoRunning = true;
+        setPlayGlyph(true);
+        console.log("Demo gestartet");
+      } else {
+        demoRunning = false;
+        setPlayGlyph(false);
+        console.log("Demo pausiert");
+      }
     });
 
-    btnOk.addEventListener("click", async () => {
+    btnOk.addEventListener("click", () => {
       const speedValue = speedSlider.value;
       const speedLabels = ["1", "2", "3", "4", "5"];
       console.log(`KSP bestätigt, Stufe: ${speedLabels[speedValue]} (Wert: ${speedValue})`);
-
-      // ✅ Wenn Würfel gerade "zwischenkipp" ist: erst vollflächig ankommen lassen,
-      // dann erst in die Kipp-Anzahl-Abfrage wechseln.
-      await finishToFullAndThen(() => {
-        showKippAnzahlView();
-      });
+      showKippAnzahlView();
     });
 
-    // Slider: wenn Demo läuft, Intervall neu setzen (ohne Play-Reset)
     speedSlider.addEventListener("input", () => {
       const value = parseInt(speedSlider.value);
       const speedLabels = ["1", "2", "3", "4", "5"];
       console.log(`Speed: ${speedLabels[value]}`);
-
-      if(demoRunning){
-        stopDemo();
-        startDemo();
-      }
     });
 
-    // ===== ZURÜCK BUTTONS =====
     backBtnKsp.addEventListener("click", () => {
       console.log("Zurück von KSP zu Level");
-      // Zurück: Demo stoppen, Play wieder aktiv
-      resetDemoUI();
       showLevelView();
     });
 
@@ -1365,9 +1238,13 @@
       showKspView();
     });
 
-    // ===== SCHLIESSEN BUTTONS =====
-    function showCloseModal(){ closeModal.classList.remove("hidden"); }
-    function hideCloseModal(){ closeModal.classList.add("hidden"); }
+    function showCloseModal(){
+      closeModal.classList.remove("hidden");
+    }
+
+    function hideCloseModal(){
+      closeModal.classList.add("hidden");
+    }
 
     closeBtnLevel.addEventListener("click", showCloseModal);
     closeBtnKsp.addEventListener("click", showCloseModal);
@@ -1378,25 +1255,20 @@
     modalConfirm.addEventListener("click", () => {
       console.log("Spiel wird beendet");
       hideCloseModal();
-      resetDemoUI();
       showLevelView();
     });
 
     closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal) hideCloseModal();
+      if(e.target === closeModal){
+        hideCloseModal();
+      }
     });
 
-    // ===== KIPP BILANZ BUTTON =====
     kippBilanzBtn.addEventListener("click", () => {
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    // ===== INIT =====
-    window.addEventListener("load", () => {
-      rebuild();
-      // Start: Level-View, Würfel vorbereitet (leer in Q0) – schadet nicht
-      setCubeEmptyW1Q0();
-    });
+    window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
