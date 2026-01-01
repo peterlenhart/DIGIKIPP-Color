@@ -1142,17 +1142,26 @@
       if(n === null || n === undefined){
         span.textContent = "";
         span.style.letterSpacing = ""; // Reset
+        span.style.marginLeft = ""; // Reset
         return;
       }
       // ✅ 9 und 6 mit Punkt
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
       
-      // ✅ 10 und 12: Engeres letter-spacing für optische Mitte
-      if(n === 10 || n === 12){
-        span.style.letterSpacing = "-0.15em"; // Ziffern näher zusammen
+      // ✅ 10, 11, 12: Nach links verschieben für optische Mitte
+      if(n === 10){
+        span.style.letterSpacing = "-0.15em";
+        span.style.marginLeft = "-0.25em"; // Am weitesten links
+      } else if(n === 11){
+        span.style.letterSpacing = "-0.12em";
+        span.style.marginLeft = "-0.08em"; // Minimal links
+      } else if(n === 12){
+        span.style.letterSpacing = "-0.15em";
+        span.style.marginLeft = "-0.18em"; // Etwas links
       } else {
         span.style.letterSpacing = ""; // Standard (-0.05em aus CSS)
+        span.style.marginLeft = ""; // Standard
       }
     }
 
@@ -1450,13 +1459,15 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      const titleVisualRow = 1.5;
+      const titleRow = 1.5;
+      const titleVisualRow = titleRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
-      // Exit-Button rechts oben (Column 15)
+      // Exit-Button rechts oben (Column 15, Row 1.5 + OFFSET)
       const exitCol = 15;
-      const exitVisualRow = 1.5;
+      const exitRow = 1.5;
+      const exitVisualRow = exitRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
       const exitLeft = (exitCol - 1) * cellPx + cellPx / 2;
       const exitTop = (exitVisualRow - 1) * cellPx + cellPx / 2;
       exitBtnPermanent.style.left = exitLeft + "px";
@@ -1481,7 +1492,8 @@
       });
 
       const closeCol = 1;
-      const closeVisualRow = 1.5;
+      const closeRow = 1.5;
+      const closeVisualRow = closeRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
       
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
