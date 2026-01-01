@@ -242,9 +242,15 @@
       width: calc(var(--cell) * 6.5); /* ✅ 923px breit = 6.5 Spalten */
     }
 
-    .squareBtn{
+    /* ✅ NUR kspTop-Buttons sind groß und flex */
+    .kspTop .squareBtn{
       flex: 1; /* ✅ Beide Buttons gleich breit */
       height: calc(60px * var(--uiscale)); /* ✅ Höher für Text */
+    }
+
+    .squareBtn{
+      width: calc(44px * var(--uiscale)); /* ✅ Standard für Kippanzahl-Buttons */
+      height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -283,13 +289,19 @@
       color: rgba(234,215,190,0.7);
     }
 
-    /* ✅ Pulsier-Animation */
+    /* ✅ Pulsier-Animation OHNE transform (behält Position!) */
     @keyframes pulse{
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.08); opacity: 0.85; }
+      0%, 100% { 
+        opacity: 1; 
+        filter: brightness(1);
+      }
+      50% { 
+        opacity: 0.75;
+        filter: brightness(1.15);
+      }
     }
     .pulse{
-      animation: pulse 1.5s ease-in-out infinite;
+      animation: pulse 1.2s ease-in-out infinite;
     }
 
     .playIcon{
