@@ -3,437 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – KOMBI Version</title>
+  <title>DigiKipp – Option 2 (funktionierende Version)</title>
 
   <style>
-    /* ===== ALTE BASIS (142px Cell) ===== */
     :root{
+      --cols: 8;
+      --cell: 142px;
+      --grid-alpha: 0.18;
+
+      /* ===== Farben (fix) ===== */
       --violett: rgb(164, 27, 133);
       --blau:    rgb(0, 107, 179);
       --gruen:   rgb(0, 166, 82);
       --orange:  rgb(249, 150, 30);
 
-      --cell-gap: 0px;
-      --cell-radius: 0px;
-
-      --floor: #7a4a34;
-
-      --cube-wood-base: #d7c2a4;
-      --cube-wood-deep: #c9b08f;
-      --cube-wood-warm: rgba(155, 70, 110, 0.10);
-      --cube-wood-gold: rgba(249, 150, 30, 0.10);
-
-      --w1-innerframe: rgba(122, 74, 52, 1);
-
-      --slot-border: rgba(0,0,0,0.55);
-      --slot-border-w: 2px;
-      --slot-fill: #ead7be;
-
-      --box-black: #000;
-      --box-border: 4px;
-      --box-radius: 0px;
-
-      --btn-bg: #ead7be;
-      --btn-text: #2a160c;
-      --btn-border: rgba(0,0,0,0.35);
-
-      --ui-panel-bg: #4a2418;
-      --ui-text: #ead7be;
-
-      --kippstrip-h: auto;
-
-      /* ✅ NEUE GRÖSSE: 142px statt 86px */
-      --ui-cell: 142px;
-
-      --rotSign: 1;
-      --rot: 0deg;
-    }
-
-    html, body { height: 100%; }
-
-    body{
-      margin:0;
-      display:flex;
-      justify-content:center;
-
-      background:
-        radial-gradient(120% 80% at 18% 12%, rgba(255,255,255,0.10), rgba(255,255,255,0) 60%),
-        radial-gradient(120% 90% at 80% 88%, rgba(0,0,0,0.35), rgba(0,0,0,0) 60%),
-        repeating-linear-gradient(
-          92deg,
-          rgba(0,0,0,0.10) 0px,
-          rgba(0,0,0,0.10) 6px,
-          rgba(255,255,255,0.03) 6px,
-          rgba(255,255,255,0.03) 16px
-        ),
-        repeating-linear-gradient(
-          18deg,
-          rgba(0,0,0,0.10) 0px,
-          rgba(0,0,0,0.10) 14px,
-          rgba(255,255,255,0.03) 14px,
-          rgba(255,255,255,0.03) 30px
-        ),
-        linear-gradient(180deg, #5b3626, #4c2b1f 55%, #3e2218);
-
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
-    /* ✅ ALTE STAGE - 900px Kompromiss */
-    .stage{
-      width: min(90vw, 900px);
-      margin-top: 0;
-      padding-top: 8px;
-      padding-bottom: 2vh;
-      display:flex;
-      flex-direction: column;
-      gap: 12px;
-      justify-content:flex-start;
-      align-items:center;
-
-      background: var(--ui-panel-bg);
-      min-height: 100vh;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    /* ===== ALTE UI ELEMENTE (versteckt, z-index niedrig) ===== */
-    .oldUI {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* ===== ALTER WÜRFEL-CODE (funktioniert, niedrige z-index) ===== */
-    
-    .boxShell{
-      width: 100%;
-      box-sizing: border-box;
-      background: transparent;
-      border: 0;
-      border-radius: var(--box-radius);
-      box-shadow: none;
-      overflow: visible;
-      display:flex;
-      flex-direction: column;
-      gap: 0;
-      position: relative;
-      z-index: 200;  /* ✅ ÜBER bgPNG(50) und colors(60), UNTER grid(600) */
-    }
-
-    /* ✅ ENTFERNT - Schatten werden von NEU übernommen */
-    /* .boxShell::before, .boxShell::after */
-
-    .board{
-      position:relative;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1 / 1;
-      box-sizing: border-box;
-      background: transparent;  /* ✅ TRANSPARENT - Schwarz kommt von NEU */
-      border: 0;
-      border-radius: 0;
-      overflow: visible;
-      box-shadow: none;  /* ✅ Schatten weg */
-
-      --cell: calc((100% - 7 * var(--cell-gap)) / 8);
-      --step: calc(var(--cell) + var(--cell-gap));
-    }
-
-    .grid{
-      position:absolute;
-      inset:0;
-      display:grid;
-      grid-template-columns: repeat(8, 1fr);
-      grid-template-rows: repeat(8, 1fr);
-      gap: var(--cell-gap);
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0;  /* ✅ VERSTECKT - nur noch für Koordinaten-System */
-    }
-
-    .cell{
-      background: var(--box-black);
-      border-radius: var(--cell-radius);
-      box-sizing: border-box;
-      box-shadow: none;
-      position: relative;
-    }
-
-    .c-orange{ background: var(--orange); }
-    .c-gruen { background: var(--gruen);  }
-    .c-violett{ background: var(--violett); }
-    .c-blau  { background: var(--blau);   }
-
-    .cell.colorCell{
-      box-shadow:
-        inset 0 0 0 2px #000,
-        0 0 0 1px rgba(0,0,0,0.25);
-    }
-
-    @keyframes targetBreath{
-      0%,100%{ transform: translate(-50%, -50%) rotate(var(--trot, 0deg)) scale(1); opacity: 0.95; }
-      50%    { transform: translate(-50%, -50%) rotate(var(--trot, 0deg)) scale(1.10); opacity: 1; }
-    }
-    .targetBadge{
-      position:absolute;
-      left:50%;
-      top:50%;
-      font-weight: 900;
-      font-size: clamp(18px, 8vmin, 36px);
-      color: rgba(0,0,0,0.92);
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      line-height: 1;
-      letter-spacing: 0.01em;
-      pointer-events:none;
-      z-index: 3;
-      animation: targetBreath 1.25s ease-in-out infinite;
-      transform-origin: 50% 50%;
-      will-change: transform, opacity;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .trot-top    { --trot: 0deg; }
-    .trot-bottom { --trot: 180deg; }
-    .trot-left   { --trot: -90deg; }
-    .trot-right  { --trot: 90deg; }
-
-    .goalOverlay{ display:none !important; }
-
-    .floor{
-      position:absolute;
-      left: var(--step);
-      top:  var(--step);
-      width: calc(6 * var(--cell) + 5 * var(--cell-gap));
-      height: calc(6 * var(--cell) + 5 * var(--cell-gap));
-      border-radius: 0;
-      z-index: 2;
-      pointer-events: none;
-      opacity: 0;  /* ✅ VERSTECKT - wird durch Box_m_Hgr.png ersetzt */
-
-      background-image: url("Box.png");
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: 100% 100%;
-
-      box-shadow:
-        inset 18px 18px 34px rgba(255,255,255,0.10),
-        inset -22px -22px 44px rgba(0,0,0,0.28),
-        inset -26px 0 40px rgba(0,0,0,0.26),
-        inset  26px 0 40px rgba(0,0,0,0.26),
-        inset  0 -26px 40px rgba(0,0,0,0.30),
-        inset  0  26px 40px rgba(0,0,0,0.30);
-    }
-
-    .ball{
-      position:absolute;
-      left: calc(var(--step) + ( (6 * var(--cell) + 5 * var(--cell-gap)) / 2 ));
-      top:  calc(var(--step) + ( (6 * var(--cell) + 5 * var(--cell-gap)) / 2 ));
-      width: calc(var(--cell) * 0.55);
-      height: calc(var(--cell) * 0.55);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
-        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
-        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.28);
-      z-index: 520;  /* ✅ HOCHGEHOLT - sichtbar! */
-      pointer-events: none;
-    }
-
-    .wFaceGroup,
-    .kipGroup{
-      position:absolute;
-      inset:0;
-      z-index: 500;  /* ✅ HOCHGEHOLT - sichtbar! */
-      pointer-events:none;
-
-      --pivot-x: calc(4 * var(--step));
-      --pivot-y: calc(4 * var(--step));
-
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .hidden{ display:none !important; }
-
-    .cubeShadow{
-      position:absolute;
-      left: calc(1 * var(--step));
-      top:  calc(1 * var(--step));
-      width: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      height: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      z-index: 1;
-      background: transparent;
-      box-shadow:
-        0 22px 26px rgba(0,0,0,0.32),
-        0 10px 16px rgba(0,0,0,0.18);
-    }
-
-    .cubeFace{
-      position:absolute;
-      width: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      height: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      box-sizing: border-box;
-      border-radius: 0;
-      background:
-        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
-        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
-        repeating-linear-gradient(
-          20deg,
-          rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 10px,
-          rgba(255,255,255,0.02) 10px,
-          rgba(255,255,255,0.02) 18px
-        ),
-        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
-        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
-      box-shadow:
-        inset 0 0 0 2px var(--w1-innerframe),
-        0 0 0 1px rgba(255,255,255,0.08) inset;
-      z-index: 2;
-      left: calc(1 * var(--step));
-      top:  calc(1 * var(--step));
-    }
-
-    .slot{
-      position:absolute;
-      width: var(--cell);
-      height: var(--cell);
-      box-sizing: border-box;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border: var(--slot-border-w) solid var(--slot-border);
-      border-radius: var(--cell-radius);
-      z-index: 7;
-      box-shadow:
-        1px 1px 0 rgba(255,255,255,0.18) inset,
-        -1px -1px 0 rgba(0,0,0,0.08) inset,
-        0 3px 5px rgba(0,0,0,0.22),
-        2px 2px 3px -1px rgba(0,0,0,0.20);
-    }
-
-    .slot .num{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      z-index: 9;
-    }
-
-    .slot .num > span{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 0.32);  /* ✅ 32% der Cell = ~45px bei 142px */
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      transform: rotate(var(--num-rot, 0deg));
-      transform-origin: 50% 50%;
-      position: relative;
-      line-height: 1;
-    }
-
-    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
-    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
-    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
-    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
-
-    .s-3b{ left: calc(1 * var(--step)); top: calc(2 * var(--step)); }
-    .s-4b{ left: calc(1 * var(--step)); top: calc(3 * var(--step)); }
-    .s-2c{ left: calc(2 * var(--step)); top: calc(1 * var(--step)); }
-    .s-2d{ left: calc(3 * var(--step)); top: calc(1 * var(--step)); }
-
-    .kipScale{
-      position:absolute;
-      inset:0;
-      --pivot-x: calc(4 * var(--step));
-      --pivot-y: calc(4 * var(--step));
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        scaleX(0.6666667)
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .kipShadow{
-      position:absolute;
-      left: calc(1 * var(--step));
-      top:  calc(1 * var(--step));
-      width: calc(6 * var(--cell) + 5 * var(--cell-gap));
-      height: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      background: transparent;
-      z-index: 1;
-      box-shadow:
-        0 22px 26px rgba(0,0,0,0.32),
-        0 10px 16px rgba(0,0,0,0.18);
-    }
-
-    .kipEdgeCore{
-      position:absolute;
-      left: calc(4 * var(--step));
-      top:  calc(1 * var(--step));
-      width: 6px;
-      height: calc(3 * var(--cell) + 2 * var(--cell-gap));
-      transform: translateX(-50%);
-      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
-      z-index: 1;
-      opacity: 0.95;
-    }
-
-    .kipFaceQ0{ left: calc(1 * var(--step)); top: calc(1 * var(--step)); }
-    .kipFaceQ1{ left: calc(4 * var(--step)); top: calc(1 * var(--step)); }
-
-    .k-4d{ left: calc(3 * var(--step)); top: calc(3 * var(--step)); }
-    .k-3d{ left: calc(3 * var(--step)); top: calc(2 * var(--step)); }
-    .k-2b{ left: calc(1 * var(--step)); top: calc(1 * var(--step)); }
-    .k-2c{ left: calc(2 * var(--step)); top: calc(1 * var(--step)); }
-
-    .k-3e{ left: calc(4 * var(--step)); top: calc(2 * var(--step)); }
-    .k-4e{ left: calc(4 * var(--step)); top: calc(3 * var(--step)); }
-    .k-2f{ left: calc(5 * var(--step)); top: calc(1 * var(--step)); }
-    .k-2g{ left: calc(6 * var(--step)); top: calc(1 * var(--step)); }
-
-    /* ===== NEUES UI OVERLAY (z-index 1000+) ===== */
-    
-    .newUIOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      /* z-index entfernt - Kinder sortieren sich global */
-      pointer-events: none;
-    }
-
-    .newUIOverlay > * {
-      pointer-events: auto;
-    }
-
-    /* Variablen für NEUES UI */
-    :root {
-      --cols: 8;
-      --cell: 142px;
-      --grid-alpha: 0.18;
+      /* ===== Farbfelder: 142 -> 126 ===== */
       --colorSize: 126px;
+
+      /* ✅ PNG-FEINJUSTAGE */
       --bg-off-x: 4px;
       --bg-off-y: 5px;
+
+      /* wird per JS gesetzt */
       --scale: 1;
       --uiscale: 1;
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
+
+      /* ===== KSP Farben ===== */
       --ui-panel-bg: #4a2418;
       --ui-text: #ead7be;
       --btn-bg: #ead7be;
@@ -442,7 +39,38 @@
       --slot-border: rgba(0,0,0,0.55);
     }
 
-    .newLayout{
+    html, body{
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      touch-action: none;
+    }
+
+    body{
+      background:
+        radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(140,105,70,0.10) 0px,
+          rgba(140,105,70,0.10) 10px,
+          rgba(230,205,165,0.10) 10px,
+          rgba(230,205,165,0.10) 22px
+        ),
+        linear-gradient(180deg, #d9c3a2, #cdb28f);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .stage{
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layout{
       position: absolute;
       left: 50%;
       top: 0;
@@ -450,11 +78,6 @@
       height: var(--gridH);
       transform-origin: top center;
       transform: translateX(-50%) scale(var(--scale));
-      pointer-events: none;
-    }
-
-    .newLayout > * {
-      pointer-events: auto;
     }
 
     .bgPNG{
@@ -470,7 +93,7 @@
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
       pointer-events: none;
-      z-index: 50;  /* ✅ UNTER Würfel */
+      z-index: 0;
     }
 
     .colors{
@@ -480,7 +103,7 @@
       width: var(--gridW);
       height: var(--gridH);
       pointer-events: none;
-      z-index: 60;  /* ✅ UNTER Würfel, ÜBER bgPNG */
+      z-index: 1;
     }
 
     .colorSq{
@@ -489,14 +112,18 @@
       height: var(--colorSize);
       border-radius: 0;
     }
+    .c-gruen   { background: var(--gruen); }
+    .c-orange  { background: var(--orange); }
+    .c-blau    { background: var(--blau); }
+    .c-violett { background: var(--violett); }
 
-    .newGrid{
+    .grid{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 600;  /* ✅ ÜBER Würfel */
+      z-index: 2;
       pointer-events: none;
       background-image:
         repeating-linear-gradient(
@@ -515,21 +142,23 @@
         );
     }
 
+    /* ===== Level UI Layer ===== */
     .uiLayer{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 1500;  /* ✅ GANZ OBEN */
+      z-index: 3;
       pointer-events: none;
     }
 
+    /* ===== Gemeinsamer Titel-Style ===== */
     .uiTitle{
       position:absolute;
       left: 50%;
       transform: translate(-50%, -50%);
-      z-index: 1010;
+      z-index: 10;
 
       font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
       font-weight: 1000;
@@ -558,7 +187,7 @@
       display:flex;
       gap: 71px;
       pointer-events: auto;
-      z-index: 1010;
+      z-index: 10;
     }
 
     .levelBtn{
@@ -592,12 +221,13 @@
       filter: brightness(0.98);
     }
 
+    /* ===== KSP Block ===== */
     .kspBlock{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
-      z-index: 1010;
+      z-index: 10;
       pointer-events: auto;
     }
 
@@ -770,11 +400,12 @@
       cursor: pointer;
     }
 
+    /* ===== KIPP ANZAHL WÄHLEN ===== */
     .kippAnzahlSubtitle{
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 1010;
+      z-index: 10;
       
       font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
       font-weight: 600;
@@ -797,7 +428,7 @@
       flex-wrap: nowrap;
       gap: calc(24px * var(--uiscale));
       pointer-events: auto;
-      z-index: 1010;
+      z-index: 10;
       justify-content: center;
     }
 
@@ -805,12 +436,155 @@
       gap: calc(12px * var(--uiscale));
     }
 
+    /* ===== WÜRFEL SYSTEM ===== */
+    
+    :root {
+      --cube-wood-base: #d7c2a4;
+      --cube-wood-deep: #c9b08f;
+      --cube-wood-warm: rgba(155, 70, 110, 0.10);
+      --cube-wood-gold: rgba(249, 150, 30, 0.10);
+      --w1-innerframe: rgba(122, 74, 52, 1);
+      --slot-fill: #ead7be;
+      --slot-border-w: 2px;
+      --rotSign: 1;
+      --rot: 0deg;
+    }
+
+    .wFaceGroup,
+    .kipGroup{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 4;
+      pointer-events: none;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    .cubeShadow{
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      z-index: 1;
+      background: transparent;
+      box-shadow:
+        0 22px 26px rgba(0,0,0,0.32),
+        0 10px 16px rgba(0,0,0,0.18);
+    }
+
+    .cubeFace{
+      position: absolute;
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
+        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
+        repeating-linear-gradient(
+          20deg,
+          rgba(0,0,0,0.02) 0px,
+          rgba(0,0,0,0.02) 10px,
+          rgba(255,255,255,0.02) 10px,
+          rgba(255,255,255,0.02) 18px
+        ),
+        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
+        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
+      box-shadow:
+        inset 0 0 0 2px var(--w1-innerframe),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
+      z-index: 2;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+    }
+
+    .ball{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((4 + 2) * var(--cell));
+      width: calc(var(--cell) * 0.55);
+      height: calc(var(--cell) * 0.55);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
+        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
+        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.28);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .slot{
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      box-sizing: border-box;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      border: var(--slot-border-w) solid var(--slot-border);
+      border-radius: 0;
+      z-index: 7;
+      box-shadow:
+        1px 1px 0 rgba(255,255,255,0.18) inset,
+        -1px -1px 0 rgba(0,0,0,0.08) inset,
+        0 3px 5px rgba(0,0,0,0.22),
+        2px 2px 3px -1px rgba(0,0,0,0.20);
+    }
+
+    .slot .num{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      z-index: 9;
+    }
+
+    .slot .num > span{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.38);  /* ✅ 38% = ~54px bei 142px Cell - FORMATFÜLLEND */
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      transform: rotate(var(--num-rot, 0deg));
+      transform-origin: 50% 50%;
+      position: relative;
+      line-height: 1;
+    }
+
+    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
+    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
+    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
+    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
+
+    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    /* ===== PERMANENTE UI - ZEILE 13 ===== */
     .permanentRow13{
       position: absolute;
       left: 0;
       width: var(--gridW);
       height: var(--cell);
-      z-index: 1015;
+      z-index: 15;
       pointer-events: none;
     }
 
@@ -871,10 +645,10 @@
 
     .digiKippTitle{
       position: absolute;
-      left: calc(50% + 92px);
+      left: calc(50% + 25px);
       top: 0;
       transform: translate(-50%, -50%);
-      z-index: 1020;
+      z-index: 20;
       
       font-size: 90px;
       font-weight: 1000;
@@ -911,7 +685,7 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       pointer-events: auto;
-      z-index: 1100;
+      z-index: 100;
       padding: 0;
     }
     .navBtn:active{
@@ -962,7 +736,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 2000;
+      z-index: 1000;
       pointer-events: auto;
     }
 
@@ -1041,230 +815,122 @@
 </head>
 
 <body>
-  <div class="stage">
-    
-    <!-- ===== ALTER WÜRFEL-CODE (z-index niedrig, funktioniert) ===== -->
-    <div class="boxShell" id="boxShell">
-      <div class="board" id="board">
-        <div class="floor" aria-hidden="true"></div>
-        <div id="grid" class="grid" aria-label="8×8 Raster"></div>
+  <div class="stage" id="stage">
+    <div class="layout" id="layout">
+      <div class="bgPNG" aria-hidden="true"></div>
 
-        <div id="wFaceGroup" class="wFaceGroup" aria-label="W Paket">
-          <div class="cubeShadow" aria-hidden="true"></div>
-          <div class="cubeFace" aria-label="Würfelfläche"></div>
+      <div class="colors" id="colors" aria-hidden="true"></div>
 
-          <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9</span></div></div>
-          <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
-          <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
-          <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
-        </div>
+      <!-- ===== WÜRFEL SYSTEM ===== -->
+      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
+        <div class="cubeShadow" aria-hidden="true"></div>
+        <div class="cubeFace" aria-label="Würfelfläche"></div>
 
-        <div id="kipGroup" class="kipGroup hidden" aria-label="KIP Gruppe">
-          <div class="kipScale">
-            <div class="kipShadow" aria-hidden="true"></div>
-            <div class="kipEdgeCore" aria-hidden="true"></div>
-
-            <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-            <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-            <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-            <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-            <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-            <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-            <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-            <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-            <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-            <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
-          </div>
-        </div>
-
-        <div class="ball" aria-label="Kugel"></div>
+        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9.</span></div></div>
+        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
+        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
+        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
       </div>
-    </div>
 
-    <!-- ===== NEUES UI OVERLAY (z-index 1000+) ===== -->
-    <div class="newUIOverlay">
-      <div class="newLayout" id="newLayout">
-        <div class="bgPNG" aria-hidden="true"></div>
+      <div class="ball" aria-label="Kugel"></div>
 
-        <div class="colors" id="colors" aria-hidden="true"></div>
+      <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
-        <div class="uiLayer" id="uiLayer" aria-hidden="true">
-          <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
+        <div class="permanentRow13" id="permanentRow13">
+          <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
+          <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
+        </div>
 
-          <div class="permanentRow13" id="permanentRow13">
-            <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
-            <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
+        <div id="levelView">
+          <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
+
+          <div class="levelBtns" id="levelBtns">
+            <button class="levelBtn" data-level="trainee">Trainee</button>
+            <button class="levelBtn" data-level="brainy">Brainy</button>
+            <button class="levelBtn" data-level="brain">Brain</button>
           </div>
 
-          <div id="levelView">
-            <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
+          <button class="navBtn closeBtn" id="closeBtnLevel" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
+        </div>
 
-            <div class="levelBtns" id="levelBtns">
-              <button class="levelBtn" data-level="trainee">Trainee</button>
-              <button class="levelBtn" data-level="brainy">Brainy</button>
-              <button class="levelBtn" data-level="brain">Brain</button>
+        <div id="kspView" class="hidden">
+          <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
+
+          <div class="kspBlock" id="kspBlock">
+            <div class="kspTop" id="kspTop">
+              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
+                <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
+              </button>
+
+              <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
+                <span class="okText">OK</span>
+              </button>
             </div>
 
-            <button class="navBtn closeBtn" id="closeBtnLevel" aria-label="Spiel beenden">
-              <div class="closeIcon"></div>
-            </button>
-          </div>
-
-          <div id="kspView" class="hidden">
-            <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
-
-            <div class="kspBlock" id="kspBlock">
-              <div class="kspTop" id="kspTop">
-                <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
-                  <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
-                </button>
-
-                <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
-                  <span class="okText">OK</span>
-                </button>
-              </div>
-
-              <div class="sliderRow" id="sliderRow">
-                <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+            <div class="sliderRow" id="sliderRow">
+              <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+              
+              <div class="sliderContainer">
+                <input id="speedSlider" type="range" min="0" max="4" value="2" step="1" aria-label="Speed Slider">
                 
-                <div class="sliderContainer">
-                  <input id="speedSlider" type="range" min="0" max="4" value="2" step="1" aria-label="Speed Slider">
-                  
-                  <div class="speedScale" aria-label="Kippspeed Stufen">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                  </div>
+                <div class="speedScale" aria-label="Kippspeed Stufen">
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                 </div>
-
-                <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
               </div>
+
+              <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
             </div>
-
-            <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
-              <div class="backIcon"></div>
-            </button>
-
-            <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
-              <div class="closeIcon"></div>
-            </button>
           </div>
 
-          <div id="kippAnzahlView" class="hidden">
-            <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
-            
-            <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-              Wähle <span style="font-weight:1000;">EINE</span> Taste
-            </div>
+          <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
+            <div class="backIcon"></div>
+          </button>
 
-            <div class="kippAnzahlBtns" id="kippAnzahlBtns">
-              <!-- Buttons werden dynamisch generiert -->
-            </div>
+          <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
+        </div>
 
-            <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
-              <div class="backIcon"></div>
-            </button>
-
-            <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
-              <div class="closeIcon"></div>
-            </button>
+        <div id="kippAnzahlView" class="hidden">
+          <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
+          
+          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
+            Wähle <span style="font-weight:1000;">EINE</span> Taste
           </div>
-        </div>
 
-        <div class="newGrid" id="newGrid" aria-hidden="true"></div>
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns">
+            <!-- Buttons werden dynamisch generiert -->
+          </div>
+
+          <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
+            <div class="backIcon"></div>
+          </button>
+
+          <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid" id="grid" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div id="closeModal" class="modalOverlay hidden">
+    <div class="modalBox">
+      <div class="modalTitle">Spiel beenden?</div>
+      <div class="modalText">Möchtest du das Spiel wirklich beenden?<br>Der aktuelle Fortschritt geht verloren.</div>
+      <div class="modalBtns">
+        <button class="modalBtn cancel" id="modalCancel">Abbrechen</button>
+        <button class="modalBtn confirm" id="modalConfirm">Beenden</button>
       </div>
     </div>
-
-    <div id="closeModal" class="modalOverlay hidden">
-      <div class="modalBox">
-        <div class="modalTitle">Spiel beenden?</div>
-        <div class="modalText">Möchtest du das Spiel wirklich beenden?<br>Der aktuelle Fortschritt geht verloren.</div>
-        <div class="modalBtns">
-          <button class="modalBtn cancel" id="modalCancel">Abbrechen</button>
-          <button class="modalBtn confirm" id="modalConfirm">Beenden</button>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <script>
-    // ===== ALTER WÜRFEL-CODE (funktioniert) =====
-    const boardEl     = document.getElementById("board");
-    const grid        = document.getElementById("grid");
-    const wFace       = document.getElementById("wFaceGroup");
-    const kipGroup    = document.getElementById("kipGroup");
-
-    function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-    const cols = ["A","B","C","D","E","F","G","H"];
-    function key(r, cLetter){ return `${r}${cLetter}`; }
-
-    const colorMap = new Map([
-      [key(3,"A"), "c-orange"],
-      [key(4,"A"), "c-gruen"],
-      [key(5,"A"), "c-violett"],
-      [key(6,"A"), "c-blau"],
-
-      [key(8,"C"), "c-gruen"],
-      [key(8,"D"), "c-orange"],
-      [key(8,"E"), "c-gruen"],
-      [key(8,"F"), "c-orange"],
-
-      [key(6,"H"), "c-violett"],
-      [key(5,"H"), "c-blau"],
-      [key(4,"H"), "c-orange"],
-      [key(3,"H"), "c-gruen"],
-
-      [key(1,"F"), "c-blau"],
-      [key(1,"E"), "c-violett"],
-      [key(1,"D"), "c-blau"],
-      [key(1,"C"), "c-violett"],
-    ]);
-
-    function buildGridOnce(){
-      if (grid.dataset.built === "1") return;
-      for(let r=1; r<=8; r++){
-        for(let c=0; c<8; c++){
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          const coord = key(r, cols[c]);
-          cell.dataset.coord = coord;
-          if(colorMap.has(coord)){
-            const cls = colorMap.get(coord);
-            cell.classList.add(cls);
-            cell.classList.add("colorCell");
-          }
-          grid.appendChild(cell);
-        }
-      }
-      grid.dataset.built = "1";
-    }
-
-    const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
-    let faceIndex = 0;
-
-    function setRotationSnap(){
-      const deg = rotDeg[rotIndex];
-      wFace.style.setProperty("--rot", deg + "deg");
-      kipGroup.style.setProperty("--rot", deg + "deg");
-    }
-
-    function showW(){
-      kipGroup.classList.add("hidden");
-      wFace.classList.remove("hidden");
-    }
-
-    function showKip(){
-      wFace.classList.add("hidden");
-      kipGroup.classList.remove("hidden");
-    }
-
-    setRotationSnap();
-    showW();
-
-    // ===== NEUER UI-CODE (Golden Code - nur UI, keine Funktion) =====
     const colorsEl = document.getElementById("colors");
     const levelTitleEl = document.getElementById("levelTitle");
     const levelBtnsEl  = document.getElementById("levelBtns");
@@ -1476,7 +1142,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 9 und 6
+          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1491,7 +1159,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1506,7 +1176,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1596,11 +1268,7 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", () => {
-      buildGridOnce();
-      rebuild();
-    });
-
+    window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
