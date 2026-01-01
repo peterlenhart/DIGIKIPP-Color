@@ -440,6 +440,72 @@
       gap: calc(12px * var(--uiscale));
     }
 
+    /* ===== PERMANENTE UI - ZEILE 13 ===== */
+    .permanentRow13{
+      position: absolute;
+      left: 0;
+      width: var(--gridW);
+      height: var(--cell);
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    /* KIPP BILANZ Button (links) */
+    .kippBilanzBtn{
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: calc(4.5 * var(--cell));
+      height: calc(106px * var(--uiscale));
+      
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      color: rgba(0,0,0,0.92);
+      
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .kippBilanzBtn:active{
+      transform: translateY(-50%) scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    /* P00/80 Punkteanzeige (rechts) */
+    .punkteAnzeige{
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      
+      font-size: clamp(80px, 10vmin, 140px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
     /* ===== NAVIGATION BUTTONS (Zurück & Schließen) ===== */
     .navBtn{
       position: absolute;
@@ -595,6 +661,12 @@
       <div class="colors" id="colors" aria-hidden="true"></div>
 
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <!-- ===== PERMANENTE UI - ZEILE 13 ===== -->
+        <div class="permanentRow13" id="permanentRow13">
+          <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
+          <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
+        </div>
+
         <!-- LEVEL WÄHLEN -->
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
@@ -718,6 +790,10 @@
     const backBtnKsp     = document.getElementById("backBtnKsp");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
+    const permanentRow13 = document.getElementById("permanentRow13");
+    const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
+    const punkteAnzeige  = document.getElementById("punkteAnzeige");
+
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
@@ -814,6 +890,10 @@
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
       kippAnzahlBtns.style.top = (midY + 145) + "px";
+
+      // Permanente Zeile 13 UI
+      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      permanentRow13.style.top = row13VisualTop + "px";
 
       // Navigation Buttons positionieren
       positionNavButtons(cellPx);
@@ -1031,6 +1111,12 @@
       if(e.target === closeModal){
         hideCloseModal();
       }
+    });
+
+    // ===== KIPP BILANZ BUTTON =====
+    kippBilanzBtn.addEventListener("click", () => {
+      console.log("KIPP BILANZ wurde geklickt");
+      // Hier später die Bilanz-Ansicht öffnen
     });
 
     // ===== INIT =====
