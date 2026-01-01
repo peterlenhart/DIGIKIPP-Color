@@ -450,21 +450,23 @@
       pointer-events: none;
     }
 
-    /* KIPP BILANZ Button (links) */
+    /* KIPP BILANZ Button (links, linksbündig mit Taste 1) */
     .kippBilanzBtn{
       position: absolute;
       left: 0;
       top: 50%;
       transform: translateY(-50%);
-      width: calc(4.5 * var(--cell));
-      height: calc(106px * var(--uiscale));
+      
+      /* Normale Button-Größe wie squareBtn, aber breiter für Text */
+      width: calc(180px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
       
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       color: rgba(0,0,0,0.92);
       
-      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
       
@@ -485,14 +487,14 @@
       filter: brightness(0.98);
     }
 
-    /* P00/80 Punkteanzeige (rechts) */
+    /* P00/80 Punkteanzeige (rechts, rechtsbündig mit Taste 6) */
     .punkteAnzeige{
       position: absolute;
       right: 0;
       top: 50%;
       transform: translateY(-50%);
       
-      font-size: clamp(80px, 10vmin, 140px);
+      font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
       
@@ -894,6 +896,25 @@
       // Permanente Zeile 13 UI
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
+
+      // KIPP BILANZ: Linksbündig mit Position von Taste "1" (bei Brainy/Brain)
+      // Bei Brainy/Brain mit compact-Klasse (gap: 12px)
+      // Buttons sind 44px breit, centered in der Zeile
+      // Wir nutzen die gleiche Logik wie kippAnzahlBtns
+      const btnWidth = 44 * (1 / (numVar("--scale") || 1)); // uiscale berücksichtigen
+      const gapCompact = 12 * (1 / (numVar("--scale") || 1));
+      const gapNormal = 24 * (1 / (numVar("--scale") || 1));
+      
+      // 6 Buttons mit compact gap
+      const totalWidthCompact = 6 * btnWidth + 5 * gapCompact;
+      const startXCompact = (gridW - totalWidthCompact) / 2;
+      
+      // KIPP BILANZ linksbündig mit Taste 1 Position
+      kippBilanzBtn.style.left = startXCompact + "px";
+      
+      // P00/80 rechtsbündig mit Taste 6 Position  
+      const endXCompact = startXCompact + totalWidthCompact;
+      punkteAnzeige.style.right = (gridW - endXCompact) + "px";
 
       // Navigation Buttons positionieren
       positionNavButtons(cellPx);
