@@ -78,9 +78,9 @@
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
-    /* ✅ ALTE STAGE - JETZT 1136px statt 688px */
+    /* ✅ ALTE STAGE - OPTIMIERT für Handys */
     .stage{
-      width: min(94vw, 1136px);
+      width: min(90vw, 950px);
       margin-top: 0;
       padding-top: 8px;
       padding-bottom: 2vh;
@@ -262,7 +262,7 @@
         radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
         radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
       box-shadow: 0 3px 6px rgba(0,0,0,0.28);
-      z-index: 3;
+      z-index: 520;  /* ✅ HOCHGEHOLT - sichtbar! */
       pointer-events: none;
     }
 
@@ -270,7 +270,7 @@
     .kipGroup{
       position:absolute;
       inset:0;
-      z-index: 4;
+      z-index: 500;  /* ✅ HOCHGEHOLT - sichtbar! */
       pointer-events:none;
 
       --pivot-x: calc(4 * var(--step));
@@ -358,7 +358,7 @@
       justify-content:center;
       font-weight: 900;
       color: #111;
-      font-size: clamp(18px, 8vmin, 36px);
+      font-size: calc(var(--cell) * 0.32);  /* ✅ 32% der Cell = ~45px bei 142px */
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
       transform: rotate(var(--num-rot, 0deg));
       transform-origin: 50% 50%;
@@ -490,7 +490,7 @@
         calc(0px + var(--bg-off-x))
         calc(0px + var(--bg-off-y));
       pointer-events: none;
-      z-index: 1001;
+      z-index: 50;  /* ✅ UNTER Würfel */
     }
 
     .colors{
@@ -500,7 +500,7 @@
       width: var(--gridW);
       height: var(--gridH);
       pointer-events: none;
-      z-index: 1002;
+      z-index: 60;  /* ✅ UNTER Würfel, ÜBER bgPNG */
     }
 
     .colorSq{
@@ -516,7 +516,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 1003;
+      z-index: 600;  /* ✅ ÜBER Würfel */
       pointer-events: none;
       background-image:
         repeating-linear-gradient(
@@ -541,7 +541,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 1004;
+      z-index: 1500;  /* ✅ GANZ OBEN */
       pointer-events: none;
     }
 
@@ -1073,10 +1073,10 @@
           <div class="cubeShadow" aria-hidden="true"></div>
           <div class="cubeFace" aria-label="Würfelfläche"></div>
 
-          <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
-          <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span></span></div></div>
-          <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span></span></div></div>
-          <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
+          <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9</span></div></div>
+          <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
+          <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
+          <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
         </div>
 
         <div id="kipGroup" class="kipGroup hidden" aria-label="KIP Gruppe">
