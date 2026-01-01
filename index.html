@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – Option 2 (funktionierende Version)</title>
+  <title>DigiKipp – PNG + Raster + Farbfelder + Level-UI + KSP</title>
 
   <style>
     :root{
@@ -328,18 +328,21 @@
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
     }
 
+    /* ✅ Schnecke: DEINE Justierung */
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
       top: -77px;
     }
 
+    /* ✅ Hase: DEINE Justierung */
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
       top: -77px;
     }
 
+    /* ✅ Regler Container: von Mitte B bis Mitte G */
     .sliderContainer{
       position: absolute;
       left: calc(1.5 * var(--cell));
@@ -432,151 +435,10 @@
       justify-content: center;
     }
 
+    /* Brainy & Brain Level: Engerer Abstand für 6 Buttons */
     .kippAnzahlBtns.compact{
       gap: calc(12px * var(--uiscale));
     }
-
-    /* ===== WÜRFEL SYSTEM ===== */
-    
-    :root {
-      --cube-wood-base: #d7c2a4;
-      --cube-wood-deep: #c9b08f;
-      --cube-wood-warm: rgba(155, 70, 110, 0.10);
-      --cube-wood-gold: rgba(249, 150, 30, 0.10);
-      --w1-innerframe: rgba(122, 74, 52, 1);
-      --slot-fill: #ead7be;
-      --slot-border-w: 2px;
-      --rotSign: 1;
-      --rot: 0deg;
-    }
-
-    .wFaceGroup,
-    .kipGroup{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 4;
-      pointer-events: none;
-
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .cubeShadow{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      z-index: 1;
-      background: transparent;
-      box-shadow:
-        0 22px 26px rgba(0,0,0,0.32),
-        0 10px 16px rgba(0,0,0,0.18);
-    }
-
-    .cubeFace{
-      position: absolute;
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      box-sizing: border-box;
-      border-radius: 0;
-      background:
-        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
-        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
-        repeating-linear-gradient(
-          20deg,
-          rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 10px,
-          rgba(255,255,255,0.02) 10px,
-          rgba(255,255,255,0.02) 18px
-        ),
-        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
-        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
-      box-shadow:
-        inset 0 0 0 2px var(--w1-innerframe),
-        0 0 0 1px rgba(255,255,255,0.08) inset;
-      z-index: 2;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-    }
-
-    .ball{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((4 + 2) * var(--cell));
-      width: calc(var(--cell) * 0.55);
-      height: calc(var(--cell) * 0.55);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
-        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
-        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
-      box-shadow: 0 3px 6px rgba(0,0,0,0.28);
-      z-index: 3;
-      pointer-events: none;
-    }
-
-    .slot{
-      position: absolute;
-      width: var(--cell);
-      height: var(--cell);
-      box-sizing: border-box;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border: var(--slot-border-w) solid var(--slot-border);
-      border-radius: 0;
-      z-index: 7;
-      box-shadow:
-        1px 1px 0 rgba(255,255,255,0.18) inset,
-        -1px -1px 0 rgba(0,0,0,0.08) inset,
-        0 3px 5px rgba(0,0,0,0.22),
-        2px 2px 3px -1px rgba(0,0,0,0.20);
-    }
-
-    .slot .num{
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      z-index: 9;
-    }
-
-    .slot .num > span{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 0.38);  /* ✅ 38% = ~54px bei 142px Cell - FORMATFÜLLEND */
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      transform: rotate(var(--num-rot, 0deg));
-      transform-origin: 50% 50%;
-      position: relative;
-      line-height: 1;
-    }
-
-    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
-    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
-    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
-    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
-
-    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
 
     /* ===== PERMANENTE UI - ZEILE 13 ===== */
     .permanentRow13{
@@ -588,12 +450,14 @@
       pointer-events: none;
     }
 
+    /* KIPP BILANZ Button (links, linksbündig mit Taste 1) */
     .kippBilanzBtn{
       position: absolute;
       left: 55px;
       top: 50%;
       transform: translateY(-50%);
       
+      /* Normale Button-Größe wie squareBtn, aber breiter für Text */
       width: calc(180px * var(--uiscale));
       height: calc(44px * var(--uiscale));
       
@@ -623,6 +487,7 @@
       filter: brightness(0.98);
     }
 
+    /* P00/80 Punkteanzeige (rechts, rechtsbündig mit Taste 6) */
     .punkteAnzeige{
       position: absolute;
       right: 70px;
@@ -643,9 +508,10 @@
       line-height: 1;
     }
 
+    /* ===== DIGIKIPP TITEL (zwischen Zeile 01 und 02) ===== */
     .digiKippTitle{
       position: absolute;
-      left: calc(50% + 25px);
+      left: calc(50% + 92px);
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
@@ -672,6 +538,7 @@
       text-transform: lowercase;
     }
 
+    /* ===== NAVIGATION BUTTONS (Zurück & Schließen) ===== */
     .navBtn{
       position: absolute;
       width: calc(56px * var(--uiscale));
@@ -693,6 +560,7 @@
       opacity: 0.8;
     }
 
+    /* Zurück-Icon: Rechtsoffenes Dreieck (zeigt nach links) - beige */
     .backIcon{
       width: 0;
       height: 0;
@@ -702,6 +570,7 @@
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
 
+    /* Schließen-Icon: X - beige */
     .closeIcon{
       position: relative;
       width: calc(32px * var(--uiscale));
@@ -726,6 +595,7 @@
       transform: translate(-50%, -50%) rotate(-45deg);
     }
 
+    /* ===== SICHERHEITSABFRAGE MODAL ===== */
     .modalOverlay{
       position: fixed;
       top: 0;
@@ -810,6 +680,7 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
+    /* ===== Visibility Control ===== */
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -821,27 +692,17 @@
 
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- ===== WÜRFEL SYSTEM ===== -->
-      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
-        <div class="cubeShadow" aria-hidden="true"></div>
-        <div class="cubeFace" aria-label="Würfelfläche"></div>
-
-        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span>9.</span></div></div>
-        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span>7</span></div></div>
-        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span>12</span></div></div>
-        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span>2</span></div></div>
-      </div>
-
-      <div class="ball" aria-label="Kugel"></div>
-
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <!-- ===== DIGIKIPP TITEL ===== -->
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
+        <!-- ===== PERMANENTE UI - ZEILE 13 ===== -->
         <div class="permanentRow13" id="permanentRow13">
           <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
           <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
         </div>
 
+        <!-- LEVEL WÄHLEN -->
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
@@ -851,11 +712,13 @@
             <button class="levelBtn" data-level="brain">Brain</button>
           </div>
 
+          <!-- Schließen-Button für Level View -->
           <button class="navBtn closeBtn" id="closeBtnLevel" aria-label="Spiel beenden">
             <div class="closeIcon"></div>
           </button>
         </div>
 
+        <!-- KSP BLOCK -->
         <div id="kspView" class="hidden">
           <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
 
@@ -885,15 +748,18 @@
             </div>
           </div>
 
+          <!-- Zurück-Button für KSP View -->
           <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
             <div class="backIcon"></div>
           </button>
 
+          <!-- Schließen-Button für KSP View -->
           <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
             <div class="closeIcon"></div>
           </button>
         </div>
 
+        <!-- KIPP ANZAHL WÄHLEN -->
         <div id="kippAnzahlView" class="hidden">
           <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
           
@@ -905,10 +771,12 @@
             <!-- Buttons werden dynamisch generiert -->
           </div>
 
+          <!-- Zurück-Button für Kipp Anzahl View -->
           <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
             <div class="backIcon"></div>
           </button>
 
+          <!-- Schließen-Button für Kipp Anzahl View -->
           <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
             <div class="closeIcon"></div>
           </button>
@@ -919,6 +787,7 @@
     </div>
   </div>
 
+  <!-- SICHERHEITSABFRAGE MODAL -->
   <div id="closeModal" class="modalOverlay hidden">
     <div class="modalBox">
       <div class="modalTitle">Spiel beenden?</div>
@@ -965,8 +834,8 @@
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
 
-    let currentView = "level";
-    let selectedLevel = null;
+    let currentView = "level"; // "level", "ksp", "anzahl"
+    let selectedLevel = null; // "trainee", "brainy", "brain"
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -1044,29 +913,36 @@
 
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
+      // Level View
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
+      // KSP View
       kspTitle.style.top = midY + "px";
       kspTop.style.top = (midY + 70) + "px";
       sliderRow.style.top = (midY + 265) + "px";
 
+      // KIPP Anzahl View
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
       kippAnzahlBtns.style.top = (midY + 145) + "px";
 
+      // Permanente Zeile 13 UI
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      const titleVisualRow = 1.5;
+      // DIGIKIPP Titel zwischen Zeile 01 und 02 (genau wie Schließen-Button)
+      const titleVisualRow = 1.5; // Zwischen 01 und 02
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
+      // Navigation Buttons positionieren
       positionNavButtons(cellPx);
     }
 
     function positionNavButtons(cellPx){
-      const backCol = 8;
+      // Zurück-Button: Zeile 8, Spalte H (zentriert im Feld)
+      const backCol = 8; // H
       const backRow = 8;
       const backVisualRow = backRow + HEADER_ROW_OFFSET;
       
@@ -1079,8 +955,9 @@
         btn.style.transform = "translate(-50%, -50%)";
       });
 
-      const closeCol = 1;
-      const closeVisualRow = 1.5;
+      // Schließen-Button: Zwischen Zeile 01 und 02 (Zeile 0.5), Spalte A
+      const closeCol = 1; // A
+      const closeVisualRow = 1.5; // Zwischen 01 und 02
       
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
@@ -1106,6 +983,7 @@
       positionUI();
     }
 
+    // ===== VIEW SWITCHING =====
     function showLevelView(){
       currentView = "level";
       levelView.classList.remove("hidden");
@@ -1126,15 +1004,19 @@
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
       
+      // Buttons je nach Level generieren
       buildKippAnzahlButtons(selectedLevel);
     }
 
+    // ===== KIPP ANZAHL BUTTONS DYNAMISCH GENERIEREN =====
     function buildKippAnzahlButtons(level){
       kippAnzahlBtns.innerHTML = "";
       
+      // Compact-Klasse entfernen
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
+        // TRAINEE: 3 Buttons (3, 6, 9)
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
         
         [3, 6, 9].forEach(num => {
@@ -1142,16 +1024,16 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 9 und 6
-          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brainy"){
+        // BRAINY: 6 Buttons (1, 2, 3, 4, 5, 6)
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
         
+        // Engeren Abstand für Brainy
         kippAnzahlBtns.classList.add("compact");
         
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -1159,26 +1041,25 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
-          const displayNum = (num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brain"){
+        // BRAIN: 6 Buttons (1, 2, 3, 4, 5, 6) - OHNE 0!
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> oder <span style="font-weight:1000;">ZWEI</span> Tasten';
         
+        // Engeren Abstand für Brain
         kippAnzahlBtns.classList.add("compact");
         
+        // Nur 1-6, keine 0
         [1, 2, 3, 4, 5, 6].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
-          const displayNum = (num === 6) ? `${num}.` : num;
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1187,16 +1068,21 @@
 
     function handleAnzahlClick(anzahl){
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
+      // Hier weiter zum Spiel
     }
 
+    // ===== LEVEL BUTTONS =====
     document.querySelectorAll('.levelBtn').forEach(btn => {
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
         console.log("Level gewählt:", selectedLevel);
+        
+        // ALLE Level führen zuerst zu KSP-Auswahl
         showKspView();
       });
     });
 
+    // ===== KSP LOGIC =====
     let demoRunning = false;
 
     function setPlayGlyph(isPause){
@@ -1222,12 +1108,14 @@
       showKippAnzahlView();
     });
 
+    // Slider Snapping zu diskreten Werten
     speedSlider.addEventListener("input", () => {
       const value = parseInt(speedSlider.value);
       const speedLabels = ["1", "2", "3", "4", "5"];
       console.log(`Speed: ${speedLabels[value]}`);
     });
 
+    // ===== ZURÜCK BUTTONS =====
     backBtnKsp.addEventListener("click", () => {
       console.log("Zurück von KSP zu Level");
       showLevelView();
@@ -1238,6 +1126,7 @@
       showKspView();
     });
 
+    // ===== SCHLIESSEN BUTTONS =====
     function showCloseModal(){
       closeModal.classList.remove("hidden");
     }
@@ -1258,16 +1147,20 @@
       showLevelView();
     });
 
+    // Modal schließen bei Klick außerhalb
     closeModal.addEventListener("click", (e) => {
       if(e.target === closeModal){
         hideCloseModal();
       }
     });
 
+    // ===== KIPP BILANZ BUTTON =====
     kippBilanzBtn.addEventListener("click", () => {
       console.log("KIPP BILANZ wurde geklickt");
+      // Hier später die Bilanz-Ansicht öffnen
     });
 
+    // ===== INIT =====
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
