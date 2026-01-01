@@ -149,7 +149,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 3;
+      z-index: 100;  /* ✅ ERHÖHT: 3→100, damit Buttons ÜBER Würfel! */
       pointer-events: none;
     }
 
@@ -238,12 +238,13 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: calc(24px * var(--uiscale));
+      gap: calc(var(--cell) * 0.5); /* ✅ 71px Abstand = 0.5 Spalte */
+      width: calc(var(--cell) * 6.5); /* ✅ 923px breit = 6.5 Spalten */
     }
 
     .squareBtn{
-      width: calc(44px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
+      flex: 1; /* ✅ Beide Buttons gleich breit */
+      height: calc(60px * var(--uiscale)); /* ✅ Höher für Text */
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -260,6 +261,35 @@
     .squareBtn:active{
       transform: scale(0.98);
       filter: brightness(0.98);
+    }
+
+    .btnText{
+      font-size: calc(16px * var(--uiscale));
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      color: #7a3f2b;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    }
+
+    /* ✅ Inaktiver Button (während Demo) */
+    .squareBtn.disabled{
+      background: rgba(122, 63, 43, 0.5);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .squareBtn.disabled .btnText{
+      color: rgba(234,215,190,0.7);
+    }
+
+    /* ✅ Pulsier-Animation */
+    @keyframes pulse{
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.85; }
+    }
+    .pulse{
+      animation: pulse 1.5s ease-in-out infinite;
     }
 
     .playIcon{
@@ -331,13 +361,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px;
+      top: -27px; /* ✅ +50px nach unten: war -77px */
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px;
+      top: -27px; /* ✅ +50px nach unten: war -77px */
     }
 
     .sliderContainer{
@@ -974,12 +1004,12 @@
 
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
-              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
-                <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
+              <button id="btnSchauen" class="squareBtn" aria-label="Zahlen anschauen und merken" type="button">
+                <span class="btnText">SCHAUEN<br>& MERKEN</span>
               </button>
 
-              <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
-                <span class="okText">OK</span>
+              <button id="btnSpielen" class="squareBtn" aria-label="Spiel starten" type="button">
+                <span class="btnText">SPIELEN</span>
               </button>
             </div>
 
@@ -1053,10 +1083,11 @@
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
-    const btnPlay      = document.getElementById("btnPlay");
-    const btnOk        = document.getElementById("btnOk");
-    const playGlyph    = document.getElementById("playGlyph");
+    const btnSchauen   = document.getElementById("btnSchauen");
+    const btnSpielen   = document.getElementById("btnSpielen");
     const speedSlider  = document.getElementById("speedSlider");
+    const snailIcon    = document.querySelector(".speedIcon.snail");
+    const haseIcon     = document.querySelector(".speedIcon.hase");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
@@ -1267,28 +1298,16 @@
 
     let runningPreview = false;
     let previewToken = 0;
-    let previewPaused = false;
 
+    // ✅ Einfacher Sleep mit Token-Check (KEINE Pause!)
     async function waitOrPause(ms, myToken){
-      const slice = 40;
-      let elapsed = 0;
-      while(elapsed < ms){
-        if(myToken !== previewToken) return false;
-        if(previewPaused){
-          await sleep(60);
-          continue;
-        }
-        const step = Math.min(slice, ms - elapsed);
-        await sleep(step);
-        elapsed += step;
-      }
+      await sleep(ms);
       return (myToken === previewToken);
     }
 
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
-      previewPaused = false;
       const myToken = ++previewToken;
 
       reroll12_keepEmpty();
@@ -1604,33 +1623,44 @@
       });
     });
 
-    function setPlayGlyph(isPause){
-      playGlyph.className = isPause ? "pauseIcon" : "playIcon";
+    function startPulsing(){
+      speedSlider.classList.add("pulse");
+      if(snailIcon) snailIcon.classList.add("pulse");
+      if(haseIcon) haseIcon.classList.add("pulse");
     }
 
-    btnPlay.addEventListener("click", async () => {
+    function stopPulsing(){
+      speedSlider.classList.remove("pulse");
+      if(snailIcon) snailIcon.classList.remove("pulse");
+      if(haseIcon) haseIcon.classList.remove("pulse");
+    }
+
+    btnSchauen.addEventListener("click", async () => {
       if(!runningPreview){
-        // ✅ STARTEN
-        setPlayGlyph(true);
+        // ✅ DEMO STARTEN
+        btnSchauen.classList.add("disabled");
+        btnSchauen.disabled = true;
+        startPulsing();
         console.log("Zahlen-Vorschau gestartet");
         await runSetNumbersCycle();
-        setPlayGlyph(false);
+        // Demo endet (nur wenn cancelPreview aufgerufen)
+        btnSchauen.classList.remove("disabled");
+        btnSchauen.disabled = false;
+        stopPulsing();
         console.log("Zahlen-Vorschau beendet");
-      } else {
-        // ✅ PAUSE / RESUME
-        previewPaused = !previewPaused;
-        setPlayGlyph(!previewPaused);
-        console.log(previewPaused ? "Vorschau pausiert" : "Vorschau fortgesetzt");
       }
     });
 
-    btnOk.addEventListener("click", () => {
+    btnSpielen.addEventListener("click", () => {
       const speedValue = speedSlider.value;
       const speedLabels = ["1", "2", "3", "4", "5"];
-      console.log(`KSP bestätigt, Stufe: ${speedLabels[speedValue]} (Wert: ${speedValue})`);
+      console.log(`Speed bestätigt: ${speedLabels[speedValue]}, SPIEL STARTET!`);
       
-      // ✅ Stoppt Endlosschleife
+      // ✅ Stoppt Demo
       cancelPreview();
+      stopPulsing();
+      btnSchauen.classList.remove("disabled");
+      btnSchauen.disabled = false;
       
       showKippAnzahlView();
     });
