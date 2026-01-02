@@ -173,6 +173,10 @@
       user-select: none;
     }
 
+    #kippAnzahlTitle{
+      color: rgba(234,215,190,0.96);
+    }
+
     .levelBtns{
       position:absolute;
       left: 50%;
@@ -1013,7 +1017,7 @@
           <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
 
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            EINE Taste wählen
+            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
@@ -1145,7 +1149,7 @@
       span.textContent = text;
 
       if(n >= 10){
-        span.style.letterSpacing = "0";
+        span.style.letterSpacing = "-0.08em";
       } else {
         span.style.letterSpacing = "";
       }
@@ -1525,7 +1529,7 @@
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
-        kippAnzahlSubtitle.textContent = 'EINE Taste wählen';
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
@@ -1538,7 +1542,7 @@
         });
 
       } else if(level === "brainy"){
-        kippAnzahlSubtitle.textContent = 'EINE Taste wählen';
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1553,7 +1557,7 @@
         });
 
       } else if(level === "brain"){
-        kippAnzahlSubtitle.textContent = 'ZWEI Tasten wählen';
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
         kippAnzahlBtns.classList.add("compact");
 
