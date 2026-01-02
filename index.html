@@ -543,7 +543,7 @@
       font-weight: 900;
       color: #111;
       font-size: calc(var(--cell) * 0.70);
-      letter-spacing: -0.05em;
+      letter-spacing: -0.02em;
       text-shadow: 0 2px 0 rgba(255,255,255,0.35);
       transform: rotate(var(--num-rot, 0deg));
       transform-origin: 50% 50%;
@@ -1101,10 +1101,18 @@
       if(!span) return;
       if(n === null || n === undefined){
         span.textContent = "";
+        span.style.letterSpacing = "";
         return;
       }
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
+      
+      // Zweistellige Zahlen (10, 11, 12) zentrieren
+      if(n >= 10){
+        span.style.letterSpacing = "0";
+      } else {
+        span.style.letterSpacing = "";
+      }
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1377,9 +1385,7 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      const titleRow = 1.5;
-      const titleVisualRow = titleRow + HEADER_ROW_OFFSET;
-      const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
+      const titleY = 1.0 * cellPx;
       digiKippTitle.style.top = titleY + "px";
 
       positionNavButtons(cellPx);
@@ -1400,11 +1406,10 @@
       });
 
       const closeCol = 1;
-      const closeRow = 1.5;
-      const closeVisualRow = closeRow + HEADER_ROW_OFFSET;
+      const closeY = 1.0 * cellPx;
       
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
-      const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
+      const closeTop = closeY;
 
       [closeBtnLevel, closeBtnKsp, closeBtnAnzahl].forEach(btn => {
         btn.style.left = closeLeft + "px";
@@ -1466,7 +1471,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
+          const displayNum = String(num);
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
@@ -1482,7 +1487,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = (num === 6) ? `${num}.` : num;
+          const displayNum = String(num);
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
@@ -1498,7 +1503,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = (num === 6) ? `${num}.` : num;
+          const displayNum = String(num);
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
