@@ -1023,6 +1023,11 @@
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
           </div>
 
+          <!-- TESTBUTTON (nur Trainee, Positionierung passiert im JS in Zelle 10H) -->
+          <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Kippziel">
+            <span class="anzahlText">T</span>
+          </button>
+
           <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
             <div class="backIcon"></div>
           </button>
@@ -1066,6 +1071,7 @@
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
     const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
+    const testTargetBtn      = document.getElementById("testTargetBtn");
 
     const closeBtnLevel  = document.getElementById("closeBtnLevel");
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
@@ -1082,8 +1088,14 @@
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
 
+    const stageEl  = document.getElementById("stage");
+    const layoutEl = document.getElementById("layout");
+
     let currentView = "level";
     let selectedLevel = null;
+
+    // Button-Logik: erst nach 3 ganzen Kipps wird STOP & SPIELEN aktiv
+    // States: "schauen" (bereit), "running" (läuft, noch nicht stoppbar), "spielen" (STOP & SPIELEN aktiv)
     let buttonState = "schauen";
 
     function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
@@ -1119,171 +1131,34 @@
       'S4': 'blau'
     };
 
-    function getVisibleNumbersWithColors(){
+    function getVisibleNumbers(){
       const curr = sets[faceIndex];
       return [
-        { slot: 'S1', num: curr[0], color: slotColorMap['S1'] },
-        { slot: 'S2', num: curr[1], color: slotColorMap['S2'] },
-        { slot: 'S3', num: curr[2], color: slotColorMap['S3'] },
-        { slot: 'S4', num: curr[3], color: slotColorMap['S4'] }
+        { slot:'S1', num: curr[0] },
+        { slot:'S2', num: curr[1] },
+        { slot:'S3', num: curr[2] },
+        { slot:'S4', num: curr[3] }
       ];
     }
 
-    // ==========================================
-    // (2) Zielzahlen-Ausrichtung: Zahlenfuß Richtung Grid-Mitte
-    // -> Rotation wird aus der Feldposition (Rand) abgeleitet.
-    // ==========================================
-    function computeTargetRotation(coord){
-      const { row, col } = coordToXY(coord);
-      // Randlogik (wie besprochen): Zahlenfuß Richtung Mitte
-      if(row === 1) return 0;     // oben -> Fuß nach unten
-      if(row === 8) return 180;   // unten -> Fuß nach oben
-      if(col === 1) return -90;   // links -> Fuß nach rechts (zur Mitte)
-      if(col === 8) return 90;    // rechts -> Fuß nach links (zur Mitte)
-      return 0;
-    }
-
-    // ==========================================
-    // Ziel-Felder pro Farbe (Koordinaten bleiben unverändert)
-    // ==========================================
+    // --- Ziel-Felder (Koordinaten bleiben unverändert; Rotation wird jetzt aus der Koordinate abgeleitet)
     const colorFieldCoords = {
-      'violett': [
-        { coord: '3A' },
-        { coord: '8D' },
-        { coord: '8E' },
-        { coord: '3H' }
-      ],
-      'blau': [
-        { coord: '1F' },
-        { coord: '8F' },
-        { coord: '4A' },
-        { coord: '5A' }
-      ],
-      'gruen': [
-        { coord: '1C' },
-        { coord: '8C' },
-        { coord: '4H' },
-        { coord: '5H' }
-      ],
-      'orange': [
-        { coord: '1D' },
-        { coord: '1E' },
-        { coord: '6A' },
-        { coord: '6H' }
-      ]
+      'violett': ['3A','8D','8E','3H'],
+      'blau':    ['1F','8F','4A','5A'],
+      'gruen':   ['1C','8C','4H','5H'],
+      'orange':  ['1D','1E','6A','6H']
     };
 
-    // ==========================================
-    // (3) Trefferlogik: Distanz immer ±1 (Nachbarzelle)
-    // -> DOM-basierte Adjazenz (Pixel), damit Rotation/Transform stimmt.
-    // ==========================================
-    function getCenterOfElement(el){
-      const r = el.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    // Zahlenfuß Richtung Boxmitte / Grid-Mitte (Achse/Kugelzentrum)
+    // Regel: obere Kante (row 1) => 0°, untere (row 8) => 180°, linke (col A) => 90°, rechte (col H) => -90°
+    function rotationForCoord(coord){
+      const { row, col } = coordToXY(coord);
+      if(row === 1) return 0;
+      if(row === 8) return 180;
+      if(col === 1) return 90;
+      if(col === 8) return -90;
+      return 0;
     }
-
-    function isAdjacentByOneCell(a, b){
-      const cellPx = numVar("--cell") || 142;
-      const tol = cellPx * 0.25; // Toleranz, bleibt rein geometrisch
-      const dx = Math.abs(a.x - b.x);
-      const dy = Math.abs(a.y - b.y);
-
-      // genau eine Zelle Nachbarschaft (horizontal ODER vertikal)
-      const horiz = (Math.abs(dx - cellPx) <= tol) && (dy <= tol);
-      const vert  = (Math.abs(dy - cellPx) <= tol) && (dx <= tol);
-      return horiz || vert;
-    }
-
-    function checkTrefferNow(){
-      const targets = Array.from(document.querySelectorAll(".targetNumber"));
-      if(targets.length === 0) return false;
-
-      // Trefferlogik soll im Spielzustand auf W sichtbar geprüft werden
-      // (Slots sind nur dort die "ZS"-Kandidaten)
-      const wSlots = Array.from(wFaceGroup.querySelectorAll(".slot"));
-
-      for(const t of targets){
-        const tNum = Number(t.dataset.targetNum || NaN);
-        if(!Number.isFinite(tNum)) continue;
-
-        const tCenter = getCenterOfElement(t);
-
-        for(const s of wSlots){
-          const span = s.querySelector(".num > span");
-          const txt = (span && span.textContent || "").trim().replace(".", "");
-          const sNum = Number(txt);
-          if(!Number.isFinite(sNum)) continue;
-
-          if(sNum !== tNum) continue;
-
-          const sCenter = getCenterOfElement(s);
-          if(isAdjacentByOneCell(sCenter, tCenter)){
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    // ==========================================
-    // (1) Trainee: Random Zielzahl–Zielfarbe so generieren,
-    //     dass NICHT bereits ein Treffer vorliegt (und auch keine
-    //     sichtbare identische Zahl-Farbe-Kombi).
-    // ==========================================
-    function getRandomItem(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function generateTargetNumberColorSafe(){
-      const visible = getVisibleNumbersWithColors().filter(v => v.num !== null && v.num !== undefined);
-      const colors = ['violett', 'blau', 'gruen', 'orange'];
-
-      if(visible.length === 0){
-        // Fallback (soll in deiner Logik praktisch nicht passieren)
-        return { num: 1, color: 'violett' };
-      }
-
-      // wir versuchen mehrere Male, bis kein Start-Treffer möglich ist
-      const MAX_TRIES = 250;
-
-      for(let tries=0; tries<MAX_TRIES; tries++){
-        const pickNumObj = getRandomItem(visible);
-        const pickNum = pickNumObj.num;
-        const pickColor = getRandomItem(colors);
-
-        // harte Sperre: wenn (Zahl,Farbe) als sichtbare Kombi existiert -> neu
-        const comboVisible = visible.some(v => v.num === pickNum && v.color === pickColor);
-        if(comboVisible) continue;
-
-        // temporär platzieren und prüfen, ob Trefferlogik bereits erfüllt wäre
-        const candidate = { num: pickNum, color: pickColor };
-
-        // DOM kurz setzen -> checkTrefferNow -> wieder löschen, falls ungültig
-        clearTargetNumbers();
-        placeTargetNumbers(candidate);
-
-        const isHitAtStart = checkTrefferNow();
-        if(isHitAtStart){
-          clearTargetNumbers();
-          continue;
-        }
-
-        // gültig
-        clearTargetNumbers();
-        return candidate;
-      }
-
-      // letzter Fallback: nimm eine Zahl, aber zwinge Farbe ≠ sichtbarer Slot-Farbe
-      const fallbackNumObj = getRandomItem(visible);
-      const fallbackNum = fallbackNumObj.num;
-      const forbiddenColors = new Set(visible.filter(v => v.num === fallbackNum).map(v => v.color));
-      const allowedColors = colors.filter(c => !forbiddenColors.has(c));
-      const fallbackColor = allowedColors.length ? getRandomItem(allowedColors) : getRandomItem(colors);
-
-      return { num: fallbackNum, color: fallbackColor };
-    }
-
-    let currentTarget = null;
 
     function placeTargetNumbers(target){
       clearTargetNumbers();
@@ -1294,8 +1169,8 @@
       const cellPx = numVar("--cell") || 142;
       const sizePx = numVar("--colorSize") || 126;
 
-      fields.forEach(field => {
-        const { row, col } = coordToXY(field.coord);
+      fields.forEach(coord => {
+        const { row, col } = coordToXY(coord);
         const visualRow = row + HEADER_ROW_OFFSET;
 
         const leftCell = (col - 1) * cellPx;
@@ -1307,7 +1182,6 @@
 
         const container = document.createElement("div");
         container.className = "targetNumber";
-        container.dataset.targetNum = String(target.num);
         container.style.position = "absolute";
         container.style.left = x + "px";
         container.style.top = y + "px";
@@ -1325,10 +1199,7 @@
         numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
         numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
         numSpan.style.lineHeight = "1";
-
-        // Rotation: Zahlenfuß Richtung Grid-Mitte (Achsen)
-        const rot = computeTargetRotation(field.coord);
-        numSpan.style.transform = `rotate(${rot}deg)`;
+        numSpan.style.transform = `rotate(${rotationForCoord(coord)}deg)`;
         numSpan.style.transformOrigin = "50% 50%";
 
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
@@ -1466,14 +1337,6 @@
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-
-      // Treffercheck (nur Logik, keine UI-Veränderung)
-      if(selectedLevel === "trainee" && currentTarget){
-        const hit = checkTrefferNow();
-        if(hit){
-          console.log("TREFFER erkannt!");
-        }
-      }
     }
 
     function reroll12_keepEmpty(){
@@ -1529,12 +1392,123 @@
       return (myToken === previewToken);
     }
 
+    // --- Treffer-Erkennung (Distanz immer <= 1; nicht "gleiche Reihe/Spalte", sondern echte Nachbarschaft)
+    function manhattan(a,b){ return Math.abs(a.row-b.row) + Math.abs(a.col-b.col); }
+
+    function coordFromElementCenter(el){
+      const cellPx = numVar("--cell") || 142;
+      const rect = el.getBoundingClientRect();
+      const layoutRect = layoutEl.getBoundingClientRect();
+
+      // Mittelpunkt des Elements relativ zum layout
+      const cx = (rect.left + rect.right)/2 - layoutRect.left;
+      const cy = (rect.top + rect.bottom)/2 - layoutRect.top;
+
+      const col = Math.round(cx / cellPx) + 1;
+      const visualRow = Math.round(cy / cellPx) + 1;
+      const row = visualRow - HEADER_ROW_OFFSET;
+
+      return { row, col };
+    }
+
+    function getVisibleSlotBoardCoords(){
+      const s1 = wFaceGroup.querySelector('[data-slot="S1"]');
+      const s2 = wFaceGroup.querySelector('[data-slot="S2"]');
+      const s3 = wFaceGroup.querySelector('[data-slot="S3"]');
+      const s4 = wFaceGroup.querySelector('[data-slot="S4"]');
+
+      // falls im Moment kip sichtbar ist, trotzdem die W-Elemente als Referenz nehmen (die rotieren ident)
+      return {
+        S1: coordFromElementCenter(s1),
+        S2: coordFromElementCenter(s2),
+        S3: coordFromElementCenter(s3),
+        S4: coordFromElementCenter(s4),
+      };
+    }
+
+    function wouldBeImmediateHit(target){
+      const fields = colorFieldCoords[target.color];
+      if(!fields) return false;
+
+      const slots = getVisibleNumbers();
+      const slotCoords = getVisibleSlotBoardCoords();
+
+      for(const coordStr of fields){
+        const tf = coordToXY(coordStr); // board-koord: row 1..8, col 1..8
+        for(const s of slots){
+          if(s.num === null || s.num === undefined) continue;
+          if(s.num !== target.num) continue;
+          const sc = slotCoords[s.slot];
+          if(!sc) continue;
+
+          // echte Nachbarschaft (Distanz exakt 1)
+          if(manhattan(tf, sc) === 1) return true;
+        }
+      }
+      return false;
+    }
+
+    // --- Random Zielzahl+Zielfarbe (nur Trainee) ---
+    // Regel: zufällige sichtbare Zahl + zufällige Farbe, aber NICHT so, dass sofort ein Treffer entsteht.
+    function generateTargetNumberColor_Trainee(){
+      const colors = ['violett', 'blau', 'gruen', 'orange'];
+      const visibleNums = getVisibleNumbers().filter(v => v.num !== null && v.num !== undefined).map(v => v.num);
+
+      if(visibleNums.length === 0){
+        return { num: 1, color: colors[Math.floor(Math.random()*colors.length)] };
+      }
+
+      // Mehrfach versuchen bis "kein Sofort-Treffer"
+      for(let tries=0; tries<200; tries++){
+        const num = visibleNums[Math.floor(Math.random()*visibleNums.length)];
+        const color = colors[Math.floor(Math.random()*colors.length)];
+        const candidate = { num, color };
+        if(!wouldBeImmediateHit(candidate)){
+          return candidate;
+        }
+      }
+
+      // Fallback (soll praktisch nie passieren): nimm erste sichtbare Zahl, und suche eine Farbe ohne Soforttreffer
+      const fallbackNum = visibleNums[0];
+      for(const c of colors){
+        const candidate = { num: fallbackNum, color: c };
+        if(!wouldBeImmediateHit(candidate)){
+          return candidate;
+        }
+      }
+      return { num: fallbackNum, color: colors[0] };
+    }
+
+    let currentTarget = null;
+
+    function cancelPreview(){
+      previewToken++;
+      runningPreview = false;
+    }
+
+    // Zurück-Button Sperre im Kippzyklus (nur Anzahlen-View / Spielablauf)
+    function setBackAnzahlEnabled(enabled){
+      if(enabled){
+        backBtnAnzahl.style.pointerEvents = "auto";
+        backBtnAnzahl.style.opacity = "";
+        backBtnAnzahl.disabled = false;
+      }else{
+        backBtnAnzahl.style.pointerEvents = "none";
+        backBtnAnzahl.style.opacity = "0.35";
+        backBtnAnzahl.disabled = true;
+      }
+    }
+
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
       const myToken = ++previewToken;
 
       reroll12_keepEmpty();
+
+      // Während Zahlenbelegung läuft: Button ist "running" (noch nicht stoppbar)
+      buttonState = "running";
+      btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
 
       showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
@@ -1551,6 +1525,7 @@
       showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
+      // 1. voller Kipp
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
@@ -1566,6 +1541,7 @@
       showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
+      // 2. voller Kipp
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
@@ -1581,9 +1557,14 @@
       showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
+      // 3. voller Kipp (Zahlenbelegung abgeschlossen)
       advanceFullCW();
       showW();
       renderW();
+
+      // JETZT erst: STOP & SPIELEN aktiv
+      btnSchauen.querySelector('.btnText').textContent = "STOP & SPIELEN";
+      buttonState = "spielen";
 
       if(stopAtNextW){
         stopAtNextW = false;
@@ -1633,11 +1614,6 @@
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
-      runningPreview = false;
-    }
-
-    function cancelPreview(){
-      previewToken++;
       runningPreview = false;
     }
 
@@ -1737,6 +1713,7 @@
       digiKippTitle.style.top = titleY + "px";
 
       positionNavButtons(cellPx);
+      positionTestButton(cellPx);
     }
 
     function positionNavButtons(cellPx){
@@ -1766,6 +1743,25 @@
       });
     }
 
+    // Testbutton in Zelle 10H (row=10, col=H=8) -> visuell: + HEADER_ROW_OFFSET
+    function positionTestButton(cellPx){
+      if(!testTargetBtn) return;
+
+      const col = 8; // H
+      const row = 10; // logische Zeile 10
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const left = (col - 1) * cellPx + cellPx / 2;
+      const top  = (visualRow - 1) * cellPx + cellPx / 2;
+
+      testTargetBtn.style.position = "absolute";
+      testTargetBtn.style.left = left + "px";
+      testTargetBtn.style.top  = top + "px";
+      testTargetBtn.style.transform = "translate(-50%, -50%)";
+      testTargetBtn.style.zIndex = "12";
+      testTargetBtn.style.pointerEvents = "auto";
+    }
+
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
 
@@ -1787,7 +1783,6 @@
       kippAnzahlView.classList.add("hidden");
 
       clearTargetNumbers();
-      currentTarget = null;
     }
 
     function showKspView(){
@@ -1796,13 +1791,13 @@
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
 
+      // zurück in die Schauen&Merken-Situation
       buttonState = "schauen";
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
 
       sliderContainer.classList.add("sliderLocked");
 
       clearTargetNumbers();
-      currentTarget = null;
     }
 
     function showKippAnzahlView(){
@@ -1813,11 +1808,19 @@
 
       buildKippAnzahlButtons(selectedLevel);
 
+      // Back ist grundsätzlich erlaubt, wird aber während runKippCycles gesperrt
+      setBackAnzahlEnabled(true);
+
+      // Testbutton nur im Trainee-Modus sichtbar
       if(selectedLevel === "trainee"){
-        // Trainee: Random-Ziel erzeugen, das KEINEN Start-Treffer erzeugt
-        currentTarget = generateTargetNumberColorSafe();
+        testTargetBtn.classList.remove("hidden");
+
+        currentTarget = generateTargetNumberColor_Trainee();
         placeTargetNumbers(currentTarget);
-        console.log("Target generiert (safe):", currentTarget);
+        console.log("Target generiert:", currentTarget);
+      } else {
+        testTargetBtn.classList.add("hidden");
+        clearTargetNumbers();
       }
     }
 
@@ -1827,7 +1830,8 @@
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
+        kippAnzahlSubtitle.innerHTML =
+          '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
@@ -1840,7 +1844,8 @@
         });
 
       } else if(level === "brainy"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
+        kippAnzahlSubtitle.innerHTML =
+          '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1855,7 +1860,8 @@
         });
 
       } else if(level === "brain"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
+        kippAnzahlSubtitle.innerHTML =
+          '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1884,22 +1890,28 @@
       runningPreview = true;
       const myToken = ++previewToken;
 
+      // Während Spielablauf: Zurück gesperrt
+      setBackAnzahlEnabled(false);
+
       for(let i = 0; i < count; i++){
         showKip();
         renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; setBackAnzahlEnabled(true); return; }
 
         advanceFullCW();
         showW();
-        renderW(); // renderW enthält Treffercheck (nur Logik)
-
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+        renderW();
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; setBackAnzahlEnabled(true); return; }
       }
 
       runningPreview = false;
       console.log(`${count} Kipp-Zyklen abgeschlossen`);
+
+      // Erst wenn Würfel wieder vollflächig liegt: Zurück erlaubt
+      setBackAnzahlEnabled(true);
     }
 
+    // Level Buttons
     document.querySelectorAll('.levelBtn').forEach(btn => {
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
@@ -1908,16 +1920,28 @@
       });
     });
 
+    // Testbutton: Kippziel hintereinander generieren (nur Trainee)
+    testTargetBtn.addEventListener("click", () => {
+      if(selectedLevel !== "trainee") return;
+      currentTarget = generateTargetNumberColor_Trainee();
+      placeTargetNumbers(currentTarget);
+      console.log("TEST: neues Target:", currentTarget);
+    });
+
+    // SCHAUEN & MERKEN / STOP & SPIELEN
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
         sliderContainer.classList.remove("sliderLocked");
 
-        btnSchauen.querySelector('.btnText').textContent = "STOP & SPIELEN";
-        buttonState = "spielen";
-        console.log("Demo gestartet");
+        console.log("Demo gestartet (Zahlenbelegung läuft)");
         await runSetNumbersCycle();
         console.log("Demo beendet");
-      } else if(buttonState === "spielen"){
+      }
+      else if(buttonState === "running"){
+        // während der 3 Kipps: NICHT abbrechen (absichtlich ignorieren)
+        return;
+      }
+      else if(buttonState === "spielen"){
         const isWVisible = !wFaceGroup.classList.contains("hidden");
 
         if(isWVisible){
