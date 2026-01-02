@@ -22,7 +22,7 @@
       --bg-off-y: 5px;
 
       --scale: 1;
-      --uiscale: 1;
+      --uiscale: 1; /* FIX: kein Gegenscaling mehr */
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
 
@@ -39,7 +39,9 @@
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none;
+
+      /* FIX: nicht global "touch-action:none" – das killt Slider/Inputs auf Mobile */
+      touch-action: manipulation;
     }
 
     body{
@@ -208,6 +210,7 @@
       white-space: nowrap;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
     }
     .levelBtn:active{
       transform: scale(0.98);
@@ -233,7 +236,8 @@
     }
 
     .btnSchauen{
-      /* Größe wird via JS gesetzt (44px hoch / 710px breit in sichtbaren Rasterpixeln) */
+      width: calc(260px * var(--uiscale));
+      height: calc(52px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -262,8 +266,6 @@
       color: #7a3f2b;
       text-align: center;
       text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-      user-select: none;
-      white-space: nowrap;
     }
 
     .squareBtn{
@@ -301,8 +303,8 @@
       position: absolute;
       width: var(--gridW);
       height: auto;
-      pointer-events: auto;
-      z-index: 12;
+      pointer-events: auto; /* FIX: Slider-Bereich muss klick/dragbar sein */
+      z-index: 20;
     }
 
     .speedIcon{
@@ -338,6 +340,7 @@
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--uiscale));
+      pointer-events: auto;
     }
 
     .speedScale{
@@ -366,6 +369,10 @@
       box-shadow:
         0 0 0 1px rgba(255,255,255,0.10) inset,
         0 1px 0 rgba(0,0,0,0.35) inset;
+      pointer-events: auto;
+
+      /* FIX: Drag auf Mobile */
+      touch-action: pan-x;
     }
     input[type="range"]::-webkit-slider-thumb{
       -webkit-appearance: none;
@@ -390,6 +397,41 @@
         0 8px 14px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
       cursor: pointer;
+    }
+
+    .kippAnzahlSubtitle{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-weight: 600;
+      letter-spacing: 0.08em;
+
+      color: rgba(255,255,255,0.92);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 4px 12px rgba(0,0,0,0.60);
+
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .kippAnzahlBtns{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: nowrap;
+      gap: calc(24px * var(--uiscale));
+      pointer-events: auto;
+      z-index: 10;
+      justify-content: center;
+    }
+
+    .kippAnzahlBtns.compact{
+      gap: calc(12px * var(--uiscale));
     }
 
     :root {
@@ -662,13 +704,14 @@
       filter: brightness(0.98);
     }
 
+    /* FIX: Punkteanzeige nicht absurd groß. Relativ zur Rasterzelle. */
     .punkteAnzeige{
       position: absolute;
       right: 70px;
       top: 50%;
       transform: translateY(-50%);
 
-      font-size: clamp(100px, 14vmin, 180px);
+      font-size: calc(var(--cell) * 0.95);
       font-weight: 1000;
       letter-spacing: 0.02em;
 
@@ -850,152 +893,6 @@
       color: rgba(255,255,255,0.95);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
-
-    /* ------- Erstes Kippziel View (Text & Ziel-Panel) ------- */
-    .targetTitle{
-      position:absolute;
-      left: 50%;
-      transform: translate(-50%, -100%); /* Bottom an angegebene y */
-      z-index: 20;
-      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.96);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 18px rgba(0,0,0,0.70);
-      white-space: nowrap;
-      user-select:none;
-      pointer-events:none;
-    }
-
-    .targetSub{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
-      font-size: calc(18px * var(--uiscale));
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      color: rgba(255,255,255,0.92);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.75),
-        0 4px 12px rgba(0,0,0,0.60);
-      user-select:none;
-      white-space: nowrap;
-      pointer-events:none;
-    }
-
-    .targetPoints{
-      position:absolute;
-      z-index: 20;
-      font-size: calc(110px * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select:none;
-      white-space: nowrap;
-      line-height: 1;
-      pointer-events:none;
-    }
-
-    .kippAnzahlHeading{
-      position:absolute;
-      left: 50%;
-      z-index: 20;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.92);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.75),
-        0 4px 12px rgba(0,0,0,0.60);
-      user-select:none;
-      pointer-events:none;
-      text-align:center;
-      white-space: nowrap;
-    }
-    .kippAnzahlHeading .big{
-      font-size: calc(24px * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      line-height: 1.0;
-    }
-    .kippAnzahlHeading .line2{
-      margin-top: calc(6px * var(--uiscale));
-      font-size: calc(20px * var(--uiscale));
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      line-height: 1.0;
-    }
-    .kippAnzahlHeading .line2 .one{
-      font-weight: 1000;
-      text-transform: uppercase;
-      letter-spacing: 0.10em;
-    }
-
-    .targetPanel{
-      position:absolute;
-      z-index: 22;
-      width: calc(213px * var(--uiscale));
-      height: calc(426px * var(--uiscale));
-      pointer-events:none;
-    }
-    .targetNumBox{
-      width: calc(213px * var(--uiscale));
-      height: calc(213px * var(--uiscale));
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border: var(--slot-border-w) solid var(--slot-border);
-      box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,
-        -2px -2px 0 rgba(0,0,0,0.15) inset,
-        0 6px 12px rgba(0,0,0,0.35);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-sizing:border-box;
-    }
-    .targetNumBox span{
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 1.05); /* 1.5× der Würfel-Slot-Zahl (0.70×cell) */
-      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
-      line-height: 1;
-      user-select:none;
-    }
-    .targetColorBox{
-      width: calc(213px * var(--uiscale));
-      height: calc(213px * var(--uiscale));
-      box-sizing:border-box;
-      border: var(--slot-border-w) solid var(--slot-border);
-      box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,
-        -2px -2px 0 rgba(0,0,0,0.15) inset,
-        0 6px 12px rgba(0,0,0,0.35);
-    }
-
-    /* Kippanzahl Button-Row im Erstes-Kippziel Screen */
-    .kippAnzahlRow{
-      position:absolute;
-      z-index: 25;
-      display:flex;
-      align-items:center;
-      pointer-events:auto;
-    }
-    .kippAnzahlRow.mode-trainee{
-      justify-content:flex-start;
-      gap: calc(24px * var(--uiscale));
-    }
-    .kippAnzahlRow.mode-wide{
-      justify-content:space-between;
-    }
-
-    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -1046,7 +943,6 @@
           <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
         </div>
 
-        <!-- Level View -->
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
@@ -1061,7 +957,6 @@
           </button>
         </div>
 
-        <!-- KSP View -->
         <div id="kspView" class="hidden">
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
@@ -1075,7 +970,7 @@
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
 
             <div class="sliderContainer">
-              <!-- 1..4 -->
+              <!-- FIX: 1..4 snap -->
               <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
 
               <div class="speedScale" aria-label="Kippspeed Stufen">
@@ -1095,35 +990,6 @@
           </button>
         </div>
 
-        <!-- Erstes Kippziel View -->
-        <div id="firstTargetView" class="hidden">
-          <div class="targetTitle" id="firstTargetTitle">ERSTES KIPPZIEL</div>
-          <div class="targetSub" id="firstTargetSub">von zehn</div>
-
-          <div class="targetPoints" id="targetPoints">P00 / 80</div>
-
-          <div class="kippAnzahlHeading" id="kippAnzahlHeading">
-            <div class="big">KIPP ANZAHL</div>
-            <div class="line2"><span class="one">EINE</span> Taste wählen</div>
-          </div>
-
-          <div class="kippAnzahlRow mode-trainee" id="kippAnzahlRow"></div>
-
-          <div class="targetPanel" id="targetPanel" aria-label="Kippziel Panel">
-            <div class="targetNumBox"><span id="targetNumber">7</span></div>
-            <div class="targetColorBox" id="targetColorBox"></div>
-          </div>
-
-          <button class="navBtn backBtn" id="backBtnTarget" aria-label="Zurück">
-            <div class="backIcon"></div>
-          </button>
-
-          <button class="navBtn closeBtn" id="closeBtnTarget" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
-
-        <!-- (Dein bisheriger kippAnzahlView bleibt vorhanden, aber wird ab jetzt nicht mehr direkt nach SPIELEN verwendet) -->
         <div id="kippAnzahlView" class="hidden">
           <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
 
@@ -1164,21 +1030,10 @@
     const levelBtnsEl  = document.getElementById("levelBtns");
     const levelView    = document.getElementById("levelView");
     const kspView      = document.getElementById("kspView");
-    const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
     const btnSchauen   = document.getElementById("btnSchauen");
     const speedSlider  = document.getElementById("speedSlider");
-
-    const firstTargetView  = document.getElementById("firstTargetView");
-    const firstTargetTitle = document.getElementById("firstTargetTitle");
-    const firstTargetSub   = document.getElementById("firstTargetSub");
-    const targetPoints     = document.getElementById("targetPoints");
-    const kippAnzahlHeading= document.getElementById("kippAnzahlHeading");
-    const kippAnzahlRow    = document.getElementById("kippAnzahlRow");
-    const targetPanel      = document.getElementById("targetPanel");
-    const targetNumberEl   = document.getElementById("targetNumber");
-    const targetColorBox   = document.getElementById("targetColorBox");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
@@ -1190,9 +1045,6 @@
     const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
     const backBtnKsp     = document.getElementById("backBtnKsp");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
-
-    const backBtnTarget  = document.getElementById("backBtnTarget");
-    const closeBtnTarget = document.getElementById("closeBtnTarget");
 
     const permanentRow13 = document.getElementById("permanentRow13");
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
@@ -1286,10 +1138,12 @@
       return pool.slice(0, count);
     }
 
+    /* FIX: Slider ist 1..4. Timing sauber darauf mappen */
     function getTiming(){
       const v = Number(speedSlider.value || 2); // 1..4
-      const hold = Math.max(520, Math.round(2200 - v * 350));
-      const kip = Math.max(160, Math.round(hold * 0.50));
+      // v=1 langsam, v=4 schnell
+      const hold = Math.max(520, Math.round(2400 - v * 420)); // 1->1980, 4->720
+      const kip  = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
     }
@@ -1378,7 +1232,8 @@
     let previewToken = 0;
 
     speedSlider.addEventListener("input", () => {
-      console.log(`Speed: ${Number(speedSlider.value)}`);
+      const value = parseInt(speedSlider.value, 10);
+      console.log(`Speed: ${value}`);
     });
 
     async function waitOrPause(type, myToken){
@@ -1485,8 +1340,8 @@
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
 
-      const uiscale = 1 / (scale || 1);
-      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
+      /* FIX: kein Gegenscaling mehr */
+      document.documentElement.style.setProperty("--uiscale", "1");
 
       return { cols, cell, gridW, scale };
     }
@@ -1539,70 +1394,26 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      const rowTop = (r) => (((r + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
 
-      const row9Top  = rowTop(9);
-      const row10Top = rowTop(10);
-      const row11Top = rowTop(11);
-      const row12Top = rowTop(12);
-      const row13Top = rowTop(13);
+      const midY = (row9VisualTop + row10VisualTop) / 2;
 
-      // Mitte aus deinem bisherigen Layout (Level/KSP)
-      const midY = (row9Top + row10Top) / 2;
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
       kspTop.style.top = midY + "px";
       sliderRow.style.top = (midY + 265) + "px";
 
-      // Button-Größen (sichtbare Rasterpixel)
-      btnSchauen.style.height = `calc(44px * var(--uiscale))`;
-      btnSchauen.style.width  = `calc(${buttonState === "schauen" ? 710 : 290}px * var(--uiscale))`;
+      kippAnzahlTitle.style.top = midY + "px";
+      kippAnzahlSubtitle.style.top = (midY + 45) + "px";
+      kippAnzahlBtns.style.top = (midY + 145) + "px";
 
-      // Permanent Row 13 / Title
-      permanentRow13.style.top = row13Top + "px";
-      digiKippTitle.style.top = (1.0 * cellPx) + "px";
+      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      permanentRow13.style.top = row13VisualTop + "px";
 
-      // Erstes Kippziel: Positionen nach Raster
-      // ERSTES KIPPZIEL: Unterkante Zeile 9
-      firstTargetTitle.style.top = (row9Top + cellPx) + "px";
-      // "von zehn": Zeile 10, kleiner und oben nahe
-      firstTargetSub.style.top   = (row10Top + 6) + "px";
-
-      // P00 / 80 zwischen Zeile 10 und 11, Start halbe Spalte A
-      targetPoints.style.left = (cellPx / 2) + "px";
-      targetPoints.style.top  = ((row10Top + row11Top) / 2) + "px";
-      targetPoints.style.transform = "translateY(-50%)";
-
-      // KIPP ANZAHL: Zeile 12, Oberkante genau Zeile 12
-      kippAnzahlHeading.style.top = row12Top + "px";
-
-      // Kippanzahl Buttons: Zeile 13, vertikal mittig
-      kippAnzahlRow.style.top  = (row13Top + (cellPx/2)) + "px";
-      kippAnzahlRow.style.transform = "translateY(-50%)";
-
-      // Startpunkt: Mitte Spalte A
-      kippAnzahlRow.style.left = (cellPx/2) + "px";
-
-      // Trainee: linksbündig ab Mitte A
-      // Wide: von Mitte A bis Mitte H
-      const spanWidth = 7 * cellPx; // A-mid -> H-mid
-      if(selectedLevel === "trainee"){
-        kippAnzahlRow.classList.remove("mode-wide");
-        kippAnzahlRow.classList.add("mode-trainee");
-        kippAnzahlRow.style.width = "auto";
-      } else {
-        kippAnzahlRow.classList.remove("mode-trainee");
-        kippAnzahlRow.classList.add("mode-wide");
-        kippAnzahlRow.style.width = spanWidth + "px";
-      }
-
-      // Zielpanel: Zeile 9.5 / Spalte F (Top = row9Top + 0.5 cell, Left = colF left)
-      const colF = 6;
-      const panelLeft = (colF - 1) * cellPx;
-      const panelTop  = row9Top + (cellPx * 0.5);
-      targetPanel.style.left = panelLeft + "px";
-      targetPanel.style.top  = panelTop + "px";
+      const titleY = 1.0 * cellPx;
+      digiKippTitle.style.top = titleY + "px";
 
       positionNavButtons(cellPx);
     }
@@ -1615,7 +1426,7 @@
       const backLeft = (backCol - 1) * cellPx + cellPx / 2;
       const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
 
-      [backBtnKsp, backBtnAnzahl, backBtnTarget].forEach(btn => {
+      [backBtnKsp, backBtnAnzahl].forEach(btn => {
         btn.style.left = backLeft + "px";
         btn.style.top = backTop + "px";
         btn.style.transform = "translate(-50%, -50%)";
@@ -1627,7 +1438,7 @@
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = closeY;
 
-      [closeBtnLevel, closeBtnKsp, closeBtnAnzahl, closeBtnTarget].forEach(btn => {
+      [closeBtnLevel, closeBtnKsp, closeBtnAnzahl].forEach(btn => {
         btn.style.left = closeLeft + "px";
         btn.style.top = closeTop + "px";
         btn.style.transform = "translate(-50%, -50%)";
@@ -1648,140 +1459,43 @@
       positionUI();
     }
 
+    function setBilanzVisible(isVisible){
+      kippBilanzBtn.style.display = isVisible ? "flex" : "none";
+    }
+
     function showLevelView(){
       currentView = "level";
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
-      firstTargetView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
-
-      // KIPP BILANZ sichtbar in Nicht-Spiel-Views
-      kippBilanzBtn.classList.remove("hidden");
+      setBilanzVisible(true);
     }
 
     function showKspView(){
       currentView = "ksp";
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
-      firstTargetView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
 
       buttonState = "schauen";
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
-
-      // Buttonbreite aktualisieren
-      btnSchauen.style.width = `calc(710px * var(--uiscale))`;
-
-      // KIPP BILANZ sichtbar (nicht Spiel)
-      kippBilanzBtn.classList.remove("hidden");
+      setBilanzVisible(true);
     }
 
-    function buildKippAnzahlRowButtons(){
-      kippAnzahlRow.innerHTML = "";
-
-      // Trainee: 3,6,9
-      // Andere Modi: wir lassen vorerst ebenfalls 3,6,9 (Layout-Test),
-      // damit du nicht zu viele JS-Funktionen auf einmal hast.
-      const nums = [3,6,9];
-
-      nums.forEach(num => {
-        const btn = document.createElement("button");
-        btn.className = "squareBtn";
-        btn.type = "button";
-        btn.innerHTML = `<span class="anzahlText">${num}</span>`;
-        btn.addEventListener("click", () => {
-          console.log("Kippanzahl gewählt:", num, "Level:", selectedLevel);
-        });
-        kippAnzahlRow.appendChild(btn);
-      });
-    }
-
-    function showFirstTargetView(){
-      currentView = "firstTarget";
-
-      levelView.classList.add("hidden");
-      kspView.classList.add("hidden");
-      firstTargetView.classList.remove("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      // Während des Spielens: KIPP BILANZ unsichtbar
-      kippBilanzBtn.classList.add("hidden");
-
-      // Punkteanzeige hier neu positioniert als großes Element
-      targetPoints.textContent = "P00 / 80";
-
-      // Buttons (3/6/9) erstellen
-      buildKippAnzahlRowButtons();
-
-      // Zielzahl & Zielfarbe generieren (Basis-Version)
-      generateFirstTarget();
-    }
-
-    function generateFirstTarget(){
-      // Sichtbare Zahlen sind current face (wenn schon zugewiesen)
-      ensureAssigned(faceIndex);
-      const visible = (sets[faceIndex] || []).filter(v => v !== null && v !== undefined);
-
-      let num = null;
-
-      if(selectedLevel === "trainee"){
-        // nur sichtbare
-        if(visible.length){
-          num = visible[Math.floor(Math.random() * visible.length)];
-        } else {
-          num = 1 + Math.floor(Math.random() * 12);
-        }
-      } else if(selectedLevel === "brainy"){
-        // nur verdeckte (1..12 ohne sichtbare)
-        const pool = [];
-        for(let i=1;i<=12;i++){
-          if(!visible.includes(i)) pool.push(i);
-        }
-        num = pool.length ? pool[Math.floor(Math.random()*pool.length)] : (1 + Math.floor(Math.random()*12));
-      } else {
-        // brain (vorerst): frei
-        num = 1 + Math.floor(Math.random() * 12);
-      }
-
-      targetNumberEl.textContent = (num === 9 || num === 6) ? `${num}.` : String(num);
-
-      // Zielfarbe: zufällig, aber NICHT die Slot-Farbe der Zahl (vereinfachte Zuordnung für Layout-Test)
-      // Slotfarben-Mapping (S1..S4): gruen, orange, blau, violett
-      const slotColors = ["c-gruen","c-orange","c-blau","c-violett"];
-
-      let forbidden = null;
-      // finde Slot-Index der Zahl auf der aktuellen sichtbaren Fläche
-      const idx = (sets[faceIndex] || []).findIndex(v => v === num);
-      if(idx >= 0 && idx < slotColors.length) forbidden = slotColors[idx];
-
-      const candidates = slotColors.filter(c => c !== forbidden);
-      const chosen = candidates[Math.floor(Math.random()*candidates.length)];
-
-      // Farbe setzen
-      targetColorBox.style.background = getComputedStyle(document.documentElement).getPropertyValue(
-        chosen === "c-gruen" ? "--gruen" :
-        chosen === "c-orange" ? "--orange" :
-        chosen === "c-blau" ? "--blau" : "--violett"
-      ).trim();
-    }
-
-    // Dein bestehender kippAnzahlView (unverändert in Funktionalität)
     function showKippAnzahlView(){
       currentView = "anzahl";
       levelView.classList.add("hidden");
       kspView.classList.add("hidden");
-      firstTargetView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
 
-      buildKippAnzahlButtons(selectedLevel);
+      /* Regel: während Spielen/Anzahl wählen -> Bilanz unsichtbar */
+      setBilanzVisible(false);
 
-      // KIPP BILANZ sichtbar (nicht Spiel)
-      kippBilanzBtn.classList.remove("hidden");
+      buildKippAnzahlButtons(selectedLevel);
     }
 
     function buildKippAnzahlButtons(level){
       kippAnzahlBtns.innerHTML = "";
-
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
@@ -1799,10 +1513,9 @@
 
       } else if(level === "brainy"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
-
         kippAnzahlBtns.classList.add("compact");
 
-        [1, 2, 3, 4, 5, 6].forEach(num => {
+        [1,2,3,4,5,6].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
@@ -1814,10 +1527,9 @@
 
       } else if(level === "brain"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> oder <span style="font-weight:1000;">ZWEI</span> Tasten';
-
         kippAnzahlBtns.classList.add("compact");
 
-        [1, 2, 3, 4, 5, 6].forEach(num => {
+        [1,2,3,4,5,6].forEach(num => {
           const btn = document.createElement("button");
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
@@ -1838,40 +1550,20 @@
         selectedLevel = btn.dataset.level;
         console.log("Level gewählt:", selectedLevel);
         showKspView();
-        rebuild();
       });
     });
-
-    function snapToNextFullFaceBeforeStart(){
-      // Wenn aktuell in Kipp-Zwischendarstellung: zum nächsten vollen W springen
-      const isKipVisible = !kipGroup.classList.contains("hidden");
-      if(isKipVisible){
-        advanceFullCW();
-      }
-      showW();
-      ensureAssigned(faceIndex);
-      renderW();
-    }
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
         btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
         buttonState = "spielen";
-
-        // Buttonbreite umschalten auf 290
-        btnSchauen.style.width = `calc(290px * var(--uiscale))`;
-
         console.log("Demo gestartet");
         await runSetNumbersCycle();
         console.log("Demo beendet");
       } else if(buttonState === "spielen"){
-        // STOPP: Preview beenden und zur nächsten vollflächigen Darstellung
         cancelPreview();
-        snapToNextFullFaceBeforeStart();
-
-        console.log("Gehe ins Spiel! -> Erstes Kippziel");
-        showFirstTargetView();
-        rebuild();
+        console.log("Gehe ins Spiel!");
+        showKippAnzahlView();
       }
     });
 
@@ -1879,13 +1571,6 @@
       console.log("Zurück von KSP zu Level");
       cancelPreview();
       showLevelView();
-    });
-
-    backBtnTarget.addEventListener("click", () => {
-      // Zurück: wieder KSP (nicht Spiel)
-      console.log("Zurück von Erstes Kippziel zu KSP");
-      showKspView();
-      rebuild();
     });
 
     backBtnAnzahl.addEventListener("click", () => {
@@ -1905,7 +1590,6 @@
     closeBtnLevel.addEventListener("click", showCloseModal);
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
-    closeBtnTarget.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
 
@@ -1913,7 +1597,6 @@
       console.log("Spiel wird beendet");
       hideCloseModal();
       showLevelView();
-      rebuild();
     });
 
     closeModal.addEventListener("click", (e) => {
@@ -1926,12 +1609,16 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", () => {
-      rebuild();
-      resetToW1Q0_Empty();
-    });
+    window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
-    document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+
+    /* FIX: globaler Touch-Blocker darf Slider/Buttons nicht killen */
+    document.addEventListener("touchmove", (e) => {
+      const t = e.target;
+      if(!t) return;
+      if (t.closest && (t.closest('#speedSlider') || t.closest('button') || t.tagName === 'INPUT')) return;
+      e.preventDefault();
+    }, { passive:false });
   </script>
 </body>
 </html>
