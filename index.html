@@ -39,8 +39,6 @@
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-
-      /* WICHTIG: nicht global "touch-action:none", sonst funktionieren Range-Slider am Handy oft nicht */
       touch-action: manipulation;
     }
 
@@ -236,7 +234,7 @@
 
     .btnSchauen{
       width: calc(260px * var(--uiscale));
-      height: calc(52px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -302,7 +300,7 @@
       position: absolute;
       width: var(--gridW);
       height: auto;
-      pointer-events: auto; /* wichtig */
+      pointer-events: auto;
     }
 
     .speedIcon{
@@ -365,7 +363,6 @@
       filter: brightness(0.98);
     }
 
-    /* Slider */
     input[type="range"]{
       -webkit-appearance: none;
       appearance: none;
@@ -378,8 +375,6 @@
       box-shadow:
         0 0 0 1px rgba(255,255,255,0.10) inset,
         0 1px 0 rgba(0,0,0,0.35) inset;
-
-      /* WICHTIG für Mobile-Drag */
       touch-action: pan-x;
       pointer-events: auto;
     }
@@ -408,7 +403,6 @@
       cursor: pointer;
     }
 
-    /* visuell deaktiviert (bis Button geklickt wurde) */
     .sliderLocked{
       opacity: 0.45;
       filter: saturate(0.8);
@@ -426,14 +420,21 @@
       transform: translateX(-50%);
       z-index: 10;
 
-      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
-      font-weight: 600;
-      letter-spacing: 0.08em;
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
 
-      color: rgba(255,255,255,0.92);
+      color: rgba(255,255,255,0.96);
+
       text-shadow:
-        0 2px 0 rgba(0,0,0,0.75),
-        0 4px 12px rgba(0,0,0,0.60);
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 18px rgba(0,0,0,0.70);
+
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
 
       white-space: nowrap;
       user-select: none;
@@ -989,16 +990,13 @@
           <div class="sliderRow" id="sliderRow">
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
 
-            <!-- START: Slider ist anfangs "locked" und wird erst beim Klick auf SCHAUEN & MERKEN aktiviert -->
             <div class="sliderContainer sliderLocked" id="sliderContainer">
-              <!-- 1..4 statt 0..4 und 1..5 -->
               <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
 
               <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
                 <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
               </div>
             </div>
-            <!-- END -->
 
             <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
           </div>
@@ -1013,10 +1011,10 @@
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <div class="uiTitle" id="kippAnzahlTitle">KIPP ANZAHL WÄHLEN</div>
+          <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
 
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            Wähle <span style="font-weight:1000;">EINE</span> Taste
+            EINE TASTE WÄHLEN
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
@@ -1164,11 +1162,8 @@
       return pool.slice(0, count);
     }
 
-    // Slider 1..4
     function getTiming(){
-      const v = Number(speedSlider.value || 2); // 1..4
-      // gleiche Charakteristik, nur neu skaliert:
-      // v=1 langsam, v=4 schnell
+      const v = Number(speedSlider.value || 2);
       const hold = Math.max(520, Math.round(2400 - v * 450));
       const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
@@ -1258,7 +1253,6 @@
     let runningPreview = false;
     let previewToken = 0;
 
-    // Klick auf 1..4 setzt den Slider (und ist danach "richtig" bedienbar)
     speedScaleEl.querySelectorAll("span").forEach(sp => {
       sp.addEventListener("click", () => {
         const v = Number(sp.dataset.v);
@@ -1441,9 +1435,12 @@
       kspTop.style.top = midY + "px";
       sliderRow.style.top = (midY + 265) + "px";
 
-      kippAnzahlTitle.style.top = midY + "px";
-      kippAnzahlSubtitle.style.top = (midY + 45) + "px";
-      kippAnzahlBtns.style.top = (midY + 145) + "px";
+      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row11Baseline = row11VisualTop + cellPx;
+      
+      kippAnzahlTitle.style.top = (row11Baseline - 85) + "px";
+      kippAnzahlSubtitle.style.top = (row11Baseline - 40) + "px";
+      kippAnzahlBtns.style.top = row11Baseline + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -1511,7 +1508,6 @@
       buttonState = "schauen";
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
 
-      // Slider wieder sperren beim Eintritt in die Ansicht (wird durch Button-Klick aktiviert)
       sliderContainer.classList.add("sliderLocked");
     }
 
@@ -1530,7 +1526,7 @@
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
-        kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
+        kippAnzahlSubtitle.textContent = 'EINE TASTE WÄHLEN';
 
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
@@ -1543,7 +1539,7 @@
         });
 
       } else if(level === "brainy"){
-        kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
+        kippAnzahlSubtitle.textContent = 'EINE TASTE WÄHLEN';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1558,7 +1554,7 @@
         });
 
       } else if(level === "brain"){
-        kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> oder <span style="font-weight:1000;">ZWEI</span> Tasten';
+        kippAnzahlSubtitle.textContent = 'ZWEI TASTEN WÄHLEN';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1588,7 +1584,6 @@
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
-        // Slider aktivieren erst beim ersten Klick auf SCHAUEN & MERKEN
         sliderContainer.classList.remove("sliderLocked");
 
         btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
@@ -1648,11 +1643,10 @@
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
 
-    // WICHTIG: nicht alles Touch-Move blockieren, sonst slider drag kaputt.
     document.addEventListener("touchmove", (e) => {
       const inRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
-      if(inRange) return;       // Slider darf ziehen
-      e.preventDefault();       // Rest bleibt wie vorher
+      if(inRange) return;
+      e.preventDefault();
     }, { passive:false });
   </script>
 </body>
