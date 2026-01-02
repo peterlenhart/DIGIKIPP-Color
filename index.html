@@ -238,15 +238,18 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: calc(var(--cell) * 0.5); /* ✅ 71px Abstand = 0.5 Spalte */
-      width: calc(var(--cell) * 6.5); /* ✅ 923px breit = 6.5 Spalten */
     }
 
-    /* ✅ NUR kspTop-Buttons sind groß und flex */
-    .kspTop .squareBtn{
-      flex: 1; /* ✅ Beide Buttons gleich breit */
-      height: calc(60px * var(--uiscale)); /* ✅ Höher für Text */
-    }
+    /* ✅ SCHAUEN & MERKEN Button - einzeln, breit genug für Text */
+    .btnSchauen{
+      width: calc(200px * var(--uiscale)); /* ✅ Breit genug für einzeiligen Text */
+      height: calc(50px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
 
     .squareBtn{
       width: calc(44px * var(--uiscale)); /* ✅ Standard für Kippanzahl-Buttons */
@@ -277,31 +280,6 @@
       color: #7a3f2b;
       text-align: center;
       text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    /* ✅ Inaktiver Button (während Demo) */
-    .squareBtn.disabled{
-      background: rgba(122, 63, 43, 0.5);
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    .squareBtn.disabled .btnText{
-      color: rgba(234,215,190,0.7);
-    }
-
-    /* ✅ Pulsier-Animation OHNE transform (behält Position!) */
-    @keyframes pulse{
-      0%, 100% { 
-        opacity: 1; 
-        filter: brightness(1);
-      }
-      50% { 
-        opacity: 0.75;
-        filter: brightness(1.15);
-      }
-    }
-    .pulse{
-      animation: pulse 1.2s ease-in-out infinite;
     }
 
     .playIcon{
@@ -1016,12 +994,8 @@
 
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
-              <button id="btnSchauen" class="squareBtn" aria-label="Zahlen anschauen und merken" type="button">
-                <span class="btnText">SCHAUEN<br>& MERKEN</span>
-              </button>
-
-              <button id="btnSpielen" class="squareBtn" aria-label="Spiel starten" type="button">
-                <span class="btnText">SPIELEN</span>
+              <button id="btnSchauen" class="squareBtn btnSchauen" aria-label="Zahlen anschauen und merken" type="button">
+                <span class="btnText">SCHAUEN & MERKEN</span>
               </button>
             </div>
 
@@ -1096,10 +1070,7 @@
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
     const btnSchauen   = document.getElementById("btnSchauen");
-    const btnSpielen   = document.getElementById("btnSpielen");
     const speedSlider  = document.getElementById("speedSlider");
-    const snailIcon    = document.querySelector(".speedIcon.snail");
-    const haseIcon     = document.querySelector(".speedIcon.hase");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
@@ -1479,9 +1450,9 @@
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      kspTitle.style.top = midY + "px";
-      kspTop.style.top = (midY + 70) + "px";
-      sliderRow.style.top = (midY + 265) + "px";
+      kspTitle.style.top = (midY + 195) + "px";  /* ✅ 70px ÜBER Slider (265-70=195) */
+      kspTop.style.top = midY + "px";            /* ✅ Wo vorher Titel war */
+      sliderRow.style.top = (midY + 265) + "px"; /* ✅ Bleibt */
 
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
@@ -1635,46 +1606,12 @@
       });
     });
 
-    function startPulsing(){
-      speedSlider.classList.add("pulse");
-      if(snailIcon) snailIcon.classList.add("pulse");
-      if(haseIcon) haseIcon.classList.add("pulse");
-    }
-
-    function stopPulsing(){
-      speedSlider.classList.remove("pulse");
-      if(snailIcon) snailIcon.classList.remove("pulse");
-      if(haseIcon) haseIcon.classList.remove("pulse");
-    }
-
     btnSchauen.addEventListener("click", async () => {
       if(!runningPreview){
-        // ✅ DEMO STARTEN
-        btnSchauen.classList.add("disabled");
-        btnSchauen.disabled = true;
-        startPulsing();
         console.log("Zahlen-Vorschau gestartet");
         await runSetNumbersCycle();
-        // Demo endet (nur wenn cancelPreview aufgerufen)
-        btnSchauen.classList.remove("disabled");
-        btnSchauen.disabled = false;
-        stopPulsing();
         console.log("Zahlen-Vorschau beendet");
       }
-    });
-
-    btnSpielen.addEventListener("click", () => {
-      const speedValue = speedSlider.value;
-      const speedLabels = ["1", "2", "3", "4", "5"];
-      console.log(`Speed bestätigt: ${speedLabels[speedValue]}, SPIEL STARTET!`);
-      
-      // ✅ Stoppt Demo
-      cancelPreview();
-      stopPulsing();
-      btnSchauen.classList.remove("disabled");
-      btnSchauen.disabled = false;
-      
-      showKippAnzahlView();
     });
 
     speedSlider.addEventListener("input", () => {
