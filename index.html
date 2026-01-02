@@ -210,6 +210,7 @@
         26px 38px 54px rgba(0,0,0,0.26),
         34px 50px 78px rgba(0,0,0,0.18);
 
+      /* Ganz leichte Bodenabdunklung direkt unter dem Würfel */
       filter: drop-shadow(0 0 0 rgba(0,0,0,0));
     }
 
@@ -491,51 +492,6 @@
       line-height: 1;
     }
 
-    /* Brain: Richtung-Buttons (nur dort sichtbar) */
-    .dirBtns{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: calc(28px * var(--uiscale));
-      z-index: 10;
-      pointer-events: auto;
-      justify-content: center;
-    }
-
-    .dirBtn{
-      width: calc(96px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
-      border-radius: calc(16px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-    }
-    .dirBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .dirBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
-
-    .dirIcon{
-      width: calc(34px * var(--uiscale));
-      height: calc(34px * var(--uiscale));
-      display:block;
-    }
-    .dirIcon path{
-      stroke: #7a3f2b;
-      stroke-width: 4.2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.35));
-    }
-
     .sliderRow{
       position: absolute;
       width: var(--gridW);
@@ -652,6 +608,31 @@
     }
     .sliderLocked .speedScale{
       pointer-events: none;
+    }
+
+    .kippAnzahlSubtitle{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+
+      color: rgba(255,255,255,0.96);
+
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 18px rgba(0,0,0,0.70);
+
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+
+      white-space: nowrap;
+      user-select: none;
     }
 
     .kippAnzahlBtns{
@@ -1178,20 +1159,8 @@
         <div id="kippAnzahlView" class="hidden">
           <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
 
-          <!-- Brain: Richtung (sitzt dort, wo vorher der Subtitel war) -->
-          <div class="dirBtns hidden" id="dirBtns">
-            <button class="dirBtn" id="btnDirCW" type="button" aria-label="Im Uhrzeigersinn">
-              <svg class="dirIcon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 12a8 8 0 1 1-2.34-5.66"/>
-                <path d="M20 4v6h-6"/>
-              </svg>
-            </button>
-            <button class="dirBtn" id="btnDirCCW" type="button" aria-label="Gegen den Uhrzeigersinn">
-              <svg class="dirIcon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 12a8 8 0 1 0 2.34-5.66"/>
-                <path d="M4 4v6h6"/>
-              </svg>
-            </button>
+          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
+            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
@@ -1239,13 +1208,10 @@
     const sliderContainer = document.getElementById("sliderContainer");
     const speedScaleEl = document.getElementById("speedScale");
 
-    const kippAnzahlView  = document.getElementById("kippAnzahlView");
-    const kippAnzahlTitle = document.getElementById("kippAnzahlTitle");
-    const kippAnzahlBtns  = document.getElementById("kippAnzahlBtns");
-
-    const dirBtns   = document.getElementById("dirBtns");
-    const btnDirCW  = document.getElementById("btnDirCW");
-    const btnDirCCW = document.getElementById("btnDirCCW");
+    const kippAnzahlView     = document.getElementById("kippAnzahlView");
+    const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
+    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
+    const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
     const closeBtnLevel  = document.getElementById("closeBtnLevel");
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
@@ -1701,13 +1667,6 @@
       assigned[idx] = true;
     }
 
-    /* NEU: Hintergrund-Vorbereitung (ms) – Cube ist intern sofort vollbestückt */
-    function precomputeAllAssigned(){
-      ensureAssigned(0);
-      ensureAssigned(1);
-      ensureAssigned(2);
-    }
-
     function renderW(){
       setRotationSnap();
       const curr = sets[faceIndex];
@@ -1788,9 +1747,6 @@
       setSchauenText("SCHAUEN & MERKEN");
 
       reroll12_keepEmpty();
-
-      /* NEU: sofort intern vollbestücken (unsichtbar, ms) */
-      precomputeAllAssigned();
 
       showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
@@ -1948,14 +1904,9 @@
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      /* Justierung: Titel 30px rauf */
-      kippAnzahlTitle.style.top = (row11Baseline - 85 - 230 - 30) + "px";
-
-      /* Richtung-Buttons (Brain) sitzen dort, wo Subtitel war */
-      dirBtns.style.top = (row11Baseline - 40 - 230 - 30) + "px";
-
-      /* Zahlen-Buttons etwas weiter runter */
-      kippAnzahlBtns.style.top = (row11Baseline - 142 + 24) + "px";
+      kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
+      kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
+      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -2085,11 +2036,8 @@
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.remove("compact");
 
-      /* Subtitel ist gelöscht: nix mehr setzen */
-      dirBtns.classList.add("hidden");
-
       if(level === "trainee"){
-        kippAnzahlTitle.textContent = "KIPP-ANZAHL";
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
@@ -2102,7 +2050,7 @@
         });
 
       } else if(level === "brainy"){
-        kippAnzahlTitle.textContent = "KIPP-ANZAHL";
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -2116,10 +2064,8 @@
         });
 
       } else if(level === "brain"){
-        /* Brain: Titel + Richtung */
-        kippAnzahlTitle.textContent = "KIPP-ANZAHL \u00B7 RICHTUNG";
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
         kippAnzahlBtns.classList.add("compact");
-        dirBtns.classList.remove("hidden");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
           const btn = document.createElement("button");
@@ -2140,8 +2086,6 @@
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
-      btnDirCW.disabled = locked;
-      btnDirCCW.disabled = locked;
     }
 
     function handleAnzahlClick(anzahl){
@@ -2229,14 +2173,6 @@
       currentTarget = generateTargetNumberColor_Trainee();
       placeTargetNumbers(currentTarget);
       console.log("TEST Target:", currentTarget);
-    });
-
-    /* Brain-Richtungsbuttons: nur UI jetzt (Logik kommt später) */
-    btnDirCW.addEventListener("click", () => {
-      console.log("Richtung gewählt: CW");
-    });
-    btnDirCCW.addEventListener("click", () => {
-      console.log("Richtung gewählt: CCW");
     });
 
     function showCloseModal(){
