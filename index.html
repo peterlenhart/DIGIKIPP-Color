@@ -75,6 +75,7 @@
       transform: translateX(-50%) scale(var(--scale));
     }
 
+    /* Z-INDEX: 0 - Box Hintergrund PNG */
     .bgPNG{
       position:absolute;
       left: 0;
@@ -89,6 +90,24 @@
         calc(0px + var(--bg-off-y));
       pointer-events: none;
       z-index: 0;
+    }
+
+    /* Z-INDEX: 1 - Kugel (UNTER dem Würfel) */
+    .ball{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((4 + 2) * var(--cell));
+      width: calc(var(--cell) * 0.55);
+      height: calc(var(--cell) * 0.55);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
+        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
+        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.28);
+      z-index: 1;
+      pointer-events: none;
     }
 
     .colors{
@@ -111,6 +130,34 @@
     .c-orange  { background: var(--orange); }
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
+
+    /* Z-INDEX: 2 - Würfel-Schatten (vollflächige Ansicht) */
+    .cubeShadowLayer{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .cubeShadowLayer.visible{
+      opacity: 1;
+    }
+
+    .cubeShadowInner{
+      position: absolute;
+      left: calc(4 * var(--cell));
+      top: calc((4 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.18) 35%, rgba(0,0,0,0.00) 55%);
+      border-radius: 8px;
+    }
 
     .grid{
       position:absolute;
@@ -137,7 +184,7 @@
         );
     }
 
-    /* Zwischenkipp-Schatten PNG Layer - Position 2B (Spalte 2, Zeile 2) bis 7G (Spalte 7, Zeile 7) */
+    /* Z-INDEX: 3 - Zwischenkipp-Schatten PNGs */
     .zwischenKippSchattenLayer{
       position: absolute;
       left: 0;
@@ -150,11 +197,8 @@
 
     .zwischenKippSchatten{
       position: absolute;
-      /* Spalte B = col 2, also left = 1 * cell (col-1) */
-      /* Zeile 2 + HEADER_OFFSET(2) = visual row 4, also top = 3 * cell (visual-1) */
       left: calc(1 * var(--cell));
       top: calc(3 * var(--cell));
-      /* 6 Zellen breit (B bis G = 2,3,4,5,6,7) und 6 Zellen hoch (2 bis 7) */
       width: calc(6 * var(--cell));
       height: calc(6 * var(--cell));
       background-size: 100% 100%;
@@ -172,6 +216,53 @@
     #shadowQ1{ background-image: url("SchattenZwischenKipp_Q1.png"); }
     #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
     #shadowQ3{ background-image: url("SchattenZwischenKipp_Q3.png"); }
+
+    /* Z-INDEX: 4 - Würfel Groups */
+    .wFaceGroup,
+    .kipGroup{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 4;
+      pointer-events: none;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    .cubeFace{
+      position: absolute;
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
+        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
+        repeating-linear-gradient(
+          20deg,
+          rgba(0,0,0,0.02) 0px,
+          rgba(0,0,0,0.02) 17px,
+          rgba(255,255,255,0.02) 17px,
+          rgba(255,255,255,0.02) 30px
+        ),
+        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
+        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
+      box-shadow:
+        inset 0 0 0 5px var(--w1-innerframe),
+        0 0 0 2px rgba(255,255,255,0.08) inset;
+      z-index: 2;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+    }
 
     .uiLayer{
       position:absolute;
@@ -517,106 +608,6 @@
       --rot: 0deg;
     }
 
-    .wFaceGroup,
-    .kipGroup{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 4;
-      pointer-events: none;
-
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    /* Würfel-Schatten: nur von den mittigen Kanten nach innen */
-    .cubeShadow{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    /* Schatten von der vertikalen mittigen Kante (links vom Zentrum) */
-    .cubeShadow::before{
-      content: "";
-      position: absolute;
-      left: calc(1.5 * var(--cell));
-      top: 0;
-      width: 18px;
-      height: calc(3 * var(--cell));
-      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28) 60%, rgba(0,0,0,0.00));
-      transform: translateX(-50%);
-      opacity: 0.85;
-    }
-
-    /* Schatten von der horizontalen mittigen Kante (oben vom Zentrum) */
-    .cubeShadow::after{
-      content: "";
-      position: absolute;
-      left: 0;
-      top: calc(1.5 * var(--cell));
-      width: calc(3 * var(--cell));
-      height: 18px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28) 60%, rgba(0,0,0,0.00));
-      transform: translateY(-50%);
-      opacity: 0.85;
-    }
-
-    .cubeFace{
-      position: absolute;
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      box-sizing: border-box;
-      border-radius: 0;
-      background:
-        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
-        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
-        repeating-linear-gradient(
-          20deg,
-          rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 17px,
-          rgba(255,255,255,0.02) 17px,
-          rgba(255,255,255,0.02) 30px
-        ),
-        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
-        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
-      box-shadow:
-        inset 0 0 0 5px var(--w1-innerframe),
-        0 0 0 2px rgba(255,255,255,0.08) inset;
-      z-index: 2;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-    }
-
-    .ball{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((4 + 2) * var(--cell));
-      width: calc(var(--cell) * 0.55);
-      height: calc(var(--cell) * 0.55);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
-        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
-        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
-      box-shadow: 0 5px 10px rgba(0,0,0,0.28);
-      z-index: 5;
-      pointer-events: none;
-    }
-
     .slot{
       position: absolute;
       width: var(--cell);
@@ -660,13 +651,11 @@
       line-height: 1;
     }
 
-    /* Zweistellige Slot-Zahlen (10, 12) enger und weiter links */
     .slot .num > span.twodigit{
       letter-spacing: -0.16em !important;
       transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
     }
 
-    /* Zielzahlen: zweistellig ebenfalls angepasst */
     .targetNumber > span.twodigit{
       letter-spacing: -0.16em;
       transform: translateX(-0.10em) rotate(var(--tn-rot, 0deg));
@@ -717,7 +706,6 @@
       transform-origin: 0 0;
     }
 
-    /* Kipp-Schatten nicht benötigt (PNG übernimmt) */
     .kipShadow{
       display: none;
     }
@@ -996,26 +984,40 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
-    /* Ziel-Puls Animation */
+    /* FIX: Ziel-Puls Animation behält Rotation bei */
     .targetNumber span{
       animation: targetBreath 1.05s ease-in-out infinite;
       will-change: transform, filter;
     }
     @keyframes targetBreath{
-      0%, 100% { transform: scale(1); filter: brightness(1); }
-      50%      { transform: scale(1.06); filter: brightness(1.12); }
+      0%, 100% { 
+        transform: rotate(var(--target-rot, 0deg)) scale(1); 
+        filter: brightness(1); 
+      }
+      50% { 
+        transform: rotate(var(--target-rot, 0deg)) scale(1.06); 
+        filter: brightness(1.12); 
+      }
     }
 
     .targetHitPulse span{
       animation: targetHit 0.42s ease-in-out 2 !important;
     }
     @keyframes targetHit{
-      0%   { transform: scale(1.00); filter: brightness(1.05); }
-      50%  { transform: scale(1.18); filter: brightness(1.28); }
-      100% { transform: scale(1.00); filter: brightness(1.05); }
+      0%   { 
+        transform: rotate(var(--target-rot, 0deg)) scale(1.00); 
+        filter: brightness(1.05); 
+      }
+      50%  { 
+        transform: rotate(var(--target-rot, 0deg)) scale(1.18); 
+        filter: brightness(1.28); 
+      }
+      100% { 
+        transform: rotate(var(--target-rot, 0deg)) scale(1.00); 
+        filter: brightness(1.05); 
+      }
     }
 
-    /* Slot-Farbe bei Treffer */
     .slot.hit-gruen{
       background: var(--gruen) !important;
     }
@@ -1029,7 +1031,6 @@
       background: var(--violett) !important;
     }
 
-    /* Slot-Zahl kurzer Pulse */
     .slot.slotHitPulse .num > span{
       animation: slotHit 0.32s ease-in-out 3;
     }
@@ -1046,11 +1047,21 @@
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
+      <!-- Z-INDEX 0: Box Hintergrund -->
       <div class="bgPNG" aria-hidden="true"></div>
 
+      <!-- Z-INDEX 1: Kugel (UNTER Würfel) -->
+      <div class="ball" aria-label="Kugel"></div>
+
+      <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- Zwischenkipp-Schatten Layer (2B bis 7G) -->
+      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig) -->
+      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
+        <div class="cubeShadowInner"></div>
+      </div>
+
+      <!-- Z-INDEX 3: Zwischenkipp-Schatten PNGs -->
       <div class="zwischenKippSchattenLayer" aria-hidden="true">
         <div id="shadowQ0" class="zwischenKippSchatten"></div>
         <div id="shadowQ1" class="zwischenKippSchatten"></div>
@@ -1058,8 +1069,8 @@
         <div id="shadowQ3" class="zwischenKippSchatten"></div>
       </div>
 
+      <!-- Z-INDEX 4: Würfel Groups -->
       <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
-        <div class="cubeShadow" aria-hidden="true"></div>
         <div class="cubeFace" aria-label="Würfelfläche"></div>
 
         <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
@@ -1088,8 +1099,7 @@
         </div>
       </div>
 
-      <div class="ball" aria-label="Kugel"></div>
-
+      <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
@@ -1219,12 +1229,13 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
 
-    // Schatten-Elemente
     const shadowQ0 = document.getElementById("shadowQ0");
     const shadowQ1 = document.getElementById("shadowQ1");
     const shadowQ2 = document.getElementById("shadowQ2");
     const shadowQ3 = document.getElementById("shadowQ3");
     const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
+
+    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
 
     let currentView = "level";
     let selectedLevel = null;
@@ -1393,16 +1404,16 @@
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    // KORRIGIERT: Zielzahlen-Rotation
+    // FIX: Zielzahlen-Rotation KORRIGIERT
+    // Spalte A (col=1): -90° = von Osten lesbar (270° im Uhrzeigersinn)
+    // Spalte H (col=8): +90° = von Westen lesbar (90° im Uhrzeigersinn)
+    // Zeile 1 (row=1): 0° = von Süden lesbar
+    // Zeile 8 (row=8): 180° = von Norden lesbar
     function rotationForCoord(coord){
       const { row, col } = coordToXY(coord);
-      // Spalte A (col=1): von Osten lesbar = -90° (270°)
       if(col === 1) return -90;
-      // Spalte H (col=8): von Westen lesbar = +90°
       if(col === 8) return 90;
-      // Zeile 1 (row=1): von Süden lesbar = 0°
       if(row === 1) return 0;
-      // Zeile 8 (row=8): von Norden lesbar = 180°
       if(row === 8) return 180;
       return 0;
     }
@@ -1463,6 +1474,9 @@
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
+        // FIX: CSS-Variable setzen für Animation
+        numSpan.style.setProperty("--target-rot", rot + "deg");
+
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
           numSpan.style.setProperty("--tn-rot", rot + "deg");
@@ -1520,22 +1534,29 @@
       return false;
     }
 
-    // Schatten-Sichtbarkeit aktualisieren
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
+      const isWVisible = !wFaceGroup.classList.contains("hidden");
       
-      if(!isKipVisible){
+      // Zwischenkipp-Schatten: nur wenn kipGroup sichtbar
+      if(isKipVisible){
+        allShadows.forEach((s, i) => {
+          if(i === rotIndex){
+            s.classList.add("visible");
+          } else {
+            s.classList.remove("visible");
+          }
+        });
+      } else {
         allShadows.forEach(s => s.classList.remove("visible"));
-        return;
       }
 
-      allShadows.forEach((s, i) => {
-        if(i === rotIndex){
-          s.classList.add("visible");
-        } else {
-          s.classList.remove("visible");
-        }
-      });
+      // Würfel-Schatten: nur wenn wFaceGroup sichtbar
+      if(isWVisible){
+        cubeShadowLayer.classList.add("visible");
+      } else {
+        cubeShadowLayer.classList.remove("visible");
+      }
     }
 
     function showW(){
@@ -1659,14 +1680,11 @@
       assigned[idx] = true;
     }
 
+    // FIX: renderW prüft NICHT mehr automatisch auf Treffer
     function renderW(){
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-
-      if(currentTarget){
-        checkHitAndSignal();
-      }
     }
 
     function reroll12_keepEmpty(){
@@ -2096,6 +2114,7 @@
       }
     }
 
+    // FIX: Treffer-Prüfung NUR am Ende der Kippanzahl
     async function runKippCycles(count){
       if(runningPreview) return;
       runningPreview = true;
@@ -2117,6 +2136,7 @@
       runningPreview = false;
       console.log(`${count} Kipp-Zyklen abgeschlossen`);
 
+      // FIX: Nur HIER wird auf Treffer geprüft
       if(currentTarget){
         checkHitAndSignal();
       }
