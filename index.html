@@ -242,8 +242,8 @@
 
     /* ✅ SCHAUEN & MERKEN Button - einzeln, breit genug für Text */
     .btnSchauen{
-      width: calc(200px * var(--uiscale)); /* ✅ Breit genug für einzeiligen Text */
-      height: calc(50px * var(--uiscale));
+      width: calc(260px * var(--uiscale)); /* ✅ Breiter für "SCHAUEN & MERKEN" einzeilig */
+      height: calc(52px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -351,13 +351,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: -27px; /* ✅ +50px nach unten: war -77px */
+      top: 0; /* ✅ Auf gleicher Höhe wie Slider */
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: -27px; /* ✅ +50px nach unten: war -77px */
+      top: 0; /* ✅ Auf gleicher Höhe wie Slider */
     }
 
     .sliderContainer{
@@ -1663,7 +1663,10 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", rebuild);
+    window.addEventListener("load", () => {
+      rebuild();
+      showLevelView(); // ✅ Initial Level-Auswahl zeigen
+    });
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
