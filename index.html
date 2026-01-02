@@ -131,38 +131,78 @@
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
 
-    /* Z-INDEX: 2 - Würfel-Schatten (vollflächige Ansicht) */
-    /* FIX: ECKIGER Schatten statt rundem Kreis */
-    .cubeShadowLayer{
-      position: absolute;
+    /* ------------------------------------------------------------------ */
+    /* NEU: Würfel-Schlagschatten (W-Ansicht), nur im Innenraum geclippt   */
+    /* Innenraum: 6×6 Felder (Spalten 2–7, Zeilen 2–7)                     */
+    /* ------------------------------------------------------------------ */
+    .cubeShadowClip{
+      position:absolute;
+      left: calc(1 * var(--cell));         /* Innenraum beginnt bei Spalte 2 */
+      top:  calc(3 * var(--cell));         /* Innenraum beginnt bei Zeile 2 (HEADER_OFFSET=2 -> +2 Zeilen) */
+      width:  calc(6 * var(--cell));
+      height: calc(6 * var(--cell));
+      z-index: 2;                          /* über PNG/ball, unter Würfel */
+      pointer-events: none;
+      overflow: hidden;                    /* HARTES Clipping: nie auf Farbfelder */
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .cubeShadowClip.visible{ opacity: 1; }
+
+    /* Rotations-Wrapper: dreht exakt wie der Würfel um denselben Pivot */
+    .cubeShadowRot{
+      position:absolute;
+      inset: 0;
+
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
+    }
+
+    /* L-Schatten (Grundstellung Q0): 2E→5E und 5B→5E */
+    .cubeShadowL{
+      position:absolute;
       left: 0;
       top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 2;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s ease;
+      width: 100%;
+      height: 100%;
+      filter: blur(10px);
+      opacity: 0.55;
     }
 
-    .cubeShadowLayer.visible{
-      opacity: 1;
+    /* Vertikal: 2E→5E (im Innenraum: E = x=3*cell; Zeile 2..5 = y=0..4*cell) */
+    .cubeShadowL .shadowV{
+      position:absolute;
+      left: calc(3 * var(--cell));         /* Innenraum-Spalten: B=0, C=1, D=2, E=3 */
+      top:  0;
+      width: var(--cell);
+      height: calc(4 * var(--cell));       /* 2..5 = 4 Zellen */
+      background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0.55),
+        rgba(0,0,0,0.22) 55%,
+        rgba(0,0,0,0.00)
+      );
     }
 
-    .cubeShadowInner{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((4 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      transform: translate(-50%, -50%);
-      /* FIX: Eckiger Schlagschatten statt runder Kreis */
-      background: transparent;
-      box-shadow: 
-        0 8px 16px rgba(0,0,0,0.35),
-        0 12px 24px rgba(0,0,0,0.25),
-        0 16px 32px rgba(0,0,0,0.18);
-      border-radius: 8px;
+    /* Horizontal: 5B→5E (im Innenraum: Zeile 5 = y=3*cell; B..E = x=0..4*cell) */
+    .cubeShadowL .shadowH{
+      position:absolute;
+      left: 0;
+      top:  calc(3 * var(--cell));         /* Innenraum-Zeilen: 2=0,3=1,4=2,5=3 */
+      width: calc(4 * var(--cell));        /* B..E = 4 Zellen */
+      height: var(--cell);
+      background: linear-gradient(
+        90deg,
+        rgba(0,0,0,0.00),
+        rgba(0,0,0,0.24) 45%,
+        rgba(0,0,0,0.52)
+      );
     }
 
     .grid{
@@ -996,13 +1036,13 @@
       will-change: transform, filter;
     }
     @keyframes targetBreath{
-      0%, 100% { 
-        transform: rotate(var(--target-rot, 0deg)) scale(1); 
-        filter: brightness(1); 
+      0%, 100% {
+        transform: rotate(var(--target-rot, 0deg)) scale(1);
+        filter: brightness(1);
       }
-      50% { 
-        transform: rotate(var(--target-rot, 0deg)) scale(1.06); 
-        filter: brightness(1.12); 
+      50% {
+        transform: rotate(var(--target-rot, 0deg)) scale(1.06);
+        filter: brightness(1.12);
       }
     }
 
@@ -1010,32 +1050,24 @@
       animation: targetHit 0.42s ease-in-out 2 !important;
     }
     @keyframes targetHit{
-      0%   { 
-        transform: rotate(var(--target-rot, 0deg)) scale(1.00); 
-        filter: brightness(1.05); 
+      0%   {
+        transform: rotate(var(--target-rot, 0deg)) scale(1.00);
+        filter: brightness(1.05);
       }
-      50%  { 
-        transform: rotate(var(--target-rot, 0deg)) scale(1.18); 
-        filter: brightness(1.28); 
+      50%  {
+        transform: rotate(var(--target-rot, 0deg)) scale(1.18);
+        filter: brightness(1.28);
       }
-      100% { 
-        transform: rotate(var(--target-rot, 0deg)) scale(1.00); 
-        filter: brightness(1.05); 
+      100% {
+        transform: rotate(var(--target-rot, 0deg)) scale(1.00);
+        filter: brightness(1.05);
       }
     }
 
-    .slot.hit-gruen{
-      background: var(--gruen) !important;
-    }
-    .slot.hit-orange{
-      background: var(--orange) !important;
-    }
-    .slot.hit-blau{
-      background: var(--blau) !important;
-    }
-    .slot.hit-violett{
-      background: var(--violett) !important;
-    }
+    .slot.hit-gruen{   background: var(--gruen) !important; }
+    .slot.hit-orange{  background: var(--orange) !important; }
+    .slot.hit-blau{    background: var(--blau) !important; }
+    .slot.hit-violett{ background: var(--violett) !important; }
 
     .slot.slotHitPulse .num > span{
       animation: slotHit 0.32s ease-in-out 3;
@@ -1045,8 +1077,6 @@
       50%  { transform: rotate(var(--num-rot,0deg)) scale(1.18); filter: brightness(1.18); }
       100% { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
     }
-
-    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -1062,9 +1092,14 @@
       <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig) -->
-      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
-        <div class="cubeShadowInner"></div>
+      <!-- NEU Z-INDEX 2: Würfel-Schlagschatten (W-Ansicht), nur im Innenraum -->
+      <div id="cubeShadowClip" class="cubeShadowClip" aria-hidden="true">
+        <div id="cubeShadowRot" class="cubeShadowRot">
+          <div class="cubeShadowL">
+            <div class="shadowV"></div>
+            <div class="shadowH"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Z-INDEX 3: Zwischenkipp-Schatten PNGs -->
@@ -1241,7 +1276,9 @@
     const shadowQ3 = document.getElementById("shadowQ3");
     const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
 
-    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
+    // NEU: Würfel-Schatten (W-Ansicht) - Clip + Rotations-Wrapper
+    const cubeShadowClip = document.getElementById("cubeShadowClip");
+    const cubeShadowRot  = document.getElementById("cubeShadowRot");
 
     let currentView = "level";
     let selectedLevel = null;
@@ -1475,15 +1512,12 @@
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
-        // FIX: IMMER CSS-Variable setzen, NIEMALS style.transform direkt!
         numSpan.style.setProperty("--target-rot", rot + "deg");
 
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
           numSpan.style.setProperty("--tn-rot", rot + "deg");
         }
-        // FIX: Kein else-Block mehr mit style.transform!
-        // Die Animation verwendet automatisch --target-rot
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
@@ -1537,7 +1571,8 @@
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       const isWVisible = !wFaceGroup.classList.contains("hidden");
-      
+
+      // Zwischenkipp-PNGs
       if(isKipVisible){
         allShadows.forEach((s, i) => {
           if(i === rotIndex){
@@ -1550,10 +1585,11 @@
         allShadows.forEach(s => s.classList.remove("visible"));
       }
 
+      // NEU: W-Ansicht Schatten nur dann sichtbar
       if(isWVisible){
-        cubeShadowLayer.classList.add("visible");
+        cubeShadowClip.classList.add("visible");
       } else {
-        cubeShadowLayer.classList.remove("visible");
+        cubeShadowClip.classList.remove("visible");
       }
     }
 
@@ -1631,6 +1667,7 @@
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
       kipGroup.style.setProperty("--rot", deg + "deg");
+      cubeShadowRot.style.setProperty("--rot", deg + "deg"); // NEU: Schatten dreht mit
       updateShadowVisibility();
     }
 
