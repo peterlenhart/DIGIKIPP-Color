@@ -149,7 +149,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 100;  /* ✅ ERHÖHT: 3→100, damit Buttons ÜBER Würfel! */
+      z-index: 3;
       pointer-events: none;
     }
 
@@ -238,21 +238,11 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      gap: calc(24px * var(--uiscale));
     }
 
-    /* ✅ SCHAUEN & MERKEN Button - einzeln, breit genug für Text */
-    .btnSchauen{
-      width: calc(260px * var(--uiscale)); /* ✅ Breiter für "SCHAUEN & MERKEN" einzeilig */
-      height: calc(52px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-
     .squareBtn{
-      width: calc(44px * var(--uiscale)); /* ✅ Standard für Kippanzahl-Buttons */
+      width: calc(44px * var(--uiscale));
       height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
@@ -270,16 +260,6 @@
     .squareBtn:active{
       transform: scale(0.98);
       filter: brightness(0.98);
-    }
-
-    .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
-      color: #7a3f2b;
-      text-align: center;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
     }
 
     .playIcon{
@@ -351,13 +331,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0; /* ✅ Auf gleicher Höhe wie Slider */
+      top: -77px;
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0; /* ✅ Auf gleicher Höhe wie Slider */
+      top: -77px;
     }
 
     .sliderContainer{
@@ -966,10 +946,6 @@
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
-        <button class="navBtn closeBtn" id="exitBtnPermanent" aria-label="Spiel beenden">
-          <div class="closeIcon"></div>
-        </button>
-
         <div class="permanentRow13" id="permanentRow13">
           <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
           <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
@@ -994,8 +970,12 @@
 
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
-              <button id="btnSchauen" class="squareBtn btnSchauen" aria-label="Zahlen anschauen und merken" type="button">
-                <span class="btnText">SCHAUEN & MERKEN</span>
+              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
+                <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
+              </button>
+
+              <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
+                <span class="okText">OK</span>
               </button>
             </div>
 
@@ -1069,7 +1049,9 @@
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
-    const btnSchauen   = document.getElementById("btnSchauen");
+    const btnPlay      = document.getElementById("btnPlay");
+    const btnOk        = document.getElementById("btnOk");
+    const playGlyph    = document.getElementById("playGlyph");
     const speedSlider  = document.getElementById("speedSlider");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
@@ -1087,7 +1069,6 @@
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
     const punkteAnzeige  = document.getElementById("punkteAnzeige");
     const digiKippTitle  = document.getElementById("digiKippTitle");
-    const exitBtnPermanent = document.getElementById("exitBtnPermanent");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
@@ -1155,28 +1136,11 @@
       if(!span) return;
       if(n === null || n === undefined){
         span.textContent = "";
-        span.style.letterSpacing = ""; // Reset
-        span.style.marginLeft = ""; // Reset
         return;
       }
       // ✅ 9 und 6 mit Punkt
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
-      
-      // ✅ 10, 11, 12: Nach links verschieben für optische Mitte
-      if(n === 10){
-        span.style.letterSpacing = "-0.15em";
-        span.style.marginLeft = "-0.25em"; // Am weitesten links
-      } else if(n === 11){
-        span.style.letterSpacing = "-0.12em";
-        span.style.marginLeft = "-0.08em"; // Minimal links
-      } else if(n === 12){
-        span.style.letterSpacing = "-0.15em";
-        span.style.marginLeft = "-0.18em"; // Etwas links
-      } else {
-        span.style.letterSpacing = ""; // Standard (-0.05em aus CSS)
-        span.style.marginLeft = ""; // Standard
-      }
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1281,16 +1245,28 @@
 
     let runningPreview = false;
     let previewToken = 0;
+    let previewPaused = false;
 
-    // ✅ Einfacher Sleep mit Token-Check (KEINE Pause!)
     async function waitOrPause(ms, myToken){
-      await sleep(ms);
+      const slice = 40;
+      let elapsed = 0;
+      while(elapsed < ms){
+        if(myToken !== previewToken) return false;
+        if(previewPaused){
+          await sleep(60);
+          continue;
+        }
+        const step = Math.min(slice, ms - elapsed);
+        await sleep(step);
+        elapsed += step;
+      }
       return (myToken === previewToken);
     }
 
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
+      previewPaused = false;
       const myToken = ++previewToken;
 
       reroll12_keepEmpty();
@@ -1450,9 +1426,9 @@
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      kspTitle.style.top = (midY + 195) + "px";  /* ✅ 70px ÜBER Slider (265-70=195) */
-      kspTop.style.top = midY + "px";            /* ✅ Wo vorher Titel war */
-      sliderRow.style.top = (midY + 265) + "px"; /* ✅ Bleibt */
+      kspTitle.style.top = midY + "px";
+      kspTop.style.top = (midY + 70) + "px";
+      sliderRow.style.top = (midY + 265) + "px";
 
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
@@ -1461,20 +1437,9 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      const titleRow = 1.5;
-      const titleVisualRow = titleRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
+      const titleVisualRow = 1.5;
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
-
-      // Exit-Button rechts oben (Column 15, Row 1.5 + OFFSET)
-      const exitCol = 15;
-      const exitRow = 1.5;
-      const exitVisualRow = exitRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
-      const exitLeft = (exitCol - 1) * cellPx + cellPx / 2;
-      const exitTop = (exitVisualRow - 1) * cellPx + cellPx / 2;
-      exitBtnPermanent.style.left = exitLeft + "px";
-      exitBtnPermanent.style.top = exitTop + "px";
-      exitBtnPermanent.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
     }
@@ -1494,8 +1459,7 @@
       });
 
       const closeCol = 1;
-      const closeRow = 1.5;
-      const closeVisualRow = closeRow + HEADER_ROW_OFFSET; // ✅ OFFSET HINZUGEFÜGT!
+      const closeVisualRow = 1.5;
       
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
@@ -1557,7 +1521,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 9 und 6
+          const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1572,7 +1538,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1587,7 +1555,9 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${num}</span>`;
+          // ✅ Punkt bei 6
+          const displayNum = (num === 6) ? `${num}.` : num;
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1606,12 +1576,35 @@
       });
     });
 
-    btnSchauen.addEventListener("click", async () => {
+    function setPlayGlyph(isPause){
+      playGlyph.className = isPause ? "pauseIcon" : "playIcon";
+    }
+
+    btnPlay.addEventListener("click", async () => {
       if(!runningPreview){
+        // ✅ STARTEN
+        setPlayGlyph(true);
         console.log("Zahlen-Vorschau gestartet");
         await runSetNumbersCycle();
+        setPlayGlyph(false);
         console.log("Zahlen-Vorschau beendet");
+      } else {
+        // ✅ PAUSE / RESUME
+        previewPaused = !previewPaused;
+        setPlayGlyph(!previewPaused);
+        console.log(previewPaused ? "Vorschau pausiert" : "Vorschau fortgesetzt");
       }
+    });
+
+    btnOk.addEventListener("click", () => {
+      const speedValue = speedSlider.value;
+      const speedLabels = ["1", "2", "3", "4", "5"];
+      console.log(`KSP bestätigt, Stufe: ${speedLabels[speedValue]} (Wert: ${speedValue})`);
+      
+      // ✅ Stoppt Endlosschleife
+      cancelPreview();
+      
+      showKippAnzahlView();
     });
 
     speedSlider.addEventListener("input", () => {
@@ -1643,7 +1636,6 @@
     closeBtnLevel.addEventListener("click", showCloseModal);
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
-    exitBtnPermanent.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
 
@@ -1663,10 +1655,7 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", () => {
-      rebuild();
-      showLevelView(); // ✅ Initial Level-Auswahl zeigen
-    });
+    window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
