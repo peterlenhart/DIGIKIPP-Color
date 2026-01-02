@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – Final Version</title>
+  <title>DigiKipp – Schauen & Merken</title>
 
   <style>
     :root{
@@ -11,26 +11,21 @@
       --cell: 142px;
       --grid-alpha: 0.18;
 
-      /* ===== Farben (fix) ===== */
       --violett: rgb(164, 27, 133);
       --blau:    rgb(0, 107, 179);
       --gruen:   rgb(0, 166, 82);
       --orange:  rgb(249, 150, 30);
 
-      /* ===== Farbfelder: 142 -> 126 ===== */
       --colorSize: 126px;
 
-      /* ✅ PNG-FEINJUSTAGE */
       --bg-off-x: 4px;
       --bg-off-y: 5px;
 
-      /* wird per JS gesetzt */
       --scale: 1;
       --uiscale: 1;
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
 
-      /* ===== KSP Farben ===== */
       --ui-panel-bg: #4a2418;
       --ui-text: #ead7be;
       --btn-bg: #ead7be;
@@ -142,18 +137,16 @@
         );
     }
 
-    /* ===== Level UI Layer ===== */
     .uiLayer{
       position:absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 100;  /* ✅ ERHÖHT: Buttons über Würfel */
+      z-index: 100;
       pointer-events: none;
     }
 
-    /* ===== Gemeinsamer Titel-Style ===== */
     .uiTitle{
       position:absolute;
       left: 50%;
@@ -221,7 +214,6 @@
       filter: brightness(0.98);
     }
 
-    /* ===== KSP Block ===== */
     .kspBlock{
       position:absolute;
       left: 0;
@@ -240,7 +232,6 @@
       justify-content:center;
     }
 
-    /* ✅ SCHAUEN & MERKEN / SPIELEN Button */
     .btnSchauen{
       width: calc(260px * var(--uiscale));
       height: calc(52px * var(--uiscale));
@@ -325,13 +316,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0;  /* ✅ Auf gleicher Höhe wie Slider */
+      top: 0;
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0;  /* ✅ Auf gleicher Höhe wie Slider */
+      top: 0;
     }
 
     .sliderContainer{
@@ -394,7 +385,6 @@
       cursor: pointer;
     }
 
-    /* ===== KIPP ANZAHL WÄHLEN ===== */
     .kippAnzahlSubtitle{
       position: absolute;
       left: 50%;
@@ -430,8 +420,6 @@
       gap: calc(12px * var(--uiscale));
     }
 
-    /* ===== WÜRFEL SYSTEM ===== */
-    
     :root {
       --cube-wood-base: #d7c2a4;
       --cube-wood-deep: #c9b08f;
@@ -573,7 +561,6 @@
     .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
     .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
 
-    /* ===== KIPP GRUPPE (Zwischenkipps) ===== */
     .kipGroup{
       position: absolute;
       left: 0;
@@ -647,7 +634,6 @@
       height: calc(3 * var(--cell));
     }
 
-    /* Kip-Slot Positionen */
     .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
     .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
     .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
@@ -902,7 +888,6 @@
 
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- ===== WÜRFEL SYSTEM ===== -->
       <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
         <div class="cubeShadow" aria-hidden="true"></div>
         <div class="cubeFace" aria-label="Würfelfläche"></div>
@@ -913,7 +898,6 @@
         <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
       </div>
 
-      <!-- ===== KIPP GRUPPE (Zwischenkipps) ===== -->
       <div id="kipGroup" class="kipGroup hidden" aria-label="Kipp Gruppe">
         <div class="kipScale">
           <div class="kipShadow" aria-hidden="true"></div>
@@ -959,7 +943,6 @@
         </div>
 
         <div id="kspView" class="hidden">
-          <!-- ✅ Button OBEN -->
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
               <button id="btnSchauen" class="btnSchauen" type="button">
@@ -968,10 +951,6 @@
             </div>
           </div>
 
-          <!-- ✅ Titel DARUNTER -->
-          <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
-
-          <!-- ✅ Slider UNTEN -->
           <div class="sliderRow" id="sliderRow">
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
             
@@ -1003,7 +982,6 @@
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
-            <!-- Buttons werden dynamisch generiert -->
           </div>
 
           <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
@@ -1037,7 +1015,6 @@
     const levelBtnsEl  = document.getElementById("levelBtns");
     const levelView    = document.getElementById("levelView");
     const kspView      = document.getElementById("kspView");
-    const kspTitle     = document.getElementById("kspTitle");
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
@@ -1064,12 +1041,10 @@
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
 
-    let currentView = "level"; // "level", "ksp", "anzahl"
-    let selectedLevel = null; // "trainee", "brainy", "brain"
-    let buttonState = "schauen"; // "schauen" oder "spielen"
+    let currentView = "level";
+    let selectedLevel = null;
+    let buttonState = "schauen";
 
-    // ===== ✅ ZAHLEN-LOGIK =====
-    
     function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
 
     const wFaceGroup = document.getElementById("wFaceGroup");
@@ -1247,7 +1222,6 @@
 
       const T = getTiming();
 
-      // Zyklus 1
       showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1257,7 +1231,6 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Zyklus 2
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1267,7 +1240,6 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Zyklus 3
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1277,12 +1249,10 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Final
       advanceFullCW();
       showW();
       renderW();
 
-      // Extra-Zyklen
       const EXTRA_CYCLES = 3;
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1297,7 +1267,6 @@
         if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
       }
 
-      // Endlos-Schleife
       while(myToken === previewToken){
         const T = getTiming();
         
@@ -1318,8 +1287,6 @@
       previewToken++;
       runningPreview = false;
     }
-
-    // ===== ENDE ZAHLEN-LOGIK =====
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -1400,10 +1367,8 @@
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      // ✅ GETAUSCHT: Button oben, Titel darunter
-      kspTop.style.top = midY + "px";              // Button
-      kspTitle.style.top = (midY + 70) + "px";      // Titel
-      sliderRow.style.top = (midY + 265) + "px";    // Slider
+      kspTop.style.top = midY + "px";
+      sliderRow.style.top = (midY + 265) + "px";
 
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
@@ -1475,7 +1440,6 @@
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
       
-      // ✅ Button zurücksetzen
       buttonState = "schauen";
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
     }
@@ -1554,18 +1518,14 @@
       });
     });
 
-    // ✅ BUTTON-LOGIK: SCHAUEN & MERKEN → SPIELEN
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
-        // ✅ Demo starten
         btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
         buttonState = "spielen";
         console.log("Demo gestartet");
         await runSetNumbersCycle();
         console.log("Demo beendet");
-        
       } else if(buttonState === "spielen"){
-        // ✅ Ins Spiel gehen
         cancelPreview();
         console.log("Gehe ins Spiel!");
         showKippAnzahlView();
@@ -1620,10 +1580,7 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", () => {
-      rebuild();
-      showLevelView();
-    });
+    window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
