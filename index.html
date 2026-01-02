@@ -501,6 +501,7 @@
       transform-origin: 0 0;
     }
 
+    /* FIX #3: CubeShadow darf NICHT nach außen werfen -> komplett entfernen */
     .cubeShadow{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -509,9 +510,7 @@
       height: calc(3 * var(--cell));
       z-index: 1;
       background: transparent;
-      box-shadow:
-        0 45px 55px rgba(0,0,0,0.45),
-        0 22px 35px rgba(0,0,0,0.28);
+      box-shadow: none; /* FIX */
     }
 
     .cubeFace{
@@ -600,6 +599,19 @@
       line-height: 1;
     }
 
+    /* FIX #2: Zweistellige Slot-Zahlen optisch zentrieren */
+    .slot .num > span.twodigit{
+      letter-spacing: -0.12em !important; /* enger */
+      transform: rotate(var(--num-rot, 0deg)) translateX(-0.06em); /* leicht nach links */
+    }
+
+    /* FIX #2 zusätzlich für Zielzahlen am Rand (nur Optik, keine Logik) */
+    .targetNumber > span.twodigit{
+      letter-spacing: -0.12em;
+      transform: translateX(-0.06em) rotate(var(--tn-rot, 0deg));
+      transform-origin: 50% 50%;
+    }
+
     .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
     .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
     .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
@@ -644,6 +656,7 @@
       transform-origin: 0 0;
     }
 
+    /* FIX #3: KipShadow darf NICHT nach außen werfen -> komplett entfernen */
     .kipShadow{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -652,9 +665,7 @@
       height: calc(3 * var(--cell));
       background: transparent;
       z-index: 1;
-      box-shadow:
-        0 45px 55px rgba(0,0,0,0.45),
-        0 22px 35px rgba(0,0,0,0.28);
+      box-shadow: none; /* FIX */
     }
 
     .kipEdgeCore{
@@ -1085,7 +1096,6 @@
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
           </div>
 
-          <!-- NEU: Testbutton (Positionierung per JS auf Zelle 10H) -->
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
           </button>
@@ -1154,10 +1164,6 @@
     let currentView = "level";
     let selectedLevel = null;
 
-    // Button-States:
-    // "schauen" = bereit, Demo zu starten
-    // "running" = Demo läuft (Klick gesperrt)
-    // "spielen" = STOP & SPIELEN verfügbar
     let buttonState = "schauen";
 
     function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
@@ -1193,29 +1199,22 @@
       kipGroup.querySelector('[data-slot="W2_D"] .num > span'),
     ];
 
-    // ===========================
-    // NEU: Innenfelder-Farben (deine Liste)
-    // ===========================
     const innerFieldColor = {
-      // grün: 2C,4G,5G,7C
       "2C": "gruen",
       "4G": "gruen",
       "5G": "gruen",
       "7C": "gruen",
 
-      // orange: 2D,2E,6B,6G
       "2D": "orange",
       "2E": "orange",
       "6B": "orange",
       "6G": "orange",
 
-      // blau: 2F,4B,5B,7F
       "2F": "blau",
       "4B": "blau",
       "5B": "blau",
       "7F": "blau",
 
-      // violett: 3B,3G,7D,7E
       "3B": "violett",
       "3G": "violett",
       "7D": "violett",
@@ -1224,9 +1223,6 @@
 
     const allColors = ["violett","blau","gruen","orange"];
 
-    // ===========================
-    // Hilfen: Koordinaten/Pixel -> Coord
-    // ===========================
     const HEADER_ROW_OFFSET = 2;
     const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
     const colMapInv = ["","A","B","C","D","E","F","G","H"];
@@ -1242,7 +1238,6 @@
     }
 
     function pixelToCoordFromLayout(xPx, yPx){
-      // xPx,yPx sind relativ zur .layout (nicht viewport)
       const cellPx = numVar("--cell") || 142;
 
       const col = Math.floor(xPx / cellPx) + 1;
@@ -1257,14 +1252,12 @@
     }
 
     function getSlotCoord(slotEl){
-      // robust: echte Position nehmen (inkl. Rotation)
       const layout = document.getElementById("layout");
       const rLayout = layout.getBoundingClientRect();
       const r = slotEl.getBoundingClientRect();
       const cx = r.left + r.width/2;
       const cy = r.top  + r.height/2;
 
-      // in Layout-Koordinaten (vor scale)
       const scale = numVar("--scale") || 1;
       const x = (cx - rLayout.left) / scale;
       const y = (cy - rLayout.top) / scale;
@@ -1272,10 +1265,7 @@
       return pixelToCoordFromLayout(x, y);
     }
 
-    // ===========================
-    // Target (Ziel) – State
-    // ===========================
-    let currentTarget = null; // {num, color}
+    let currentTarget = null;
 
     function getVisibleNumbers(){
       const curr = sets[faceIndex];
@@ -1288,7 +1278,6 @@
     }
 
     function isImmediateHitCombo(candidate){
-      // Prüft: würde candidate (num,color) SOFORT einen Treffer erzeugen?
       const visible = getVisibleNumbers();
       for(const v of visible){
         if(v.num == null) continue;
@@ -1306,9 +1295,6 @@
     }
 
     function generateTargetNumberColor_Trainee(){
-      // Regel: Zahl muss eine der 4 sichtbaren Zahlen sein.
-      // Farbe ist eine der 4 Farben.
-      // ABER: Kombi darf NICHT sofort Treffer sein.
       const visibleNums = getVisibleNumbers()
         .filter(v => v.num != null)
         .map(v => v.num);
@@ -1317,7 +1303,6 @@
         return { num: 1, color: "orange" };
       }
 
-      // Kandidatenliste aufbauen: alle sichtbaren nums x alle Farben, aber sofort-Treffer rausfiltern
       const candidates = [];
       for(const n of visibleNums){
         for(const c of allColors){
@@ -1328,18 +1313,14 @@
         }
       }
 
-      // Wenn alles rausfällt (sehr selten): n fix, dann Farbe wählen die NICHT immediate hit ist, sonst n ändern
       if(candidates.length === 0){
         const n = visibleNums[Math.floor(Math.random()*visibleNums.length)];
-        // try colors
         const okColors = allColors.filter(c => !isImmediateHitCombo({num:n,color:c}));
         if(okColors.length){
           return { num: n, color: okColors[Math.floor(Math.random()*okColors.length)] };
         }
-        // letzter Notfall: andere Zahl nehmen
         const otherNums = visibleNums.filter(x => x !== n);
         const n2 = otherNums.length ? otherNums[Math.floor(Math.random()*otherNums.length)] : n;
-        // irgendeine Farbe
         const c2 = allColors[Math.floor(Math.random()*allColors.length)];
         return { num: n2, color: c2 };
       }
@@ -1347,26 +1328,15 @@
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    // ===========================
-    // Zielzahl-Ausrichtung (Zahlenfuß zur Mitte)
-    // ===========================
     function rotationForCoord(coord){
-      // Kinder-Logik:
-      // West (A): Fuß nach Osten => +90
-      // Nord (row 1): Fuß nach Süden => 0
-      // Ost (H): Fuß nach Westen => -90
-      // Süd (row 8): Fuß nach Norden => 180
       const { row, col } = coordToXY(coord);
       if(col === 1) return 90;
       if(col === 8) return -90;
       if(row === 1) return 0;
       if(row === 8) return 180;
-      // falls jemals innen: Standard 0
       return 0;
     }
 
-    // Außen-Farbfelder (optisch): Koordinaten pro Farbe
-    // (gleich wie bei dir, aber Rotationswerte werden JETZT aus coord berechnet)
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
       'blau':    ['1F','8F','4A','5A'],
@@ -1419,14 +1389,16 @@
         numSpan.style.lineHeight = "1";
 
         const rot = rotationForCoord(coord);
-        numSpan.style.transform = `rotate(${rot}deg)`;
-        numSpan.style.transformOrigin = "50% 50%";
 
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
         if(target.num >= 10){
-          numSpan.style.letterSpacing = "-0.08em";
+          numSpan.classList.add("twodigit");
+          numSpan.style.setProperty("--tn-rot", rot + "deg");
+        } else {
+          numSpan.style.transform = `rotate(${rot}deg)`;
+          numSpan.style.transformOrigin = "50% 50%";
         }
 
         container.appendChild(numSpan);
@@ -1434,28 +1406,20 @@
       });
     }
 
-    // ===========================
-    // Trefferlogik: Slot liegt auf Innenfeld mit Zielfarbe + Zielzahl
-    // ===========================
     function clearHitVisuals(){
-      // Slot-Farben entfernen
       slotElsW.forEach(el => {
         el.classList.remove("hit-gruen","hit-orange","hit-blau","hit-violett","slotHitPulse");
       });
-      // Ziel-"Punch" entfernen
       document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
     }
 
     function applyHitVisual(slotEl, targetColor){
-      // Slot vollflächig Zielfarbe
       const cls = "hit-" + targetColor;
       slotEl.classList.add(cls);
 
-      // Slot-Zahl kurz pulsieren
       slotEl.classList.add("slotHitPulse");
       setTimeout(() => slotEl.classList.remove("slotHitPulse"), 1100);
 
-      // Zielzahlen kurz stärker pulsieren (Punch)
       document.querySelectorAll(".targetNumber").forEach(el => el.classList.add("targetHitPulse"));
       setTimeout(() => {
         document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
@@ -1465,7 +1429,6 @@
     function checkHitAndSignal(){
       if(!currentTarget) return false;
 
-      // Slotpositionen bestimmen + vergleichen
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++){
         const n = curr[i];
@@ -1478,7 +1441,6 @@
 
         const c = innerFieldColor[coord];
         if(c && c === currentTarget.color){
-          // Treffer!
           clearHitVisuals();
           applyHitVisual(slotEl, currentTarget.color);
           console.log("TREFFER:", {target: currentTarget, slot: i+1, coord});
@@ -1488,9 +1450,6 @@
       return false;
     }
 
-    // ===========================
-    // Sichtbarkeit W/KIP
-    // ===========================
     function showW(){
       kipGroup.classList.add("hidden");
       wFaceGroup.classList.remove("hidden");
@@ -1505,8 +1464,12 @@
       return [f4, f3, f2, f1];
     }
 
+    /* FIX #2: renderNumber setzt für >=10 die Klasse twodigit (Optik) */
     function renderNumber(span, n){
       if(!span) return;
+
+      span.classList.remove("twodigit");
+
       if(n === null || n === undefined){
         span.textContent = "";
         span.style.letterSpacing = "";
@@ -1516,7 +1479,7 @@
       span.textContent = text;
 
       if(n >= 10){
-        span.style.letterSpacing = "-0.08em";
+        span.classList.add("twodigit");
       } else {
         span.style.letterSpacing = "";
       }
@@ -1610,7 +1573,6 @@
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
 
-      // NEU: wenn Ziel aktiv -> nach jedem W-Render Treffer prüfen
       if(currentTarget){
         checkHitAndSignal();
       }
@@ -1669,10 +1631,6 @@
       return (myToken === previewToken);
     }
 
-    // ===========================
-    // NEU: Schauen&Merk Logik:
-    // - Button wird erst NACH 3 vollen KIPs zu "STOP & SPIELEN"
-    // ===========================
     function setSchauenEnabled(enabled){
       btnSchauen.disabled = !enabled;
     }
@@ -1686,12 +1644,10 @@
       runningPreview = true;
       const myToken = ++previewToken;
 
-      // Ziel/Hit-Optik zurücksetzen
       currentTarget = null;
       clearTargetNumbers();
       clearHitVisuals();
 
-      // Button sperren bis nach 3 KIPs (Zahlenbelegung vollständig)
       buttonState = "running";
       setSchauenEnabled(false);
       setSchauenText("SCHAUEN & MERKEN");
@@ -1721,12 +1677,11 @@
 
       ensureAssigned(2); renderW();
 
-      // >>> HIER: nach 3 vollen KIPs ist Zahlenbelegung fertig
+      /* FIX #1: Button-Text */
       buttonState = "spielen";
-      setSchauenText("STOP & SPIELEN");
+      setSchauenText("STOPP & SPIELEN?");
       setSchauenEnabled(true);
 
-      // Jetzt kann der Spieler stoppen (wir warten wie bisher weiter, bis er drückt)
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
@@ -1899,7 +1854,6 @@
     }
 
     function positionTestButton(cellPx){
-      // Zelle 10H => row=10, col=H (8)
       const row = 10;
       const col = 8;
       const visualRow = row + HEADER_ROW_OFFSET;
@@ -1965,7 +1919,6 @@
 
       buildKippAnzahlButtons(selectedLevel);
 
-      // Testbutton nur im Trainee sichtbar
       if(selectedLevel === "trainee"){
         testTargetBtn.classList.remove("hidden");
         testTargetBtn.disabled = false;
@@ -1973,7 +1926,6 @@
         testTargetBtn.classList.add("hidden");
       }
 
-      // Trainee: Ziel generieren + platzieren
       if(selectedLevel === "trainee"){
         clearHitVisuals();
         currentTarget = generateTargetNumberColor_Trainee();
@@ -2044,12 +1996,10 @@
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
 
       if(selectedLevel === "trainee"){
-        // Back-Button und Auswahl sperren solange Kippzyklus läuft
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
         runKippCycles(anzahl).finally(() => {
-          // erst wenn Würfel wieder liegt (W-Phase nach letzter Kipp)
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
@@ -2061,7 +2011,6 @@
       runningPreview = true;
       const myToken = ++previewToken;
 
-      // Trefferoptik reset bei neuem Zyklus
       clearHitVisuals();
 
       for(let i = 0; i < count; i++){
@@ -2071,22 +2020,18 @@
 
         advanceFullCW();
         showW();
-        renderW(); // hier wird Hit geprüft
+        renderW();
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
       console.log(`${count} Kipp-Zyklen abgeschlossen`);
 
-      // Am Ende nochmal explizit prüfen (Sicherheit)
       if(currentTarget){
         checkHitAndSignal();
       }
     }
 
-    // ===========================
-    // Level wählen
-    // ===========================
     document.querySelectorAll('.levelBtn').forEach(btn => {
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
@@ -2095,15 +2040,11 @@
       });
     });
 
-    // ===========================
-    // Schauen & Merken / Stop & Spielen
-    // ===========================
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
         sliderContainer.classList.remove("sliderLocked");
         console.log("Demo gestartet");
 
-        // Demo starten (Button wird intern gesperrt bis "spielen")
         await runSetNumbersCycle();
 
       } else if(buttonState === "spielen"){
@@ -2131,9 +2072,6 @@
       showKspView();
     });
 
-    // ===========================
-    // Testbutton: neue Targets hintereinander generieren
-    // ===========================
     testTargetBtn.addEventListener("click", () => {
       if(selectedLevel !== "trainee") return;
       clearHitVisuals();
