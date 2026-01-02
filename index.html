@@ -226,8 +226,8 @@
     }
 
     /* =====================================================
-       Z-INDEX: 2.5 - KIPP-BODENSCHATTEN (NEU!)
-       Dunkelt die Hälfte des Boxinnenraums ab, wo kipGroup liegt
+       Z-INDEX: 2.5 - KIPP-KANTENSCHATTEN (NEU!)
+       Schlagschatten an den 3 innenliegenden Kanten der kipGroup
        ===================================================== */
     .kipShadowLayer{
       position: absolute;
@@ -252,74 +252,150 @@
       clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
     }
 
-    .kipShadowQuadrant{
+    .kipEdgeShadows{
       position: absolute;
       opacity: 0;
       transition: opacity 0.1s ease;
     }
 
-    .kipShadowQuadrant.visible{
+    .kipEdgeShadows.visible{
       opacity: 1;
     }
 
-    /* Q0 (rotIndex=0, 0° Nördlich): kipGroup in Q0+Q1 → OBERE Hälfte abdunkeln */
+    /* Q0 (Nördlich): kipGroup oben, Außenkante=oben, Innenkanten=unten+links+rechts */
     #kipShadowQ0{
       left: calc(1 * var(--cell));
       top: calc((1 + 2) * var(--cell));
       width: calc(6 * var(--cell));
-      height: calc(3.6 * var(--cell));
-      background: radial-gradient(ellipse at center bottom,
-        rgba(0,0,0,0.48) 0%,
-        rgba(0,0,0,0.38) 35%,
-        rgba(0,0,0,0.22) 65%,
-        rgba(0,0,0,0.10) 85%,
-        rgba(0,0,0,0.00) 100%
-      );
+      height: calc(3 * var(--cell));
+      background:
+        /* Untenkante: breiter Schatten nach unten */
+        linear-gradient(to bottom,
+          transparent 0%,
+          transparent calc(100% - 120px),
+          rgba(0,0,0,0.12) calc(100% - 90px),
+          rgba(0,0,0,0.28) calc(100% - 60px),
+          rgba(0,0,0,0.42) calc(100% - 35px),
+          rgba(0,0,0,0.52) calc(100% - 15px),
+          transparent 100%
+        ),
+        /* Linke Kante: Schatten nach rechts */
+        linear-gradient(to right,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        ),
+        /* Rechte Kante: Schatten nach links */
+        linear-gradient(to left,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        );
     }
 
-    /* Q1 (rotIndex=1, 90° Östlich): kipGroup in Q1+Q2 → RECHTE Hälfte abdunkeln */
+    /* Q1 (Östlich): kipGroup rechts, Außenkante=rechts, Innenkanten=links+oben+unten */
     #kipShadowQ1{
-      left: calc(3.4 * var(--cell));
+      left: calc(1 * var(--cell));
       top: calc((1 + 2) * var(--cell));
-      width: calc(3.6 * var(--cell));
+      width: calc(6 * var(--cell));
       height: calc(6 * var(--cell));
-      background: radial-gradient(ellipse at left center,
-        rgba(0,0,0,0.48) 0%,
-        rgba(0,0,0,0.38) 35%,
-        rgba(0,0,0,0.22) 65%,
-        rgba(0,0,0,0.10) 85%,
-        rgba(0,0,0,0.00) 100%
-      );
+      background:
+        /* Linke Kante: breiter Schatten nach rechts */
+        linear-gradient(to right,
+          rgba(0,0,0,0.52) 0px,
+          rgba(0,0,0,0.42) 35px,
+          rgba(0,0,0,0.28) 70px,
+          rgba(0,0,0,0.12) 110px,
+          transparent 150px
+        ),
+        /* Obere Kante: Schatten nach unten */
+        linear-gradient(to bottom,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        ),
+        /* Untere Kante: Schatten nach oben */
+        linear-gradient(to top,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        );
     }
 
-    /* Q2 (rotIndex=2, 180° Südlich): kipGroup in Q2+Q3 → UNTERE Hälfte abdunkeln */
+    /* Q2 (Südlich): kipGroup unten, Außenkante=unten, Innenkanten=oben+links+rechts */
     #kipShadowQ2{
       left: calc(1 * var(--cell));
-      top: calc((3.4 + 2) * var(--cell));
+      top: calc((4 + 2) * var(--cell));
       width: calc(6 * var(--cell));
-      height: calc(3.6 * var(--cell));
-      background: radial-gradient(ellipse at center top,
-        rgba(0,0,0,0.48) 0%,
-        rgba(0,0,0,0.38) 35%,
-        rgba(0,0,0,0.22) 65%,
-        rgba(0,0,0,0.10) 85%,
-        rgba(0,0,0,0.00) 100%
-      );
+      height: calc(3 * var(--cell));
+      background:
+        /* Oberkante: breiter Schatten nach oben */
+        linear-gradient(to top,
+          transparent 0%,
+          transparent calc(100% - 120px),
+          rgba(0,0,0,0.12) calc(100% - 90px),
+          rgba(0,0,0,0.28) calc(100% - 60px),
+          rgba(0,0,0,0.42) calc(100% - 35px),
+          rgba(0,0,0,0.52) calc(100% - 15px),
+          transparent 100%
+        ),
+        /* Linke Kante: Schatten nach rechts */
+        linear-gradient(to right,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        ),
+        /* Rechte Kante: Schatten nach links */
+        linear-gradient(to left,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        );
     }
 
-    /* Q3 (rotIndex=3, 270° Westlich): kipGroup in Q3+Q0 → LINKE Hälfte abdunkeln */
+    /* Q3 (Westlich): kipGroup links, Außenkante=links, Innenkanten=rechts+oben+unten */
     #kipShadowQ3{
       left: calc(1 * var(--cell));
       top: calc((1 + 2) * var(--cell));
-      width: calc(3.6 * var(--cell));
+      width: calc(6 * var(--cell));
       height: calc(6 * var(--cell));
-      background: radial-gradient(ellipse at right center,
-        rgba(0,0,0,0.48) 0%,
-        rgba(0,0,0,0.38) 35%,
-        rgba(0,0,0,0.22) 65%,
-        rgba(0,0,0,0.10) 85%,
-        rgba(0,0,0,0.00) 100%
-      );
+      background:
+        /* Rechte Kante: breiter Schatten nach links */
+        linear-gradient(to left,
+          rgba(0,0,0,0.52) 0px,
+          rgba(0,0,0,0.42) 35px,
+          rgba(0,0,0,0.28) 70px,
+          rgba(0,0,0,0.12) 110px,
+          transparent 150px
+        ),
+        /* Obere Kante: Schatten nach unten */
+        linear-gradient(to bottom,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        ),
+        /* Untere Kante: Schatten nach oben */
+        linear-gradient(to top,
+          rgba(0,0,0,0.48) 0px,
+          rgba(0,0,0,0.38) 20px,
+          rgba(0,0,0,0.22) 50px,
+          rgba(0,0,0,0.10) 85px,
+          transparent 120px
+        );
     }
 
     /* Z-INDEX: 3 - Zwischenkipp-Schatten PNGs */
@@ -1146,13 +1222,13 @@
         </div>
       </div>
 
-      <!-- Z-INDEX 2.5: KIPP-BODENSCHATTEN (NEU! geclippt auf 2B-7G) -->
+      <!-- Z-INDEX 2.5: KIPP-KANTENSCHATTEN (NEU! geclippt auf 2B-7G) -->
       <div id="kipShadowLayer" class="kipShadowLayer" aria-hidden="true">
         <div class="kipShadowClip">
-          <div id="kipShadowQ0" class="kipShadowQuadrant"></div>
-          <div id="kipShadowQ1" class="kipShadowQuadrant"></div>
-          <div id="kipShadowQ2" class="kipShadowQuadrant"></div>
-          <div id="kipShadowQ3" class="kipShadowQuadrant"></div>
+          <div id="kipShadowQ0" class="kipEdgeShadows"></div>
+          <div id="kipShadowQ1" class="kipEdgeShadows"></div>
+          <div id="kipShadowQ2" class="kipEdgeShadows"></div>
+          <div id="kipShadowQ3" class="kipEdgeShadows"></div>
         </div>
       </div>
 
@@ -1626,7 +1702,7 @@
       return false;
     }
 
-    // NEU: updateShadowVisibility steuert auch Kipp-Bodenschatten
+    // NEU: updateShadowVisibility steuert auch Kipp-Kantenschatten
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       const isWVisible = !wFaceGroup.classList.contains("hidden");
@@ -1638,7 +1714,7 @@
           else s.classList.remove("visible");
         });
 
-        // NEU: Kipp-Bodenschatten (Hälfte des Innenraums)
+        // NEU: Kipp-Kantenschatten (3 innenliegende Kanten)
         kipShadowLayer.classList.add("visible");
         allKipShadows.forEach((s, i) => {
           if(i === rotIndex) s.classList.add("visible");
