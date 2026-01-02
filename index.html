@@ -39,7 +39,9 @@
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: none;
+
+      /* WICHTIG: nicht global "touch-action:none", sonst funktionieren Range-Slider am Handy oft nicht */
+      touch-action: manipulation;
     }
 
     body{
@@ -248,6 +250,7 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       transition: all 0.2s ease;
+      pointer-events: auto;
     }
     .btnSchauen:active{
       transform: scale(0.98);
@@ -279,6 +282,7 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
+      pointer-events: auto;
     }
     .squareBtn:active{
       transform: scale(0.98);
@@ -298,6 +302,7 @@
       position: absolute;
       width: var(--gridW);
       height: auto;
+      pointer-events: auto; /* wichtig */
     }
 
     .speedIcon{
@@ -311,6 +316,7 @@
         hue-rotate(355deg) brightness(105%) contrast(95%)
         drop-shadow(0 1px 0 rgba(0,0,0,0.35))
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+      pointer-events: none;
     }
 
     .speedIcon.snail{
@@ -332,6 +338,7 @@
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--uiscale));
+      pointer-events: auto;
     }
 
     .speedScale{
@@ -345,8 +352,20 @@
       line-height: 1;
       user-select:none;
       text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      pointer-events: auto;
+    }
+    .speedScale span{
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .speedScale span:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
     }
 
+    /* Slider */
     input[type="range"]{
       -webkit-appearance: none;
       appearance: none;
@@ -359,6 +378,10 @@
       box-shadow:
         0 0 0 1px rgba(255,255,255,0.10) inset,
         0 1px 0 rgba(0,0,0,0.35) inset;
+
+      /* WICHTIG für Mobile-Drag */
+      touch-action: pan-x;
+      pointer-events: auto;
     }
     input[type="range"]::-webkit-slider-thumb{
       -webkit-appearance: none;
@@ -385,21 +408,33 @@
       cursor: pointer;
     }
 
+    /* visuell deaktiviert (bis Button geklickt wurde) */
+    .sliderLocked{
+      opacity: 0.45;
+      filter: saturate(0.8);
+    }
+    .sliderLocked input[type="range"]{
+      pointer-events: none;
+    }
+    .sliderLocked .speedScale{
+      pointer-events: none;
+    }
+
     .kippAnzahlSubtitle{
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
-      
+
       font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
       font-weight: 600;
       letter-spacing: 0.08em;
-      
+
       color: rgba(255,255,255,0.92);
       text-shadow:
         0 2px 0 rgba(0,0,0,0.75),
         0 4px 12px rgba(0,0,0,0.60);
-      
+
       white-space: nowrap;
       user-select: none;
     }
@@ -660,23 +695,23 @@
       left: 55px;
       top: 50%;
       transform: translateY(-50%);
-      
+
       width: calc(180px * var(--uiscale));
       height: calc(44px * var(--uiscale));
-      
+
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgb(198, 168, 128);
       color: rgba(0,0,0,0.92);
-      
+
       font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
-      
+
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
-      
+
       display: flex;
       align-items: center;
       justify-content: center;
@@ -695,16 +730,16 @@
       right: 70px;
       top: 50%;
       transform: translateY(-50%);
-      
+
       font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
-      
+
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
         0 8px 20px rgba(0,0,0,0.70);
-      
+
       user-select: none;
       white-space: nowrap;
       line-height: 1;
@@ -716,23 +751,23 @@
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
-      
+
       font-size: 90px;
       font-weight: 1000;
       letter-spacing: 0.05em;
       word-spacing: -0.3em;
-      
+
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 4px 0 rgba(0,0,0,0.85),
         0 10px 24px rgba(0,0,0,0.70);
-      
+
       user-select: none;
       white-space: nowrap;
       line-height: 1;
       text-align: center;
     }
-    
+
     .digiKippTitle .color{
       font-size: 60px;
       font-weight: 600;
@@ -954,15 +989,16 @@
           <div class="sliderRow" id="sliderRow">
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
 
-            <div class="sliderContainer">
-              <!-- SLIDER: 1..4 (statt 0..4) -->
+            <!-- START: Slider ist anfangs "locked" und wird erst beim Klick auf SCHAUEN & MERKEN aktiviert -->
+            <div class="sliderContainer sliderLocked" id="sliderContainer">
+              <!-- 1..4 statt 0..4 und 1..5 -->
               <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
 
-              <!-- SKALA: 1..4 -->
-              <div class="speedScale" aria-label="Kippspeed Stufen">
-                <span>1</span><span>2</span><span>3</span><span>4</span>
+              <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
+                <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
               </div>
             </div>
+            <!-- END -->
 
             <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
           </div>
@@ -1022,6 +1058,8 @@
     const sliderRow    = document.getElementById("sliderRow");
     const btnSchauen   = document.getElementById("btnSchauen");
     const speedSlider  = document.getElementById("speedSlider");
+    const sliderContainer = document.getElementById("sliderContainer");
+    const speedScaleEl = document.getElementById("speedScale");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
@@ -1126,12 +1164,12 @@
       return pool.slice(0, count);
     }
 
-    // SLIDER-MAPPING: 1..4 (Anzeige & Logik)
+    // Slider 1..4
     function getTiming(){
-      const vRaw = Number(speedSlider.value || 2);
-      const v = Math.max(1, Math.min(4, vRaw)); // 1..4
-
-      const hold = Math.max(520, Math.round(2200 - (v - 1) * 450));
+      const v = Number(speedSlider.value || 2); // 1..4
+      // gleiche Charakteristik, nur neu skaliert:
+      // v=1 langsam, v=4 schnell
+      const hold = Math.max(520, Math.round(2400 - v * 450));
       const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
@@ -1220,9 +1258,18 @@
     let runningPreview = false;
     let previewToken = 0;
 
-    // Log angepasst: 1..4
+    // Klick auf 1..4 setzt den Slider (und ist danach "richtig" bedienbar)
+    speedScaleEl.querySelectorAll("span").forEach(sp => {
+      sp.addEventListener("click", () => {
+        const v = Number(sp.dataset.v);
+        speedSlider.value = String(v);
+        speedSlider.dispatchEvent(new Event("input", { bubbles:true }));
+      });
+    });
+
     speedSlider.addEventListener("input", () => {
-      console.log(`Speed: ${speedSlider.value}`); // 1..4
+      const value = parseInt(speedSlider.value, 10);
+      console.log(`Speed: ${value}`);
     });
 
     async function waitOrPause(type, myToken){
@@ -1463,6 +1510,9 @@
 
       buttonState = "schauen";
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
+
+      // Slider wieder sperren beim Eintritt in die Ansicht (wird durch Button-Klick aktiviert)
+      sliderContainer.classList.add("sliderLocked");
     }
 
     function showKippAnzahlView(){
@@ -1487,8 +1537,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = String(num);
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1503,8 +1552,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = String(num);
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1519,8 +1567,7 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          const displayNum = String(num);
-          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
+          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1541,6 +1588,9 @@
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
+        // Slider aktivieren erst beim ersten Klick auf SCHAUEN & MERKEN
+        sliderContainer.classList.remove("sliderLocked");
+
         btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
         buttonState = "spielen";
         console.log("Demo gestartet");
@@ -1598,11 +1648,11 @@
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
 
-    // TOUCH-FIX: Slider muss schiebbar bleiben
+    // WICHTIG: nicht alles Touch-Move blockieren, sonst slider drag kaputt.
     document.addEventListener("touchmove", (e) => {
-      const isRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
-      if(isRange) return;
-      e.preventDefault();
+      const inRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
+      if(inRange) return;       // Slider darf ziehen
+      e.preventDefault();       // Rest bleibt wie vorher
     }, { passive:false });
   </script>
 </body>
