@@ -1112,6 +1112,135 @@
       kipGroup.querySelector('[data-slot="W2_D"] .num > span'),
     ];
 
+    const slotColorMap = {
+      'S1': 'violett',
+      'S2': 'blau',
+      'S3': 'orange',
+      'S4': 'blau'
+    };
+
+    function getVisibleNumbersWithColors(){
+      const curr = sets[faceIndex];
+      return [
+        { num: curr[0], color: slotColorMap['S1'] },
+        { num: curr[1], color: slotColorMap['S2'] },
+        { num: curr[2], color: slotColorMap['S3'] },
+        { num: curr[3], color: slotColorMap['S4'] }
+      ];
+    }
+
+    function generateTargetNumberColor(){
+      const visible = getVisibleNumbersWithColors();
+      const colors = ['violett', 'blau', 'gruen', 'orange'];
+      
+      const validCombos = [];
+      
+      visible.forEach(v => {
+        if(v.num === null) return;
+        colors.forEach(c => {
+          if(c !== v.color){
+            validCombos.push({ num: v.num, color: c });
+          }
+        });
+      });
+      
+      if(validCombos.length === 0){
+        const randomNum = visible.filter(v => v.num !== null)[0];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        return { num: randomNum.num, color: randomColor };
+      }
+      
+      const chosen = validCombos[Math.floor(Math.random() * validCombos.length)];
+      return chosen;
+    }
+
+    let currentTarget = null;
+
+    const colorFieldCoords = {
+      'violett': [
+        { coord: '3A', rot: 90 },
+        { coord: '8D', rot: 180 },
+        { coord: '8E', rot: 180 },
+        { coord: '3H', rot: -90 }
+      ],
+      'blau': [
+        { coord: '1F', rot: 0 },
+        { coord: '8F', rot: 180 },
+        { coord: '4A', rot: 90 },
+        { coord: '5A', rot: 90 }
+      ],
+      'gruen': [
+        { coord: '1C', rot: 0 },
+        { coord: '8C', rot: 180 },
+        { coord: '4H', rot: -90 },
+        { coord: '5H', rot: -90 }
+      ],
+      'orange': [
+        { coord: '1D', rot: 0 },
+        { coord: '1E', rot: 0 },
+        { coord: '6A', rot: 90 },
+        { coord: '6H', rot: -90 }
+      ]
+    };
+
+    function placeTargetNumbers(target){
+      clearTargetNumbers();
+      
+      const fields = colorFieldCoords[target.color];
+      if(!fields) return;
+      
+      const cellPx = numVar("--cell") || 142;
+      const sizePx = numVar("--colorSize") || 126;
+      
+      fields.forEach(field => {
+        const { row, col } = coordToXY(field.coord);
+        const visualRow = row + HEADER_ROW_OFFSET;
+        
+        const leftCell = (col - 1) * cellPx;
+        const topCell = (visualRow - 1) * cellPx;
+        
+        const pad = (cellPx - sizePx) / 2;
+        const x = leftCell + pad;
+        const y = topCell + pad;
+        
+        const container = document.createElement("div");
+        container.className = "targetNumber";
+        container.style.position = "absolute";
+        container.style.left = x + "px";
+        container.style.top = y + "px";
+        container.style.width = sizePx + "px";
+        container.style.height = sizePx + "px";
+        container.style.display = "flex";
+        container.style.alignItems = "center";
+        container.style.justifyContent = "center";
+        container.style.zIndex = "8";
+        container.style.pointerEvents = "none";
+        
+        const numSpan = document.createElement("span");
+        numSpan.style.fontWeight = "900";
+        numSpan.style.color = "#111";
+        numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
+        numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
+        numSpan.style.lineHeight = "1";
+        numSpan.style.transform = `rotate(${field.rot}deg)`;
+        numSpan.style.transformOrigin = "50% 50%";
+        
+        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
+        numSpan.textContent = text;
+        
+        if(target.num >= 10){
+          numSpan.style.letterSpacing = "-0.08em";
+        }
+        
+        container.appendChild(numSpan);
+        colorsEl.appendChild(container);
+      });
+    }
+
+    function clearTargetNumbers(){
+      document.querySelectorAll('.targetNumber').forEach(el => el.remove());
+    }
+
     function showW(){
       kipGroup.classList.add("hidden");
       wFaceGroup.classList.remove("hidden");
@@ -1255,6 +1384,7 @@
 
     let runningPreview = false;
     let previewToken = 0;
+    let stopAtNextW = false;
 
     speedScaleEl.querySelectorAll("span").forEach(sp => {
       sp.addEventListener("click", () => {
@@ -1296,6 +1426,12 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(0); renderW();
+      if(stopAtNextW){
+        stopAtNextW = false;
+        runningPreview = false;
+        showKippAnzahlView();
+        return;
+      }
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
@@ -1305,6 +1441,12 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
+      if(stopAtNextW){
+        stopAtNextW = false;
+        runningPreview = false;
+        showKippAnzahlView();
+        return;
+      }
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
@@ -1314,6 +1456,12 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
+      if(stopAtNextW){
+        stopAtNextW = false;
+        runningPreview = false;
+        showKippAnzahlView();
+        return;
+      }
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
@@ -1322,6 +1470,13 @@
       advanceFullCW();
       showW();
       renderW();
+      
+      if(stopAtNextW){
+        stopAtNextW = false;
+        runningPreview = false;
+        showKippAnzahlView();
+        return;
+      }
 
       const EXTRA_CYCLES = 3;
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
@@ -1334,6 +1489,14 @@
         advanceFullCW();
         showW();
         renderW();
+        
+        if(stopAtNextW){
+          stopAtNextW = false;
+          runningPreview = false;
+          showKippAnzahlView();
+          return;
+        }
+        
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1345,6 +1508,14 @@
         advanceFullCW();
         showW();
         renderW();
+        
+        if(stopAtNextW){
+          stopAtNextW = false;
+          runningPreview = false;
+          showKippAnzahlView();
+          return;
+        }
+        
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1500,6 +1671,8 @@
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
+      
+      clearTargetNumbers();
     }
 
     function showKspView(){
@@ -1512,6 +1685,8 @@
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
 
       sliderContainer.classList.add("sliderLocked");
+      
+      clearTargetNumbers();
     }
 
     function showKippAnzahlView(){
@@ -1521,6 +1696,13 @@
       kippAnzahlView.classList.remove("hidden");
 
       buildKippAnzahlButtons(selectedLevel);
+      
+      if(selectedLevel === "trainee"){
+        currentTarget = generateTargetNumberColor();
+        placeTargetNumbers(currentTarget);
+        
+        console.log("Target generiert:", currentTarget);
+      }
     }
 
     function buildKippAnzahlButtons(level){
@@ -1575,6 +1757,30 @@
 
     function handleAnzahlClick(anzahl){
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
+      
+      if(selectedLevel === "trainee"){
+        runKippCycles(anzahl);
+      }
+    }
+
+    async function runKippCycles(count){
+      if(runningPreview) return;
+      runningPreview = true;
+      const myToken = ++previewToken;
+
+      for(let i = 0; i < count; i++){
+        showKip();
+        renderKip();
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+
+        advanceFullCW();
+        showW();
+        renderW();
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+      }
+
+      runningPreview = false;
+      console.log(`${count} Kipp-Zyklen abgeschlossen`);
     }
 
     document.querySelectorAll('.levelBtn').forEach(btn => {
@@ -1595,9 +1801,16 @@
         await runSetNumbersCycle();
         console.log("Demo beendet");
       } else if(buttonState === "spielen"){
-        cancelPreview();
-        console.log("Gehe ins Spiel!");
-        showKippAnzahlView();
+        const isWVisible = !wFaceGroup.classList.contains("hidden");
+        
+        if(isWVisible){
+          cancelPreview();
+          console.log("Gehe ins Spiel!");
+          showKippAnzahlView();
+        } else {
+          stopAtNextW = true;
+          console.log("Warte auf nächste W-Ansicht...");
+        }
       }
     });
 
