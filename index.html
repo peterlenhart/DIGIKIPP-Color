@@ -262,58 +262,62 @@
       opacity: 1;
     }
 
-    /* Q0 (rotIndex=0, 0°): Linke Hälfte abdunkeln */
+    /* Q0 (rotIndex=0, 0° Nördlich): kipGroup in Q0+Q1 → OBERE Hälfte abdunkeln */
     #kipShadowQ0{
       left: calc(1 * var(--cell));
       top: calc((1 + 2) * var(--cell));
-      width: calc(3.5 * var(--cell));
-      height: calc(6 * var(--cell));
-      background: linear-gradient(90deg,
-        rgba(0,0,0,0.42) 0%,
-        rgba(0,0,0,0.32) 45%,
-        rgba(0,0,0,0.14) 85%,
-        rgba(0,0,0,0.00) 100%
-      );
-    }
-
-    /* Q1 (rotIndex=1, 90°): Obere Hälfte abdunkeln */
-    #kipShadowQ1{
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
       width: calc(6 * var(--cell));
-      height: calc(3.5 * var(--cell));
-      background: linear-gradient(180deg,
-        rgba(0,0,0,0.42) 0%,
-        rgba(0,0,0,0.32) 45%,
-        rgba(0,0,0,0.14) 85%,
+      height: calc(3.6 * var(--cell));
+      background: radial-gradient(ellipse at center bottom,
+        rgba(0,0,0,0.48) 0%,
+        rgba(0,0,0,0.38) 35%,
+        rgba(0,0,0,0.22) 65%,
+        rgba(0,0,0,0.10) 85%,
         rgba(0,0,0,0.00) 100%
       );
     }
 
-    /* Q2 (rotIndex=2, 180°): Rechte Hälfte abdunkeln */
-    #kipShadowQ2{
-      left: calc(3.5 * var(--cell));
+    /* Q1 (rotIndex=1, 90° Östlich): kipGroup in Q1+Q2 → RECHTE Hälfte abdunkeln */
+    #kipShadowQ1{
+      left: calc(3.4 * var(--cell));
       top: calc((1 + 2) * var(--cell));
-      width: calc(3.5 * var(--cell));
+      width: calc(3.6 * var(--cell));
       height: calc(6 * var(--cell));
-      background: linear-gradient(270deg,
-        rgba(0,0,0,0.42) 0%,
-        rgba(0,0,0,0.32) 45%,
-        rgba(0,0,0,0.14) 85%,
+      background: radial-gradient(ellipse at left center,
+        rgba(0,0,0,0.48) 0%,
+        rgba(0,0,0,0.38) 35%,
+        rgba(0,0,0,0.22) 65%,
+        rgba(0,0,0,0.10) 85%,
         rgba(0,0,0,0.00) 100%
       );
     }
 
-    /* Q3 (rotIndex=3, 270°): Untere Hälfte abdunkeln */
+    /* Q2 (rotIndex=2, 180° Südlich): kipGroup in Q2+Q3 → UNTERE Hälfte abdunkeln */
+    #kipShadowQ2{
+      left: calc(1 * var(--cell));
+      top: calc((3.4 + 2) * var(--cell));
+      width: calc(6 * var(--cell));
+      height: calc(3.6 * var(--cell));
+      background: radial-gradient(ellipse at center top,
+        rgba(0,0,0,0.48) 0%,
+        rgba(0,0,0,0.38) 35%,
+        rgba(0,0,0,0.22) 65%,
+        rgba(0,0,0,0.10) 85%,
+        rgba(0,0,0,0.00) 100%
+      );
+    }
+
+    /* Q3 (rotIndex=3, 270° Westlich): kipGroup in Q3+Q0 → LINKE Hälfte abdunkeln */
     #kipShadowQ3{
       left: calc(1 * var(--cell));
-      top: calc((4.5 + 2) * var(--cell));
-      width: calc(6 * var(--cell));
-      height: calc(3.5 * var(--cell));
-      background: linear-gradient(0deg,
-        rgba(0,0,0,0.42) 0%,
-        rgba(0,0,0,0.32) 45%,
-        rgba(0,0,0,0.14) 85%,
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3.6 * var(--cell));
+      height: calc(6 * var(--cell));
+      background: radial-gradient(ellipse at right center,
+        rgba(0,0,0,0.48) 0%,
+        rgba(0,0,0,0.38) 35%,
+        rgba(0,0,0,0.22) 65%,
+        rgba(0,0,0,0.10) 85%,
         rgba(0,0,0,0.00) 100%
       );
     }
