@@ -137,7 +137,7 @@
         );
     }
 
-    /* NEU: Zwischenkipp-Schatten PNG Layer */
+    /* Zwischenkipp-Schatten PNG Layer - Position 2B (Spalte 2, Zeile 2) bis 7G (Spalte 7, Zeile 7) */
     .zwischenKippSchattenLayer{
       position: absolute;
       left: 0;
@@ -150,13 +150,16 @@
 
     .zwischenKippSchatten{
       position: absolute;
+      /* Spalte B = col 2, also left = 1 * cell (col-1) */
+      /* Zeile 2 + HEADER_OFFSET(2) = visual row 4, also top = 3 * cell (visual-1) */
       left: calc(1 * var(--cell));
-      top: calc((2 + 2) * var(--cell));
+      top: calc(3 * var(--cell));
+      /* 6 Zellen breit (B bis G = 2,3,4,5,6,7) und 6 Zellen hoch (2 bis 7) */
       width: calc(6 * var(--cell));
       height: calc(6 * var(--cell));
-      background-size: contain;
+      background-size: 100% 100%;
       background-repeat: no-repeat;
-      background-position: center;
+      background-position: 0 0;
       opacity: 0;
       transition: opacity 0.1s ease;
     }
@@ -534,9 +537,41 @@
       transform-origin: 0 0;
     }
 
-    /* Würfel-Schatten entfernt */
+    /* Würfel-Schatten: nur von den mittigen Kanten nach innen */
     .cubeShadow{
-      display: none;
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Schatten von der vertikalen mittigen Kante (links vom Zentrum) */
+    .cubeShadow::before{
+      content: "";
+      position: absolute;
+      left: calc(1.5 * var(--cell));
+      top: 0;
+      width: 18px;
+      height: calc(3 * var(--cell));
+      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28) 60%, rgba(0,0,0,0.00));
+      transform: translateX(-50%);
+      opacity: 0.85;
+    }
+
+    /* Schatten von der horizontalen mittigen Kante (oben vom Zentrum) */
+    .cubeShadow::after{
+      content: "";
+      position: absolute;
+      left: 0;
+      top: calc(1.5 * var(--cell));
+      width: calc(3 * var(--cell));
+      height: 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28) 60%, rgba(0,0,0,0.00));
+      transform: translateY(-50%);
+      opacity: 0.85;
     }
 
     .cubeFace{
@@ -578,7 +613,7 @@
         radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
         radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
       box-shadow: 0 5px 10px rgba(0,0,0,0.28);
-      z-index: 3;
+      z-index: 5;
       pointer-events: none;
     }
 
@@ -682,7 +717,7 @@
       transform-origin: 0 0;
     }
 
-    /* Kipp-Schatten entfernt */
+    /* Kipp-Schatten nicht benötigt (PNG übernimmt) */
     .kipShadow{
       display: none;
     }
@@ -1015,7 +1050,7 @@
 
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- NEU: Zwischenkipp-Schatten Layer -->
+      <!-- Zwischenkipp-Schatten Layer (2B bis 7G) -->
       <div class="zwischenKippSchattenLayer" aria-hidden="true">
         <div id="shadowQ0" class="zwischenKippSchatten"></div>
         <div id="shadowQ1" class="zwischenKippSchatten"></div>
@@ -1184,7 +1219,7 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
 
-    // NEU: Schatten-Elemente
+    // Schatten-Elemente
     const shadowQ0 = document.getElementById("shadowQ0");
     const shadowQ1 = document.getElementById("shadowQ1");
     const shadowQ2 = document.getElementById("shadowQ2");
@@ -1358,13 +1393,17 @@
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    // NEU: Korrigierte Rotation für Zielzahlen
+    // KORRIGIERT: Zielzahlen-Rotation
     function rotationForCoord(coord){
       const { row, col } = coordToXY(coord);
-      if(col === 1) return -90;  // Spalte A: von Osten lesbar
-      if(col === 8) return 90;   // Spalte H: von Westen lesbar
-      if(row === 1) return 0;    // Zeile 1: von Süden lesbar
-      if(row === 8) return 180;  // Zeile 8: von Norden lesbar
+      // Spalte A (col=1): von Osten lesbar = -90° (270°)
+      if(col === 1) return -90;
+      // Spalte H (col=8): von Westen lesbar = +90°
+      if(col === 8) return 90;
+      // Zeile 1 (row=1): von Süden lesbar = 0°
+      if(row === 1) return 0;
+      // Zeile 8 (row=8): von Norden lesbar = 180°
+      if(row === 8) return 180;
       return 0;
     }
 
@@ -1481,17 +1520,15 @@
       return false;
     }
 
-    // NEU: Schatten-Sichtbarkeit aktualisieren
+    // Schatten-Sichtbarkeit aktualisieren
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       
       if(!isKipVisible){
-        // Kein Schatten wenn kipGroup nicht sichtbar
         allShadows.forEach(s => s.classList.remove("visible"));
         return;
       }
 
-      // Zeige nur den Schatten für den aktuellen rotIndex
       allShadows.forEach((s, i) => {
         if(i === rotIndex){
           s.classList.add("visible");
