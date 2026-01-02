@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – Option 2 (funktionierende Version)</title>
+  <title>DigiKipp – Final Version</title>
 
   <style>
     :root{
@@ -149,7 +149,7 @@
       top: 0;
       width: var(--gridW);
       height: var(--gridH);
-      z-index: 3;
+      z-index: 100;  /* ✅ ERHÖHT: Buttons über Würfel */
       pointer-events: none;
     }
 
@@ -238,7 +238,39 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: calc(24px * var(--uiscale));
+    }
+
+    /* ✅ SCHAUEN & MERKEN / SPIELEN Button */
+    .btnSchauen{
+      width: calc(260px * var(--uiscale));
+      height: calc(52px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btnSchauen:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    .btnText{
+      font-size: calc(16px * var(--uiscale));
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      color: #7a3f2b;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
     }
 
     .squareBtn{
@@ -260,44 +292,6 @@
     .squareBtn:active{
       transform: scale(0.98);
       filter: brightness(0.98);
-    }
-
-    .playIcon{
-      width: 0;
-      height: 0;
-      border-top: calc(11px * var(--uiscale)) solid transparent;
-      border-bottom: calc(11px * var(--uiscale)) solid transparent;
-      border-left: calc(18px * var(--uiscale)) solid #7a3f2b;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
-      transform: translateX(calc(1px * var(--uiscale)));
-    }
-
-    .pauseIcon{
-      width: calc(18px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      position: relative;
-      filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25));
-    }
-    .pauseIcon::before,
-    .pauseIcon::after{
-      content:"";
-      position:absolute;
-      top:0;
-      width: calc(6px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      background: #7a3f2b;
-      border-radius: 1px;
-    }
-    .pauseIcon::before{ left: 0; }
-    .pauseIcon::after { right: 0; }
-
-    .okText{
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      color: #7a3f2b;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      font-size: calc(16px * var(--uiscale));
-      line-height: 1;
     }
 
     .anzahlText{
@@ -331,13 +325,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px;
+      top: 0;  /* ✅ Auf gleicher Höhe wie Slider */
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: -77px;
+      top: 0;  /* ✅ Auf gleicher Höhe wie Slider */
     }
 
     .sliderContainer{
@@ -445,7 +439,7 @@
       --cube-wood-gold: rgba(249, 150, 30, 0.10);
       --w1-innerframe: rgba(122, 74, 52, 1);
       --slot-fill: #ead7be;
-      --slot-border-w: 4px;  /* ✅ VERSTÄRKT: 3→4px */
+      --slot-border-w: 4px;
       --rotSign: 1;
       --rot: 0deg;
     }
@@ -479,8 +473,8 @@
       z-index: 1;
       background: transparent;
       box-shadow:
-        0 45px 55px rgba(0,0,0,0.45),  /* ✅ VERSTÄRKT: Schlagschatten auf Boden */
-        0 22px 35px rgba(0,0,0,0.28);  /* ✅ VERSTÄRKT: Zusätzliche Tiefe */
+        0 45px 55px rgba(0,0,0,0.45),
+        0 22px 35px rgba(0,0,0,0.28);
     }
 
     .cubeFace{
@@ -495,14 +489,14 @@
         repeating-linear-gradient(
           20deg,
           rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 17px,                    /* ✅ Skaliert: 10→17 */
+          rgba(0,0,0,0.02) 17px,
           rgba(255,255,255,0.02) 17px,
-          rgba(255,255,255,0.02) 30px               /* ✅ Skaliert: 18→30 */
+          rgba(255,255,255,0.02) 30px
         ),
         linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
         linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
       box-shadow:
-        inset 0 0 0 5px var(--w1-innerframe),       /* ✅ VERSTÄRKT: 3→5px */
+        inset 0 0 0 5px var(--w1-innerframe),
         0 0 0 2px rgba(255,255,255,0.08) inset;
       z-index: 2;
       left: calc(1 * var(--cell));
@@ -521,7 +515,7 @@
         radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
         radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
         radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
-      box-shadow: 0 5px 10px rgba(0,0,0,0.28);  /* ✅ Skaliert: 3→5, 6→10 */
+      box-shadow: 0 5px 10px rgba(0,0,0,0.28);
       z-index: 3;
       pointer-events: none;
     }
@@ -538,10 +532,10 @@
       border-radius: 0;
       z-index: 7;
       box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,     /* ✅ VERSTÄRKT: 0.18→0.25 */
-        -2px -2px 0 rgba(0,0,0,0.15) inset,          /* ✅ VERSTÄRKT: 0.08→0.15 */
-        0 6px 12px rgba(0,0,0,0.35),                 /* ✅ VERSTÄRKT: 5→6, 8→12, 0.22→0.35 */
-        4px 4px 7px -2px rgba(0,0,0,0.30);           /* ✅ VERSTÄRKT: 3→4, 5→7, 0.20→0.30 */
+        2px 2px 0 rgba(255,255,255,0.25) inset,
+        -2px -2px 0 rgba(0,0,0,0.15) inset,
+        0 6px 12px rgba(0,0,0,0.35),
+        4px 4px 7px -2px rgba(0,0,0,0.30);
     }
 
     .slot .num{
@@ -560,9 +554,9 @@
       justify-content: center;
       font-weight: 900;
       color: #111;
-      font-size: calc(var(--cell) * 0.70);  /* ✅ 70% = ~100px bei 142px Cell - RIESIG wie ALT */
-      letter-spacing: -0.05em;  /* ✅ NEU: Punkt dichter, optische Mitte */
-      text-shadow: 0 2px 0 rgba(255,255,255,0.35);  /* ✅ Skaliert: 1→2 */
+      font-size: calc(var(--cell) * 0.70);
+      letter-spacing: -0.05em;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
       transform: rotate(var(--num-rot, 0deg));
       transform-origin: 50% 50%;
       position: relative;
@@ -666,7 +660,6 @@
 
     .hidden{ display:none !important; }
 
-    .ball{
     .permanentRow13{
       position: absolute;
       left: 0;
@@ -733,7 +726,7 @@
 
     .digiKippTitle{
       position: absolute;
-      left: calc(50% + 92px);  /* ✅ KORRIGIERT: 25→92px */
+      left: calc(50% + 92px);
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
@@ -966,32 +959,31 @@
         </div>
 
         <div id="kspView" class="hidden">
-          <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
-
+          <!-- ✅ Button OBEN -->
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
-              <button id="btnPlay" class="squareBtn" aria-label="Demo starten/pausieren" type="button">
-                <span id="playGlyph" class="playIcon" aria-hidden="true"></span>
-              </button>
-
-              <button id="btnOk" class="squareBtn" aria-label="Geschwindigkeit bestätigen" type="button">
-                <span class="okText">OK</span>
+              <button id="btnSchauen" class="btnSchauen" type="button">
+                <span class="btnText">SCHAUEN & MERKEN</span>
               </button>
             </div>
+          </div>
 
-            <div class="sliderRow" id="sliderRow">
-              <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+          <!-- ✅ Titel DARUNTER -->
+          <div class="uiTitle" id="kspTitle">KIPPSPEED (KSP)</div>
+
+          <!-- ✅ Slider UNTEN -->
+          <div class="sliderRow" id="sliderRow">
+            <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+            
+            <div class="sliderContainer">
+              <input id="speedSlider" type="range" min="0" max="4" value="2" step="1" aria-label="Speed Slider">
               
-              <div class="sliderContainer">
-                <input id="speedSlider" type="range" min="0" max="4" value="2" step="1" aria-label="Speed Slider">
-                
-                <div class="speedScale" aria-label="Kippspeed Stufen">
-                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                </div>
+              <div class="speedScale" aria-label="Kippspeed Stufen">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
               </div>
-
-              <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
             </div>
+
+            <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
           </div>
 
           <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
@@ -1049,9 +1041,7 @@
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
     const sliderRow    = document.getElementById("sliderRow");
-    const btnPlay      = document.getElementById("btnPlay");
-    const btnOk        = document.getElementById("btnOk");
-    const playGlyph    = document.getElementById("playGlyph");
+    const btnSchauen   = document.getElementById("btnSchauen");
     const speedSlider  = document.getElementById("speedSlider");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
@@ -1076,12 +1066,12 @@
 
     let currentView = "level"; // "level", "ksp", "anzahl"
     let selectedLevel = null; // "trainee", "brainy", "brain"
+    let buttonState = "schauen"; // "schauen" oder "spielen"
 
-    // ===== ✅ ZAHLEN-LOGIK AUS ALT =====
+    // ===== ✅ ZAHLEN-LOGIK =====
     
     function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
 
-    // Slot-Targets für Zahlen
     const wFaceGroup = document.getElementById("wFaceGroup");
     const kipGroup = document.getElementById("kipGroup");
     
@@ -1138,7 +1128,6 @@
         span.textContent = "";
         return;
       }
-      // ✅ 9 und 6 mit Punkt
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
     }
@@ -1155,7 +1144,6 @@
 
     function getTiming(){
       const v = Number(speedSlider.value || 2);
-      // Skalierung angepasst: 0-4 statt 0-9
       const hold = Math.max(520, Math.round(2200 - v * 350));
       const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
@@ -1198,7 +1186,6 @@
       renderWEmpty();
     }
 
-    // Zahlen-Sets: 3 Flächen mit je 4 Zahlen
     let planned = [
       [null,null,null,null],
       [null,null,null,null],
@@ -1245,35 +1232,22 @@
 
     let runningPreview = false;
     let previewToken = 0;
-    let previewPaused = false;
 
     async function waitOrPause(ms, myToken){
-      const slice = 40;
-      let elapsed = 0;
-      while(elapsed < ms){
-        if(myToken !== previewToken) return false;
-        if(previewPaused){
-          await sleep(60);
-          continue;
-        }
-        const step = Math.min(slice, ms - elapsed);
-        await sleep(step);
-        elapsed += step;
-      }
+      await sleep(ms);
       return (myToken === previewToken);
     }
 
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
-      previewPaused = false;
       const myToken = ++previewToken;
 
       reroll12_keepEmpty();
 
       const T = getTiming();
 
-      // Zyklus 1: W leer → W mit Zahlen → KIP
+      // Zyklus 1
       showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1283,7 +1257,7 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Zyklus 2: Rotation → W leer → W mit Zahlen → KIP
+      // Zyklus 2
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1293,7 +1267,7 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Zyklus 3: Rotation → W leer → W mit Zahlen → KIP
+      // Zyklus 3
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1303,12 +1277,12 @@
       showKip(); renderKip();
       if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
 
-      // Final: Rotation zurück zu Start
+      // Final
       advanceFullCW();
       showW();
       renderW();
 
-      // 3 Extra-Zyklen
+      // Extra-Zyklen
       const EXTRA_CYCLES = 3;
       if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
 
@@ -1323,9 +1297,9 @@
         if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
       }
 
-      // ✅ ENDLOS-SCHLEIFE: Weiter kippen, bis OK geklickt wird
+      // Endlos-Schleife
       while(myToken === previewToken){
-        const T = getTiming(); // ✅ Speed-Änderungen berücksichtigen
+        const T = getTiming();
         
         showKip();
         renderKip();
@@ -1426,9 +1400,10 @@
       levelTitleEl.style.top = midY + "px";
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
-      kspTitle.style.top = midY + "px";
-      kspTop.style.top = (midY + 70) + "px";
-      sliderRow.style.top = (midY + 265) + "px";
+      // ✅ GETAUSCHT: Button oben, Titel darunter
+      kspTop.style.top = midY + "px";              // Button
+      kspTitle.style.top = (midY + 70) + "px";      // Titel
+      sliderRow.style.top = (midY + 265) + "px";    // Slider
 
       kippAnzahlTitle.style.top = midY + "px";
       kippAnzahlSubtitle.style.top = (midY + 45) + "px";
@@ -1437,7 +1412,8 @@
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
 
-      const titleVisualRow = 1.5;
+      const titleRow = 1.5;
+      const titleVisualRow = titleRow + HEADER_ROW_OFFSET;
       const titleY = (titleVisualRow - 1) * cellPx + cellPx / 2;
       digiKippTitle.style.top = titleY + "px";
 
@@ -1459,7 +1435,8 @@
       });
 
       const closeCol = 1;
-      const closeVisualRow = 1.5;
+      const closeRow = 1.5;
+      const closeVisualRow = closeRow + HEADER_ROW_OFFSET;
       
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = (closeVisualRow - 1) * cellPx + cellPx / 2;
@@ -1497,6 +1474,10 @@
       levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
+      
+      // ✅ Button zurücksetzen
+      buttonState = "schauen";
+      btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
     }
 
     function showKippAnzahlView(){
@@ -1521,7 +1502,6 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 9 und 6
           const displayNum = (num === 9 || num === 6) ? `${num}.` : num;
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
@@ -1538,7 +1518,6 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
           const displayNum = (num === 6) ? `${num}.` : num;
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
@@ -1555,7 +1534,6 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          // ✅ Punkt bei 6
           const displayNum = (num === 6) ? `${num}.` : num;
           btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
@@ -1576,35 +1554,22 @@
       });
     });
 
-    function setPlayGlyph(isPause){
-      playGlyph.className = isPause ? "pauseIcon" : "playIcon";
-    }
-
-    btnPlay.addEventListener("click", async () => {
-      if(!runningPreview){
-        // ✅ STARTEN
-        setPlayGlyph(true);
-        console.log("Zahlen-Vorschau gestartet");
+    // ✅ BUTTON-LOGIK: SCHAUEN & MERKEN → SPIELEN
+    btnSchauen.addEventListener("click", async () => {
+      if(buttonState === "schauen"){
+        // ✅ Demo starten
+        btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
+        buttonState = "spielen";
+        console.log("Demo gestartet");
         await runSetNumbersCycle();
-        setPlayGlyph(false);
-        console.log("Zahlen-Vorschau beendet");
-      } else {
-        // ✅ PAUSE / RESUME
-        previewPaused = !previewPaused;
-        setPlayGlyph(!previewPaused);
-        console.log(previewPaused ? "Vorschau pausiert" : "Vorschau fortgesetzt");
+        console.log("Demo beendet");
+        
+      } else if(buttonState === "spielen"){
+        // ✅ Ins Spiel gehen
+        cancelPreview();
+        console.log("Gehe ins Spiel!");
+        showKippAnzahlView();
       }
-    });
-
-    btnOk.addEventListener("click", () => {
-      const speedValue = speedSlider.value;
-      const speedLabels = ["1", "2", "3", "4", "5"];
-      console.log(`KSP bestätigt, Stufe: ${speedLabels[speedValue]} (Wert: ${speedValue})`);
-      
-      // ✅ Stoppt Endlosschleife
-      cancelPreview();
-      
-      showKippAnzahlView();
     });
 
     speedSlider.addEventListener("input", () => {
@@ -1655,7 +1620,10 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", rebuild);
+    window.addEventListener("load", () => {
+      rebuild();
+      showLevelView();
+    });
     window.addEventListener("resize", rebuild);
     document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
   </script>
