@@ -1216,8 +1216,25 @@
     let runningPreview = false;
     let previewToken = 0;
 
-    async function waitOrPause(ms, myToken){
-      await sleep(ms);
+    speedSlider.addEventListener("input", () => {
+      const value = parseInt(speedSlider.value);
+      const speedLabels = ["1", "2", "3", "4", "5"];
+      console.log(`Speed: ${speedLabels[value]}`);
+    });
+
+    async function waitOrPause(type, myToken){
+      const startTime = Date.now();
+      
+      while(myToken === previewToken){
+        const T = getTiming();
+        const targetMs = (type === 'kip') ? T.kipMs : T.wMs;
+        const elapsed = Date.now() - startTime;
+        
+        if(elapsed >= targetMs) break;
+        
+        await sleep(50);
+      }
+      
       return (myToken === previewToken);
     }
 
@@ -1228,64 +1245,60 @@
 
       reroll12_keepEmpty();
 
-      const T = getTiming();
-
       showW(); renderWEmpty();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(0); renderW();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip(); renderKip();
-      if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW();
       showW();
       renderW();
 
       const EXTRA_CYCLES = 3;
-      if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
         showKip();
         renderKip();
-        if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW();
         showW();
         renderW();
-        if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       while(myToken === previewToken){
-        const T = getTiming();
-        
         showKip();
         renderKip();
-        if(!await waitOrPause(T.kipMs, myToken)){ runningPreview=false; return; }
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW();
         showW();
         renderW();
-        if(!await waitOrPause(T.wMs, myToken)){ runningPreview=false; return; }
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
@@ -1535,12 +1548,6 @@
         console.log("Gehe ins Spiel!");
         showKippAnzahlView();
       }
-    });
-
-    speedSlider.addEventListener("input", () => {
-      const value = parseInt(speedSlider.value);
-      const speedLabels = ["1", "2", "3", "4", "5"];
-      console.log(`Speed: ${speedLabels[value]}`);
     });
 
     backBtnKsp.addEventListener("click", () => {
