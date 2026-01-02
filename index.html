@@ -248,7 +248,6 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       transition: all 0.2s ease;
-      pointer-events: auto;
     }
     .btnSchauen:active{
       transform: scale(0.98);
@@ -280,7 +279,6 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
-      pointer-events: auto;
     }
     .squareBtn:active{
       transform: scale(0.98);
@@ -300,10 +298,6 @@
       position: absolute;
       width: var(--gridW);
       height: auto;
-
-      /* ✅ FIX: sonst kommt kein Touch/Mouse am Slider an (weil uiLayer pointer-events:none) */
-      pointer-events: auto;
-      z-index: 12;
     }
 
     .speedIcon{
@@ -317,7 +311,6 @@
         hue-rotate(355deg) brightness(105%) contrast(95%)
         drop-shadow(0 1px 0 rgba(0,0,0,0.35))
         drop-shadow(0 2px 6px rgba(0,0,0,0.25));
-      pointer-events: none;
     }
 
     .speedIcon.snail{
@@ -339,7 +332,6 @@
       display: flex;
       flex-direction: column;
       gap: calc(6px * var(--uiscale));
-      pointer-events: auto;
     }
 
     .speedScale{
@@ -353,7 +345,6 @@
       line-height: 1;
       user-select:none;
       text-shadow: 0 1px 0 rgba(0,0,0,0.35);
-      pointer-events: none;
     }
 
     input[type="range"]{
@@ -368,8 +359,6 @@
       box-shadow:
         0 0 0 1px rgba(255,255,255,0.10) inset,
         0 1px 0 rgba(0,0,0,0.35) inset;
-      pointer-events: auto;
-      touch-action: pan-x;
     }
     input[type="range"]::-webkit-slider-thumb{
       -webkit-appearance: none;
@@ -401,13 +390,16 @@
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
+      
       font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
       font-weight: 600;
       letter-spacing: 0.08em;
+      
       color: rgba(255,255,255,0.92);
       text-shadow:
         0 2px 0 rgba(0,0,0,0.75),
         0 4px 12px rgba(0,0,0,0.60);
+      
       white-space: nowrap;
       user-select: none;
     }
@@ -569,10 +561,22 @@
     .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
     .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
 
-    .kipGroup{ position:absolute; left:0; top:0; width:var(--gridW); height:var(--gridH); z-index:4; pointer-events:none;
+    .kipGroup{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 4;
+      pointer-events: none;
+
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
-      transform: translate(var(--pivot-x), var(--pivot-y)) rotate(var(--rot)) translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        rotate(var(--rot))
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
 
@@ -616,8 +620,19 @@
       opacity: 0.95;
     }
 
-    .kipFaceQ0{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); width: calc(3 * var(--cell)); height: calc(3 * var(--cell)); }
-    .kipFaceQ1{ left: calc(4 * var(--cell)); top: calc((1 + 2) * var(--cell)); width: calc(3 * var(--cell)); height: calc(3 * var(--cell)); }
+    .kipFaceQ0{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+
+    .kipFaceQ1{
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
 
     .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
     .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
@@ -645,18 +660,23 @@
       left: 55px;
       top: 50%;
       transform: translateY(-50%);
+      
       width: calc(180px * var(--uiscale));
       height: calc(44px * var(--uiscale));
+      
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgb(198, 168, 128);
       color: rgba(0,0,0,0.92);
+      
       font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
+      
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
+      
       display: flex;
       align-items: center;
       justify-content: center;
@@ -675,13 +695,16 @@
       right: 70px;
       top: 50%;
       transform: translateY(-50%);
+      
       font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
+      
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
         0 8px 20px rgba(0,0,0,0.70);
+      
       user-select: none;
       white-space: nowrap;
       line-height: 1;
@@ -693,20 +716,23 @@
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
+      
       font-size: 90px;
       font-weight: 1000;
       letter-spacing: 0.05em;
       word-spacing: -0.3em;
+      
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 4px 0 rgba(0,0,0,0.85),
         0 10px 24px rgba(0,0,0,0.70);
+      
       user-select: none;
       white-space: nowrap;
       line-height: 1;
       text-align: center;
     }
-
+    
     .digiKippTitle .color{
       font-size: 60px;
       font-weight: 600;
@@ -760,8 +786,12 @@
       border-radius: calc(2.5px * var(--uiscale));
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
-    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
-    .closeIcon::after{  transform: translate(-50%, -50%) rotate(-45deg); }
+    .closeIcon::before{
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .closeIcon::after{
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
 
     .modalOverlay{
       position: fixed;
@@ -925,11 +955,12 @@
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
 
             <div class="sliderContainer">
-              <!-- ✅ FIX: 1..5 statt 0..4 -->
-              <input id="speedSlider" type="range" min="1" max="5" value="3" step="1" aria-label="Speed Slider">
+              <!-- SLIDER: 1..4 (statt 0..4) -->
+              <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
 
+              <!-- SKALA: 1..4 -->
               <div class="speedScale" aria-label="Kippspeed Stufen">
-                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                <span>1</span><span>2</span><span>3</span><span>4</span>
               </div>
             </div>
 
@@ -952,7 +983,8 @@
             Wähle <span style="font-weight:1000;">EINE</span> Taste
           </div>
 
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns">
+          </div>
 
           <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
             <div class="backIcon"></div>
@@ -1094,13 +1126,13 @@
       return pool.slice(0, count);
     }
 
-    // ✅ FIX: Speed jetzt 1..5 (1=langsam, 5=schnell)
+    // SLIDER-MAPPING: 1..4 (Anzeige & Logik)
     function getTiming(){
-      const v = Number(speedSlider.value || 3); // 1..5
+      const vRaw = Number(speedSlider.value || 2);
+      const v = Math.max(1, Math.min(4, vRaw)); // 1..4
 
-      // 1 -> 2200ms, 5 -> 800ms (linear)
-      const hold = Math.max(520, Math.round(2200 - (v - 1) * 350));
-      const kip  = Math.max(160, Math.round(hold * 0.50));
+      const hold = Math.max(520, Math.round(2200 - (v - 1) * 450));
+      const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
     }
@@ -1188,38 +1220,10 @@
     let runningPreview = false;
     let previewToken = 0;
 
-    // ✅ SNAP + merklicher "Tick" (optional vibra)
-    let lastSliderValue = Number(speedSlider.value || 3);
-
-    function snapSpeedSlider(){
-      const min = Number(speedSlider.min);
-      const max = Number(speedSlider.max);
-
-      let v = Number(speedSlider.value);
-      v = Math.round(v);
-      v = Math.max(min, Math.min(max, v));
-
-      if(v !== Number(speedSlider.value)) speedSlider.value = String(v);
-
-      if(v !== lastSliderValue){
-        // optionaler haptischer Tick am Handy
-        if(navigator.vibrate) navigator.vibrate(10);
-        lastSliderValue = v;
-      }
-
-      // Debug / Anzeige
-      console.log(`Speed (1..5): ${v}`);
-    }
-
+    // Log angepasst: 1..4
     speedSlider.addEventListener("input", () => {
-      // beim Ziehen sofort aktualisieren (Timing nimmt eh live getTiming())
-      snapSpeedSlider();
+      console.log(`Speed: ${speedSlider.value}`); // 1..4
     });
-
-    // beim Loslassen definitiv einrasten
-    speedSlider.addEventListener("change", snapSpeedSlider);
-    speedSlider.addEventListener("pointerup", snapSpeedSlider);
-    speedSlider.addEventListener("touchend", snapSpeedSlider, { passive: true });
 
     async function waitOrPause(type, myToken){
       const startTime = Date.now();
@@ -1442,7 +1446,6 @@
 
       rebuildColors();
       positionUI();
-      snapSpeedSlider(); // ✅ initial sauber einrasten
     }
 
     function showLevelView(){
@@ -1484,13 +1487,15 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+          const displayNum = String(num);
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brainy"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> Taste';
+
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -1498,13 +1503,15 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+          const displayNum = String(num);
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brain"){
         kippAnzahlSubtitle.innerHTML = 'Wähle <span style="font-weight:1000;">EINE</span> oder <span style="font-weight:1000;">ZWEI</span> Tasten';
+
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -1512,7 +1519,8 @@
           btn.className = "squareBtn";
           btn.dataset.anzahl = num;
           btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+          const displayNum = String(num);
+          btn.innerHTML = `<span class="anzahlText">${displayNum}</span>`;
           btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
@@ -1589,7 +1597,13 @@
 
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
-    document.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+
+    // TOUCH-FIX: Slider muss schiebbar bleiben
+    document.addEventListener("touchmove", (e) => {
+      const isRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
+      if(isRange) return;
+      e.preventDefault();
+    }, { passive:false });
   </script>
 </body>
 </html>
