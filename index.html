@@ -22,11 +22,12 @@
       --bg-off-y: 5px;
 
       --scale: 1;
-      --uiscale: 1; /* FIX: kein Gegenscaling mehr */
+      --uiscale: 1; /* bewusst 1 lassen -> UI skaliert sauber mit Layout */
+
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
 
-      /* NEU: echte Zelle am Screen (wird per JS gesetzt) */
+      /* echte Zelle am Screen (wird per JS gesetzt) */
       --cellScreen: var(--cell);
       --cellS: var(--cellScreen);
 
@@ -36,6 +37,19 @@
       --btn-text: #2a160c;
       --btn-border: rgba(0,0,0,0.35);
       --slot-border: rgba(0,0,0,0.55);
+
+      /* ===== FIX: Einheitliche Button/Icons-Grundmaße ===== */
+      --wideBtnW: 284px;     /* Level-Button Breite */
+      --wideBtnH: 106px;     /* Level-Button Höhe   */
+      --wideBtnR: 14px;
+
+      --squareBtnS: 106px;   /* 3/6/9 (und 1..6) gleich "kräftig" */
+      --squareBtnR: 14px;
+
+      --navBtnS: clamp(52px, calc(var(--cellS) * 0.58), 86px); /* X / Pfeil wieder groß */
+      --navStroke: clamp(4px, 0.8vmin, 7px);
+
+      --speedIconS: clamp(54px, calc(var(--cellS) * 0.62), 92px);
     }
 
     html, body{
@@ -188,13 +202,13 @@
     }
 
     .levelBtn{
-      width: 284px;
-      height: 106px;
+      width: var(--wideBtnW);
+      height: var(--wideBtnH);
       display:flex;
       align-items:center;
       justify-content:center;
 
-      border-radius: 14px;
+      border-radius: var(--wideBtnR);
 
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -237,10 +251,11 @@
       justify-content:center;
     }
 
+    /* ===== FIX: SCHAUEN/SPIELEN Button auf gleiche Größe wie Level-Buttons ===== */
     .btnSchauen{
-      width: calc(260px * var(--uiscale));
-      height: calc(52px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
+      width: var(--wideBtnW);
+      height: var(--wideBtnH);
+      border-radius: var(--wideBtnR);
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       box-shadow:
@@ -261,19 +276,21 @@
     }
 
     .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
+      font-size: calc(clamp(16px, 3.8vmin, 22px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
       color: #7a3f2b;
       text-align: center;
       text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+      white-space: nowrap;
     }
 
+    /* ===== FIX: 3/6/9 (und 1..6) wieder kräftig ===== */
     .squareBtn{
-      width: calc(44px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
+      width: var(--squareBtnS);
+      height: var(--squareBtnS);
+      border-radius: var(--squareBtnR);
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
       box-shadow:
@@ -294,10 +311,10 @@
 
     .anzahlText{
       font-weight: 1000;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.02em;
       color: #7a3f2b;
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      font-size: calc(18px * var(--uiscale));
+      font-size: clamp(22px, calc(var(--cellS) * 0.34), 34px);
       line-height: 1;
     }
 
@@ -309,9 +326,10 @@
       z-index: 20;
     }
 
+    /* ===== FIX: Schnecke/Hase wieder größer ===== */
     .speedIcon{
-      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
-      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      width: var(--speedIconS);
+      height: var(--speedIconS);
       opacity: 0.98;
       position: absolute;
       filter:
@@ -326,13 +344,13 @@
     .speedIcon.snail{
       left: calc(var(--cell) - var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0;
+      top: -6px;
     }
 
     .speedIcon.hase{
       left: calc(7 * var(--cell) + var(--cell) / 5);
       transform: translateX(-50%);
-      top: 0;
+      top: -6px;
     }
 
     .sliderContainer{
@@ -341,7 +359,7 @@
       width: calc(5 * var(--cell));
       display: flex;
       flex-direction: column;
-      gap: calc(6px * var(--uiscale));
+      gap: 8px;
       pointer-events: auto;
     }
 
@@ -352,7 +370,7 @@
       color: var(--ui-text);
       font-weight: 1000;
       letter-spacing: 0.08em;
-      font-size: calc(18px * var(--uiscale));
+      font-size: clamp(18px, calc(var(--cellS) * 0.22), 26px);
       line-height: 1;
       user-select:none;
       text-shadow: 0 1px 0 rgba(0,0,0,0.35);
@@ -363,7 +381,7 @@
       -webkit-appearance: none;
       appearance: none;
       width: 100%;
-      height: calc(10px * var(--uiscale));
+      height: clamp(10px, calc(var(--cellS) * 0.13), 16px);
       border-radius: 999px;
       background: var(--ui-panel-bg);
       outline: none;
@@ -377,9 +395,9 @@
     input[type="range"]::-webkit-slider-thumb{
       -webkit-appearance: none;
       appearance: none;
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
+      width: clamp(22px, calc(var(--cellS) * 0.22), 34px);
+      height: clamp(22px, calc(var(--cellS) * 0.22), 34px);
+      border-radius: clamp(6px, calc(var(--cellS) * 0.07), 10px);
       background: var(--btn-bg);
       border: 2px solid rgba(0,0,0,0.35);
       box-shadow:
@@ -388,9 +406,9 @@
       cursor: pointer;
     }
     input[type="range"]::-moz-range-thumb{
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
+      width: clamp(22px, calc(var(--cellS) * 0.22), 34px);
+      height: clamp(22px, calc(var(--cellS) * 0.22), 34px);
+      border-radius: clamp(6px, calc(var(--cellS) * 0.07), 10px);
       background: var(--btn-bg);
       border: 2px solid rgba(0,0,0,0.35);
       box-shadow:
@@ -424,14 +442,14 @@
       transform: translateX(-50%);
       display: flex;
       flex-wrap: nowrap;
-      gap: calc(24px * var(--uiscale));
+      gap: 24px;
       pointer-events: auto;
       z-index: 10;
       justify-content: center;
     }
 
     .kippAnzahlBtns.compact{
-      gap: calc(12px * var(--uiscale));
+      gap: 16px;
     }
 
     :root {
@@ -675,15 +693,15 @@
       top: 50%;
       transform: translateY(-50%);
 
-      width: calc(180px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
+      width: 180px;
+      height: 44px;
 
-      border-radius: calc(14px * var(--uiscale));
+      border-radius: 14px;
       border: 2px solid rgba(0,0,0,0.65);
       background: rgb(198, 168, 128);
       color: rgba(0,0,0,0.92);
 
-      font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
+      font-size: clamp(12px, 3vmin, 18px);
       font-weight: 1000;
       letter-spacing: 0.06em;
 
@@ -704,7 +722,6 @@
       filter: brightness(0.98);
     }
 
-    /* FIX #1: P00/80 stabil (nicht absurd groß / nicht zu klein) */
     .punkteAnzeige{
       position: absolute;
       right: 70px;
@@ -726,7 +743,6 @@
       pointer-events: none;
     }
 
-    /* FIX #2: DIGIKIPP-Titel nicht fix 90px, sondern raster-screen-proportional */
     .digiKippTitle{
       position: absolute;
       left: calc(50% + 92px);
@@ -757,10 +773,11 @@
       text-transform: lowercase;
     }
 
+    /* ===== FIX: X und Pfeil wieder groß ===== */
     .navBtn{
       position: absolute;
-      width: calc(56px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
+      width: var(--navBtnS);
+      height: var(--navBtnS);
       background: none;
       border: none;
       display: flex;
@@ -781,16 +798,16 @@
     .backIcon{
       width: 0;
       height: 0;
-      border-top: calc(18px * var(--uiscale)) solid transparent;
-      border-bottom: calc(18px * var(--uiscale)) solid transparent;
-      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
+      border-top: calc(var(--navBtnS) * 0.32) solid transparent;
+      border-bottom: calc(var(--navBtnS) * 0.32) solid transparent;
+      border-right: calc(var(--navBtnS) * 0.50) solid rgba(234,215,190,0.96);
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
 
     .closeIcon{
       position: relative;
-      width: calc(32px * var(--uiscale));
-      height: calc(32px * var(--uiscale));
+      width: calc(var(--navBtnS) * 0.60);
+      height: calc(var(--navBtnS) * 0.60);
     }
     .closeIcon::before,
     .closeIcon::after{
@@ -798,10 +815,10 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: calc(32px * var(--uiscale));
-      height: calc(5px * var(--uiscale));
+      width: calc(var(--navBtnS) * 0.62);
+      height: var(--navStroke);
       background: rgba(234,215,190,0.96);
-      border-radius: calc(2.5px * var(--uiscale));
+      border-radius: 999px;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
     .closeIcon::before{
@@ -1325,7 +1342,6 @@
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
     }
 
-    /* FIX: hier wird jetzt auch --cellScreen gesetzt */
     function setScaleToFitWidth(){
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 142;
