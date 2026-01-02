@@ -423,7 +423,6 @@
       font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.14em;
-      text-transform: uppercase;
 
       color: rgba(255,255,255,0.96);
 
@@ -1014,7 +1013,7 @@
           <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
 
           <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            EINE TASTE WÄHLEN
+            EINE Taste wählen
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns">
@@ -1438,9 +1437,9 @@
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
       
-      kippAnzahlTitle.style.top = (row11Baseline - 85) + "px";
-      kippAnzahlSubtitle.style.top = (row11Baseline - 40) + "px";
-      kippAnzahlBtns.style.top = row11Baseline + "px";
+      kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
+      kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
+      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -1526,7 +1525,7 @@
       kippAnzahlBtns.classList.remove("compact");
 
       if(level === "trainee"){
-        kippAnzahlSubtitle.textContent = 'EINE TASTE WÄHLEN';
+        kippAnzahlSubtitle.textContent = 'EINE Taste wählen';
 
         [3, 6, 9].forEach(num => {
           const btn = document.createElement("button");
@@ -1539,7 +1538,7 @@
         });
 
       } else if(level === "brainy"){
-        kippAnzahlSubtitle.textContent = 'EINE TASTE WÄHLEN';
+        kippAnzahlSubtitle.textContent = 'EINE Taste wählen';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1554,7 +1553,7 @@
         });
 
       } else if(level === "brain"){
-        kippAnzahlSubtitle.textContent = 'ZWEI TASTEN WÄHLEN';
+        kippAnzahlSubtitle.textContent = 'ZWEI Tasten wählen';
 
         kippAnzahlBtns.classList.add("compact");
 
@@ -1586,7 +1585,7 @@
       if(buttonState === "schauen"){
         sliderContainer.classList.remove("sliderLocked");
 
-        btnSchauen.querySelector('.btnText').textContent = "SPIELEN";
+        btnSchauen.querySelector('.btnText').textContent = "STOP & SPIELEN";
         buttonState = "spielen";
         console.log("Demo gestartet");
         await runSetNumbersCycle();
