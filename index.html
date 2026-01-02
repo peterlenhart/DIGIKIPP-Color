@@ -137,6 +137,39 @@
         );
     }
 
+    /* NEU: Zwischenkipp-Schatten PNG Layer */
+    .zwischenKippSchattenLayer{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .zwischenKippSchatten{
+      position: absolute;
+      left: calc(1 * var(--cell));
+      top: calc((2 + 2) * var(--cell));
+      width: calc(6 * var(--cell));
+      height: calc(6 * var(--cell));
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+    }
+
+    .zwischenKippSchatten.visible{
+      opacity: 1;
+    }
+
+    #shadowQ0{ background-image: url("SchattenZwischenKipp_Q0.png"); }
+    #shadowQ1{ background-image: url("SchattenZwischenKipp_Q1.png"); }
+    #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
+    #shadowQ3{ background-image: url("SchattenZwischenKipp_Q3.png"); }
+
     .uiLayer{
       position:absolute;
       left: 0;
@@ -501,16 +534,9 @@
       transform-origin: 0 0;
     }
 
-    /* FIX #3: CubeShadow darf NICHT nach außen werfen -> komplett entfernen */
+    /* Würfel-Schatten entfernt */
     .cubeShadow{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      z-index: 1;
-      background: transparent;
-      box-shadow: none; /* FIX */
+      display: none;
     }
 
     .cubeFace{
@@ -599,16 +625,16 @@
       line-height: 1;
     }
 
-    /* FIX #2: Zweistellige Slot-Zahlen optisch zentrieren */
+    /* Zweistellige Slot-Zahlen (10, 12) enger und weiter links */
     .slot .num > span.twodigit{
-      letter-spacing: -0.12em !important; /* enger */
-      transform: rotate(var(--num-rot, 0deg)) translateX(-0.06em); /* leicht nach links */
+      letter-spacing: -0.16em !important;
+      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
     }
 
-    /* FIX #2 zusätzlich für Zielzahlen am Rand (nur Optik, keine Logik) */
+    /* Zielzahlen: zweistellig ebenfalls angepasst */
     .targetNumber > span.twodigit{
-      letter-spacing: -0.12em;
-      transform: translateX(-0.06em) rotate(var(--tn-rot, 0deg));
+      letter-spacing: -0.16em;
+      transform: translateX(-0.10em) rotate(var(--tn-rot, 0deg));
       transform-origin: 50% 50%;
     }
 
@@ -656,16 +682,9 @@
       transform-origin: 0 0;
     }
 
-    /* FIX #3: KipShadow darf NICHT nach außen werfen -> komplett entfernen */
+    /* Kipp-Schatten entfernt */
     .kipShadow{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(6 * var(--cell));
-      height: calc(3 * var(--cell));
-      background: transparent;
-      z-index: 1;
-      box-shadow: none; /* FIX */
+      display: none;
     }
 
     .kipEdgeCore{
@@ -942,9 +961,7 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
-    /* ============================
-       NEU: Ziel-Puls (Variante A)
-       ============================ */
+    /* Ziel-Puls Animation */
     .targetNumber span{
       animation: targetBreath 1.05s ease-in-out infinite;
       will-change: transform, filter;
@@ -963,9 +980,7 @@
       100% { transform: scale(1.00); filter: brightness(1.05); }
     }
 
-    /* ============================
-       NEU: Slot-Farbe bei Treffer
-       ============================ */
+    /* Slot-Farbe bei Treffer */
     .slot.hit-gruen{
       background: var(--gruen) !important;
     }
@@ -979,7 +994,7 @@
       background: var(--violett) !important;
     }
 
-    /* NEU: Slot-Zahl kurzer Pulse */
+    /* Slot-Zahl kurzer Pulse */
     .slot.slotHitPulse .num > span{
       animation: slotHit 0.32s ease-in-out 3;
     }
@@ -999,6 +1014,14 @@
       <div class="bgPNG" aria-hidden="true"></div>
 
       <div class="colors" id="colors" aria-hidden="true"></div>
+
+      <!-- NEU: Zwischenkipp-Schatten Layer -->
+      <div class="zwischenKippSchattenLayer" aria-hidden="true">
+        <div id="shadowQ0" class="zwischenKippSchatten"></div>
+        <div id="shadowQ1" class="zwischenKippSchatten"></div>
+        <div id="shadowQ2" class="zwischenKippSchatten"></div>
+        <div id="shadowQ3" class="zwischenKippSchatten"></div>
+      </div>
 
       <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
         <div class="cubeShadow" aria-hidden="true"></div>
@@ -1160,6 +1183,13 @@
     const modalConfirm = document.getElementById("modalConfirm");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
+
+    // NEU: Schatten-Elemente
+    const shadowQ0 = document.getElementById("shadowQ0");
+    const shadowQ1 = document.getElementById("shadowQ1");
+    const shadowQ2 = document.getElementById("shadowQ2");
+    const shadowQ3 = document.getElementById("shadowQ3");
+    const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
 
     let currentView = "level";
     let selectedLevel = null;
@@ -1328,12 +1358,13 @@
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
+    // NEU: Korrigierte Rotation für Zielzahlen
     function rotationForCoord(coord){
       const { row, col } = coordToXY(coord);
-      if(col === 1) return 90;
-      if(col === 8) return -90;
-      if(row === 1) return 0;
-      if(row === 8) return 180;
+      if(col === 1) return -90;  // Spalte A: von Osten lesbar
+      if(col === 8) return 90;   // Spalte H: von Westen lesbar
+      if(row === 1) return 0;    // Zeile 1: von Süden lesbar
+      if(row === 8) return 180;  // Zeile 8: von Norden lesbar
       return 0;
     }
 
@@ -1450,13 +1481,36 @@
       return false;
     }
 
+    // NEU: Schatten-Sichtbarkeit aktualisieren
+    function updateShadowVisibility(){
+      const isKipVisible = !kipGroup.classList.contains("hidden");
+      
+      if(!isKipVisible){
+        // Kein Schatten wenn kipGroup nicht sichtbar
+        allShadows.forEach(s => s.classList.remove("visible"));
+        return;
+      }
+
+      // Zeige nur den Schatten für den aktuellen rotIndex
+      allShadows.forEach((s, i) => {
+        if(i === rotIndex){
+          s.classList.add("visible");
+        } else {
+          s.classList.remove("visible");
+        }
+      });
+    }
+
     function showW(){
       kipGroup.classList.add("hidden");
       wFaceGroup.classList.remove("hidden");
+      updateShadowVisibility();
     }
+
     function showKip(){
       wFaceGroup.classList.add("hidden");
       kipGroup.classList.remove("hidden");
+      updateShadowVisibility();
     }
 
     function mapHiddenToVisible_CW(face){
@@ -1464,7 +1518,6 @@
       return [f4, f3, f2, f1];
     }
 
-    /* FIX #2: renderNumber setzt für >=10 die Klasse twodigit (Optik) */
     function renderNumber(span, n){
       if(!span) return;
 
@@ -1522,6 +1575,7 @@
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
       kipGroup.style.setProperty("--rot", deg + "deg");
+      updateShadowVisibility();
     }
 
     function advanceFullCW(){
@@ -1677,7 +1731,6 @@
 
       ensureAssigned(2); renderW();
 
-      /* FIX #1: Button-Text */
       buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
       setSchauenEnabled(true);
