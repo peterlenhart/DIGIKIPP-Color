@@ -32,6 +32,28 @@
       --btn-text: #2a160c;
       --btn-border: rgba(0,0,0,0.35);
       --slot-border: rgba(0,0,0,0.55);
+      --slot-border-w: 4px;
+
+      /* Würfel-Farben */
+      --cube-wood-base: #d7c2a4;
+      --cube-wood-deep: #c9b08f;
+      --cube-wood-warm: rgba(155, 70, 110, 0.10);
+      --cube-wood-gold: rgba(249, 150, 30, 0.10);
+      --w1-innerframe: rgba(122, 74, 52, 1);
+      --slot-fill: #ead7be;
+
+      --rotSign: 1;
+      --rot: 0deg;
+
+      /* ===========
+         CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein
+         Zeile 1 = Farbfeldzeile
+         Innenraum beginnt bei 2B und endet bei 7G
+         =========== */
+      --clipTop:    calc((2 - 1) * var(--cell)); /* ab Zeile 2 */
+      --clipLeft:   calc((2 - 1) * var(--cell)); /* ab Spalte B (=2) */
+      --clipRight:  calc((8 - 7) * var(--cell)); /* rechts bleibt 1 Spalte (H) */
+      --clipBottom: calc(var(--gridH) - (7 * var(--cell))); /* unten ab Zeile 8 */
     }
 
     html, body{
@@ -131,12 +153,12 @@
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
 
-    /* ==========================================================
-       Z-INDEX: 2 - Würfel-Schatten (vollflächige W-Ansicht)
-       FIX: Schatten rotiert mit dem Mittelpunkt/Pivot wie der Würfel
-       ========================================================== */
-
-    .cubeShadowClip{
+    /* =========================================
+       Z-INDEX: 2 - Würfel-Schatten (vollflächig)
+       - dreht MIT dem Würfel (Pivot im Zentrum)
+       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
+       ========================================= */
+    .cubeShadowLayer{
       position: absolute;
       left: 0;
       top: 0;
@@ -146,23 +168,6 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s ease;
-      overflow: hidden;
-
-      /* Wenn du später willst, dass wirklich NUR der Innenraum Schatten bekommt:
-         clip-path: inset(XXpx);  (XX = Innenrahmen-Dicke)
-         Für jetzt: 0px = keine Beschneidung.
-      */
-      clip-path: inset(0px);
-    }
-    .cubeShadowClip.visible{ opacity: 1; }
-
-    /* Diese Gruppe rotiert exakt wie wFaceGroup */
-    .cubeShadowGroup{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
 
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
@@ -174,22 +179,39 @@
       transform-origin: 0 0;
     }
 
-    /* Schatten sitzt unter der Würfelfläche an exakt derselben Position wie .cubeFace */
+    .cubeShadowLayer.visible{
+      opacity: 1;
+    }
+
+    /* CLIP-WRAPPER: Schatten-Gefängnis 2B–7G */
+    .cubeShadowClip{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+
+      /* STRIKT: alles außerhalb wird abgeschnitten */
+      clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
+    }
+
+    /* Schatten selbst: folgt der Würfelfläche (gleiche Position wie cubeFace) */
     .cubeShadowInner{
       position: absolute;
       left: calc(1 * var(--cell));
       top:  calc((1 + 2) * var(--cell));
-      width:  calc(3 * var(--cell));
+      width: calc(3 * var(--cell));
       height: calc(3 * var(--cell));
+
       background: transparent;
       border-radius: 10px;
 
-      /* Photoshop-like Schlagschatten */
+      /* Breiter & kräftiger – wirkt wie echter Schlagschatten auf Boxboden */
       box-shadow:
-        0 10px 18px rgba(0,0,0,0.30),
-        0 18px 34px rgba(0,0,0,0.20),
-        0 26px 50px rgba(0,0,0,0.14);
-      filter: blur(0.2px);
+        18px 26px 34px rgba(0,0,0,0.36),
+        26px 38px 54px rgba(0,0,0,0.26),
+        34px 50px 78px rgba(0,0,0,0.18);
+
+      /* Ganz leichte Bodenabdunklung direkt unter dem Würfel */
+      filter: drop-shadow(0 0 0 rgba(0,0,0,0));
     }
 
     .grid{
@@ -629,18 +651,6 @@
       gap: calc(12px * var(--uiscale));
     }
 
-    :root {
-      --cube-wood-base: #d7c2a4;
-      --cube-wood-deep: #c9b08f;
-      --cube-wood-warm: rgba(155, 70, 110, 0.10);
-      --cube-wood-gold: rgba(249, 150, 30, 0.10);
-      --w1-innerframe: rgba(122, 74, 52, 1);
-      --slot-fill: #ead7be;
-      --slot-border-w: 4px;
-      --rotSign: 1;
-      --rot: 0deg;
-    }
-
     .slot{
       position: absolute;
       width: var(--cell);
@@ -739,9 +749,7 @@
       transform-origin: 0 0;
     }
 
-    .kipShadow{
-      display: none;
-    }
+    .kipShadow{ display: none; }
 
     .kipEdgeCore{
       position: absolute;
@@ -795,23 +803,18 @@
       left: 55px;
       top: 50%;
       transform: translateY(-50%);
-
       width: calc(180px * var(--uiscale));
       height: calc(44px * var(--uiscale));
-
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgb(198, 168, 128);
       color: rgba(0,0,0,0.92);
-
       font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.06em;
-
       box-shadow:
         0 10px 18px rgba(0,0,0,0.22),
         0 0 0 1px rgba(255,255,255,0.18) inset;
-
       display: flex;
       align-items: center;
       justify-content: center;
@@ -830,16 +833,13 @@
       right: 70px;
       top: 50%;
       transform: translateY(-50%);
-
       font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
-
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
         0 8px 20px rgba(0,0,0,0.70);
-
       user-select: none;
       white-space: nowrap;
       line-height: 1;
@@ -851,17 +851,14 @@
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
-
       font-size: 90px;
       font-weight: 1000;
       letter-spacing: 0.05em;
       word-spacing: -0.3em;
-
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 4px 0 rgba(0,0,0,0.85),
         0 10px 24px rgba(0,0,0,0.70);
-
       user-select: none;
       white-space: nowrap;
       line-height: 1;
@@ -926,12 +923,8 @@
       border-radius: calc(2.5px * var(--uiscale));
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
-    .closeIcon::before{
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-    .closeIcon::after{
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
+    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
+    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
 
     .modalOverlay{
       position: fixed;
@@ -1000,10 +993,7 @@
         0 0 0 1px rgba(255,255,255,0.15) inset;
       white-space: nowrap;
     }
-    .modalBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
+    .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
 
     .modalBtn.cancel{
       background: #a8927a;
@@ -1017,7 +1007,7 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
-    /* FIX: Animation verwendet CSS-Variable --target-rot für Rotation */
+    /* Animation Target */
     .targetNumber span{
       animation: targetBreath 1.05s ease-in-out infinite;
       will-change: transform, filter;
@@ -1033,22 +1023,11 @@
       }
     }
 
-    .targetHitPulse span{
-      animation: targetHit 0.42s ease-in-out 2 !important;
-    }
+    .targetHitPulse span{ animation: targetHit 0.42s ease-in-out 2 !important; }
     @keyframes targetHit{
-      0%   {
-        transform: rotate(var(--target-rot, 0deg)) scale(1.00);
-        filter: brightness(1.05);
-      }
-      50%  {
-        transform: rotate(var(--target-rot, 0deg)) scale(1.18);
-        filter: brightness(1.28);
-      }
-      100% {
-        transform: rotate(var(--target-rot, 0deg)) scale(1.00);
-        filter: brightness(1.05);
-      }
+      0%   { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
+      50%  { transform: rotate(var(--target-rot, 0deg)) scale(1.18); filter: brightness(1.28); }
+      100% { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
     }
 
     .slot.hit-gruen{ background: var(--gruen) !important; }
@@ -1056,16 +1035,12 @@
     .slot.hit-blau{ background: var(--blau) !important; }
     .slot.hit-violett{ background: var(--violett) !important; }
 
-    .slot.slotHitPulse .num > span{
-      animation: slotHit 0.32s ease-in-out 3;
-    }
+    .slot.slotHitPulse .num > span{ animation: slotHit 0.32s ease-in-out 3; }
     @keyframes slotHit{
       0%   { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
       50%  { transform: rotate(var(--num-rot,0deg)) scale(1.18); filter: brightness(1.18); }
       100% { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
     }
-
-    .hidden{ display:none !important; }
   </style>
 </head>
 
@@ -1075,15 +1050,15 @@
       <!-- Z-INDEX 0: Box Hintergrund -->
       <div class="bgPNG" aria-hidden="true"></div>
 
-      <!-- Z-INDEX 1: Kugel (UNTER Würfel) -->
+      <!-- Z-INDEX 1: Kugel -->
       <div class="ball" aria-label="Kugel"></div>
 
       <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, rotiert mit Q0..Q3) -->
-      <div id="cubeShadowClip" class="cubeShadowClip" aria-hidden="true">
-        <div id="cubeShadowGroup" class="cubeShadowGroup" aria-hidden="true">
+      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, geclippt 2B–7G, dreht mit) -->
+      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
+        <div class="cubeShadowClip">
           <div class="cubeShadowInner"></div>
         </div>
       </div>
@@ -1188,8 +1163,7 @@
             <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
           </div>
 
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns">
-          </div>
+          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
@@ -1262,9 +1236,7 @@
     const shadowQ3 = document.getElementById("shadowQ3");
     const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
 
-    // ✅ FIX: Würfel-Schattengruppe (rotierend)
-    const cubeShadowClip  = document.getElementById("cubeShadowClip");
-    const cubeShadowGroup = document.getElementById("cubeShadowGroup");
+    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
 
     let currentView = "level";
     let selectedLevel = null;
@@ -1494,7 +1466,6 @@
         numSpan.style.lineHeight = "1";
 
         const rot = rotationForCoord(coord);
-
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
@@ -1554,29 +1525,23 @@
       return false;
     }
 
-    // ✅ FIX: Schatten-Logik korrekt:
-    // - Zwischenkipp-PNGs nur in Kipp-Ansicht
-    // - Würfel-Schlagschatten nur in W-Ansicht (und rotiert per setRotationSnap)
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
       if(isKipVisible){
         allShadows.forEach((s, i) => {
-          if(i === rotIndex){
-            s.classList.add("visible");
-          } else {
-            s.classList.remove("visible");
-          }
+          if(i === rotIndex) s.classList.add("visible");
+          else s.classList.remove("visible");
         });
       } else {
         allShadows.forEach(s => s.classList.remove("visible"));
       }
 
       if(isWVisible){
-        cubeShadowClip.classList.add("visible");
+        cubeShadowLayer.classList.add("visible");
       } else {
-        cubeShadowClip.classList.remove("visible");
+        cubeShadowLayer.classList.remove("visible");
       }
     }
 
@@ -1650,15 +1615,11 @@
     let rotIndex  = 0;
     let faceIndex = 0;
 
-    // ✅ FIX: Rotation gilt jetzt für:
-    // - wFaceGroup
-    // - kipGroup
-    // - cubeShadowGroup (damit Schatten nicht mehr starr in Q0 sitzt)
     function setRotationSnap(){
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
       kipGroup.style.setProperty("--rot", deg + "deg");
-      cubeShadowGroup.style.setProperty("--rot", deg + "deg");
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg"); /* Schatten dreht MIT */
       updateShadowVisibility();
     }
 
@@ -1758,7 +1719,6 @@
         const elapsed = Date.now() - startTime;
 
         if(elapsed >= targetMs) break;
-
         await sleep(50);
       }
 
@@ -1933,7 +1893,6 @@
 
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
       levelTitleEl.style.top = midY + "px";
@@ -2014,6 +1973,7 @@
 
       rebuildColors();
       positionUI();
+      updateShadowVisibility();
     }
 
     function showLevelView(){
@@ -2025,6 +1985,9 @@
       clearTargetNumbers();
       clearHitVisuals();
       currentTarget = null;
+
+      /* Startbild soll Schatten zeigen */
+      showW();
     }
 
     function showKspView(){
@@ -2042,6 +2005,8 @@
       clearTargetNumbers();
       clearHitVisuals();
       currentTarget = null;
+
+      showW();
     }
 
     function showKippAnzahlView(){
@@ -2086,7 +2051,6 @@
 
       } else if(level === "brainy"){
         kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
-
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -2101,7 +2065,6 @@
 
       } else if(level === "brain"){
         kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
-
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -2177,7 +2140,6 @@
       if(buttonState === "schauen"){
         sliderContainer.classList.remove("sliderLocked");
         console.log("Demo gestartet");
-
         await runSetNumbersCycle();
 
       } else if(buttonState === "spielen"){
@@ -2244,7 +2206,13 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    window.addEventListener("load", rebuild);
+    /* START: sofort Schatten + Startbild korrekt */
+    window.addEventListener("load", () => {
+      rebuild();
+      resetToW1Q0_Empty();
+      showLevelView();
+      updateShadowVisibility();
+    });
     window.addEventListener("resize", rebuild);
 
     document.addEventListener("touchmove", (e) => {
