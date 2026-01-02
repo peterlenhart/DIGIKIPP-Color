@@ -22,7 +22,7 @@
       --bg-off-y: 5px;
 
       --scale: 1;
-      --uiscale: 1; /* FIX: kein Gegenscaling mehr */
+      --uiscale: 1; /* wird per JS gesetzt: 1/scale (geclamped) */
       --gridW: calc(var(--cols) * var(--cell));
       --gridH: 100vh;
 
@@ -39,8 +39,6 @@
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-
-      /* FIX: nicht global "touch-action:none" – das killt Slider/Inputs auf Mobile */
       touch-action: manipulation;
     }
 
@@ -180,7 +178,7 @@
       left: 50%;
       transform: translateX(-50%);
       display:flex;
-      gap: 71px;
+      gap: calc(71px * var(--uiscale)); /* FIX */
       pointer-events: auto;
       z-index: 10;
     }
@@ -303,7 +301,7 @@
       position: absolute;
       width: var(--gridW);
       height: auto;
-      pointer-events: auto; /* FIX: Slider-Bereich muss klick/dragbar sein */
+      pointer-events: auto;
       z-index: 20;
     }
 
@@ -370,8 +368,6 @@
         0 0 0 1px rgba(255,255,255,0.10) inset,
         0 1px 0 rgba(0,0,0,0.35) inset;
       pointer-events: auto;
-
-      /* FIX: Drag auf Mobile */
       touch-action: pan-x;
     }
     input[type="range"]::-webkit-slider-thumb{
@@ -671,7 +667,7 @@
 
     .kippBilanzBtn{
       position: absolute;
-      left: 55px;
+      left: calc(55px * var(--uiscale)); /* FIX */
       top: 50%;
       transform: translateY(-50%);
 
@@ -704,14 +700,13 @@
       filter: brightness(0.98);
     }
 
-    /* FIX: Punkteanzeige nicht absurd groß. Relativ zur Rasterzelle. */
     .punkteAnzeige{
       position: absolute;
-      right: 70px;
+      right: calc(70px * var(--uiscale)); /* FIX */
       top: 50%;
       transform: translateY(-50%);
 
-      font-size: calc(var(--cell) * 0.95);
+      font-size: calc(var(--cell) * 0.95 * var(--uiscale)); /* FIX: UI gegenskalieren */
       font-weight: 1000;
       letter-spacing: 0.02em;
 
@@ -728,12 +723,12 @@
 
     .digiKippTitle{
       position: absolute;
-      left: calc(50% + 92px);
+      left: calc(50% + calc(92px * var(--uiscale))); /* FIX */
       top: 0;
       transform: translate(-50%, -50%);
       z-index: 20;
 
-      font-size: 90px;
+      font-size: calc(90px * var(--uiscale)); /* FIX */
       font-weight: 1000;
       letter-spacing: 0.05em;
       word-spacing: -0.3em;
@@ -751,7 +746,7 @@
     }
 
     .digiKippTitle .color{
-      font-size: 60px;
+      font-size: calc(60px * var(--uiscale)); /* FIX */
       font-weight: 600;
       text-transform: lowercase;
     }
@@ -970,7 +965,6 @@
             <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
 
             <div class="sliderContainer">
-              <!-- FIX: 1..4 snap -->
               <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
 
               <div class="speedScale" aria-label="Kippspeed Stufen">
@@ -1138,11 +1132,9 @@
       return pool.slice(0, count);
     }
 
-    /* FIX: Slider ist 1..4. Timing sauber darauf mappen */
     function getTiming(){
       const v = Number(speedSlider.value || 2); // 1..4
-      // v=1 langsam, v=4 schnell
-      const hold = Math.max(520, Math.round(2400 - v * 420)); // 1->1980, 4->720
+      const hold = Math.max(520, Math.round(2400 - v * 420));
       const kip  = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
@@ -1340,10 +1332,11 @@
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
 
-      /* FIX: kein Gegenscaling mehr */
-      document.documentElement.style.setProperty("--uiscale", "1");
+      // FIX: UI gegenskalieren, aber begrenzen (damit nix extrem wird)
+      const uiscale = Math.max(1, Math.min(1.7, 1 / scale));
+      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
 
-      return { cols, cell, gridW, scale };
+      return { cols, cell, gridW, scale, uiscale };
     }
 
     const HEADER_ROW_OFFSET = 2;
@@ -1488,7 +1481,6 @@
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
 
-      /* Regel: während Spielen/Anzahl wählen -> Bilanz unsichtbar */
       setBilanzVisible(false);
 
       buildKippAnzahlButtons(selectedLevel);
@@ -1612,7 +1604,6 @@
     window.addEventListener("load", rebuild);
     window.addEventListener("resize", rebuild);
 
-    /* FIX: globaler Touch-Blocker darf Slider/Buttons nicht killen */
     document.addEventListener("touchmove", (e) => {
       const t = e.target;
       if(!t) return;
