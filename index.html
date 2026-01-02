@@ -45,15 +45,11 @@
       --rotSign: 1;
       --rot: 0deg;
 
-      /* ===========
-         CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein
-         Zeile 1 = Farbfeldzeile
-         Innenraum beginnt bei 2B und endet bei 7G
-         =========== */
-      --clipTop:    calc((2 - 1) * var(--cell)); /* ab Zeile 2 */
-      --clipLeft:   calc((2 - 1) * var(--cell)); /* ab Spalte B (=2) */
-      --clipRight:  calc((8 - 7) * var(--cell)); /* rechts bleibt 1 Spalte (H) */
-      --clipBottom: calc(var(--gridH) - (7 * var(--cell))); /* unten ab Zeile 8 */
+      /* CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein */
+      --clipTop:    calc((2 - 1) * var(--cell));
+      --clipLeft:   calc((2 - 1) * var(--cell));
+      --clipRight:  calc((8 - 7) * var(--cell));
+      --clipBottom: calc(var(--gridH) - (7 * var(--cell)));
     }
 
     html, body{
@@ -153,11 +149,7 @@
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
 
-    /* =========================================
-       Z-INDEX: 2 - Würfel-Schatten (vollflächig)
-       - dreht MIT dem Würfel (Pivot im Zentrum)
-       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
-       ========================================= */
+    /* Z-INDEX: 2 - Würfel-Schatten (vollflächig, dreht MIT dem Würfel) */
     .cubeShadowLayer{
       position: absolute;
       left: 0;
@@ -183,17 +175,13 @@
       opacity: 1;
     }
 
-    /* CLIP-WRAPPER: Schatten-Gefängnis 2B–7G */
     .cubeShadowClip{
       position:absolute;
       inset:0;
       pointer-events:none;
-
-      /* STRIKT: alles außerhalb wird abgeschnitten */
       clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
     }
 
-    /* Schatten selbst: folgt der Würfelfläche (gleiche Position wie cubeFace) */
     .cubeShadowInner{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -204,13 +192,11 @@
       background: transparent;
       border-radius: 10px;
 
-      /* Breiter & kräftiger – wirkt wie echter Schlagschatten auf Boxboden */
       box-shadow:
         18px 26px 34px rgba(0,0,0,0.36),
         26px 38px 54px rgba(0,0,0,0.26),
         34px 50px 78px rgba(0,0,0,0.18);
 
-      /* Ganz leichte Bodenabdunklung direkt unter dem Würfel */
       filter: drop-shadow(0 0 0 rgba(0,0,0,0));
     }
 
@@ -237,6 +223,99 @@
           rgba(255,255,255,0) 1px,
           rgba(255,255,255,0) var(--cell)
         );
+    }
+
+    /* =====================================================
+       Z-INDEX: 2.5 - KIPP-BODENSCHATTEN (NEU!)
+       Dunkelt die Hälfte des Boxinnenraums ab, wo kipGroup liegt
+       ===================================================== */
+    .kipShadowLayer{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .kipShadowLayer.visible{
+      opacity: 1;
+    }
+
+    .kipShadowClip{
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
+    }
+
+    .kipShadowQuadrant{
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+    }
+
+    .kipShadowQuadrant.visible{
+      opacity: 1;
+    }
+
+    /* Q0 (rotIndex=0, 0°): Linke Hälfte abdunkeln */
+    #kipShadowQ0{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3.5 * var(--cell));
+      height: calc(6 * var(--cell));
+      background: linear-gradient(90deg,
+        rgba(0,0,0,0.42) 0%,
+        rgba(0,0,0,0.32) 45%,
+        rgba(0,0,0,0.14) 85%,
+        rgba(0,0,0,0.00) 100%
+      );
+    }
+
+    /* Q1 (rotIndex=1, 90°): Obere Hälfte abdunkeln */
+    #kipShadowQ1{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(6 * var(--cell));
+      height: calc(3.5 * var(--cell));
+      background: linear-gradient(180deg,
+        rgba(0,0,0,0.42) 0%,
+        rgba(0,0,0,0.32) 45%,
+        rgba(0,0,0,0.14) 85%,
+        rgba(0,0,0,0.00) 100%
+      );
+    }
+
+    /* Q2 (rotIndex=2, 180°): Rechte Hälfte abdunkeln */
+    #kipShadowQ2{
+      left: calc(3.5 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3.5 * var(--cell));
+      height: calc(6 * var(--cell));
+      background: linear-gradient(270deg,
+        rgba(0,0,0,0.42) 0%,
+        rgba(0,0,0,0.32) 45%,
+        rgba(0,0,0,0.14) 85%,
+        rgba(0,0,0,0.00) 100%
+      );
+    }
+
+    /* Q3 (rotIndex=3, 270°): Untere Hälfte abdunkeln */
+    #kipShadowQ3{
+      left: calc(1 * var(--cell));
+      top: calc((4.5 + 2) * var(--cell));
+      width: calc(6 * var(--cell));
+      height: calc(3.5 * var(--cell));
+      background: linear-gradient(0deg,
+        rgba(0,0,0,0.42) 0%,
+        rgba(0,0,0,0.32) 45%,
+        rgba(0,0,0,0.14) 85%,
+        rgba(0,0,0,0.00) 100%
+      );
     }
 
     /* Z-INDEX: 3 - Zwischenkipp-Schatten PNGs */
@@ -1056,10 +1135,20 @@
       <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, geclippt 2B–7G, dreht mit) -->
+      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, geclippt, dreht mit) -->
       <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
         <div class="cubeShadowClip">
           <div class="cubeShadowInner"></div>
+        </div>
+      </div>
+
+      <!-- Z-INDEX 2.5: KIPP-BODENSCHATTEN (NEU! geclippt auf 2B-7G) -->
+      <div id="kipShadowLayer" class="kipShadowLayer" aria-hidden="true">
+        <div class="kipShadowClip">
+          <div id="kipShadowQ0" class="kipShadowQuadrant"></div>
+          <div id="kipShadowQ1" class="kipShadowQuadrant"></div>
+          <div id="kipShadowQ2" class="kipShadowQuadrant"></div>
+          <div id="kipShadowQ3" class="kipShadowQuadrant"></div>
         </div>
       </div>
 
@@ -1237,6 +1326,14 @@
     const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
 
     const cubeShadowLayer = document.getElementById("cubeShadowLayer");
+
+    // NEU: Kipp-Bodenschatten
+    const kipShadowLayer = document.getElementById("kipShadowLayer");
+    const kipShadowQ0 = document.getElementById("kipShadowQ0");
+    const kipShadowQ1 = document.getElementById("kipShadowQ1");
+    const kipShadowQ2 = document.getElementById("kipShadowQ2");
+    const kipShadowQ3 = document.getElementById("kipShadowQ3");
+    const allKipShadows = [kipShadowQ0, kipShadowQ1, kipShadowQ2, kipShadowQ3];
 
     let currentView = "level";
     let selectedLevel = null;
@@ -1525,19 +1622,31 @@
       return false;
     }
 
+    // NEU: updateShadowVisibility steuert auch Kipp-Bodenschatten
     function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
+      // Zwischenkipp-PNG-Schatten
       if(isKipVisible){
         allShadows.forEach((s, i) => {
           if(i === rotIndex) s.classList.add("visible");
           else s.classList.remove("visible");
         });
+
+        // NEU: Kipp-Bodenschatten (Hälfte des Innenraums)
+        kipShadowLayer.classList.add("visible");
+        allKipShadows.forEach((s, i) => {
+          if(i === rotIndex) s.classList.add("visible");
+          else s.classList.remove("visible");
+        });
       } else {
         allShadows.forEach(s => s.classList.remove("visible"));
+        kipShadowLayer.classList.remove("visible");
+        allKipShadows.forEach(s => s.classList.remove("visible"));
       }
 
+      // Würfel-Schatten
       if(isWVisible){
         cubeShadowLayer.classList.add("visible");
       } else {
@@ -1619,7 +1728,7 @@
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
       kipGroup.style.setProperty("--rot", deg + "deg");
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg"); /* Schatten dreht MIT */
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
       updateShadowVisibility();
     }
 
@@ -1986,7 +2095,6 @@
       clearHitVisuals();
       currentTarget = null;
 
-      /* Startbild soll Schatten zeigen */
       showW();
     }
 
@@ -2206,7 +2314,6 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    /* START: sofort Schatten + Startbild korrekt */
     window.addEventListener("load", () => {
       rebuild();
       resetToW1Q0_Empty();
