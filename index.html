@@ -1122,89 +1122,192 @@
     function getVisibleNumbersWithColors(){
       const curr = sets[faceIndex];
       return [
-        { num: curr[0], color: slotColorMap['S1'] },
-        { num: curr[1], color: slotColorMap['S2'] },
-        { num: curr[2], color: slotColorMap['S3'] },
-        { num: curr[3], color: slotColorMap['S4'] }
+        { slot: 'S1', num: curr[0], color: slotColorMap['S1'] },
+        { slot: 'S2', num: curr[1], color: slotColorMap['S2'] },
+        { slot: 'S3', num: curr[2], color: slotColorMap['S3'] },
+        { slot: 'S4', num: curr[3], color: slotColorMap['S4'] }
       ];
     }
 
-    function generateTargetNumberColor(){
-      const visible = getVisibleNumbersWithColors();
-      const colors = ['violett', 'blau', 'gruen', 'orange'];
-      
-      const validCombos = [];
-      
-      visible.forEach(v => {
-        if(v.num === null) return;
-        colors.forEach(c => {
-          if(c !== v.color){
-            validCombos.push({ num: v.num, color: c });
+    // ==========================================
+    // (2) Zielzahlen-Ausrichtung: Zahlenfuß Richtung Grid-Mitte
+    // -> Rotation wird aus der Feldposition (Rand) abgeleitet.
+    // ==========================================
+    function computeTargetRotation(coord){
+      const { row, col } = coordToXY(coord);
+      // Randlogik (wie besprochen): Zahlenfuß Richtung Mitte
+      if(row === 1) return 0;     // oben -> Fuß nach unten
+      if(row === 8) return 180;   // unten -> Fuß nach oben
+      if(col === 1) return -90;   // links -> Fuß nach rechts (zur Mitte)
+      if(col === 8) return 90;    // rechts -> Fuß nach links (zur Mitte)
+      return 0;
+    }
+
+    // ==========================================
+    // Ziel-Felder pro Farbe (Koordinaten bleiben unverändert)
+    // ==========================================
+    const colorFieldCoords = {
+      'violett': [
+        { coord: '3A' },
+        { coord: '8D' },
+        { coord: '8E' },
+        { coord: '3H' }
+      ],
+      'blau': [
+        { coord: '1F' },
+        { coord: '8F' },
+        { coord: '4A' },
+        { coord: '5A' }
+      ],
+      'gruen': [
+        { coord: '1C' },
+        { coord: '8C' },
+        { coord: '4H' },
+        { coord: '5H' }
+      ],
+      'orange': [
+        { coord: '1D' },
+        { coord: '1E' },
+        { coord: '6A' },
+        { coord: '6H' }
+      ]
+    };
+
+    // ==========================================
+    // (3) Trefferlogik: Distanz immer ±1 (Nachbarzelle)
+    // -> DOM-basierte Adjazenz (Pixel), damit Rotation/Transform stimmt.
+    // ==========================================
+    function getCenterOfElement(el){
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
+    function isAdjacentByOneCell(a, b){
+      const cellPx = numVar("--cell") || 142;
+      const tol = cellPx * 0.25; // Toleranz, bleibt rein geometrisch
+      const dx = Math.abs(a.x - b.x);
+      const dy = Math.abs(a.y - b.y);
+
+      // genau eine Zelle Nachbarschaft (horizontal ODER vertikal)
+      const horiz = (Math.abs(dx - cellPx) <= tol) && (dy <= tol);
+      const vert  = (Math.abs(dy - cellPx) <= tol) && (dx <= tol);
+      return horiz || vert;
+    }
+
+    function checkTrefferNow(){
+      const targets = Array.from(document.querySelectorAll(".targetNumber"));
+      if(targets.length === 0) return false;
+
+      // Trefferlogik soll im Spielzustand auf W sichtbar geprüft werden
+      // (Slots sind nur dort die "ZS"-Kandidaten)
+      const wSlots = Array.from(wFaceGroup.querySelectorAll(".slot"));
+
+      for(const t of targets){
+        const tNum = Number(t.dataset.targetNum || NaN);
+        if(!Number.isFinite(tNum)) continue;
+
+        const tCenter = getCenterOfElement(t);
+
+        for(const s of wSlots){
+          const span = s.querySelector(".num > span");
+          const txt = (span && span.textContent || "").trim().replace(".", "");
+          const sNum = Number(txt);
+          if(!Number.isFinite(sNum)) continue;
+
+          if(sNum !== tNum) continue;
+
+          const sCenter = getCenterOfElement(s);
+          if(isAdjacentByOneCell(sCenter, tCenter)){
+            return true;
           }
-        });
-      });
-      
-      if(validCombos.length === 0){
-        const randomNum = visible.filter(v => v.num !== null)[0];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        return { num: randomNum.num, color: randomColor };
+        }
       }
-      
-      const chosen = validCombos[Math.floor(Math.random() * validCombos.length)];
-      return chosen;
+      return false;
+    }
+
+    // ==========================================
+    // (1) Trainee: Random Zielzahl–Zielfarbe so generieren,
+    //     dass NICHT bereits ein Treffer vorliegt (und auch keine
+    //     sichtbare identische Zahl-Farbe-Kombi).
+    // ==========================================
+    function getRandomItem(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateTargetNumberColorSafe(){
+      const visible = getVisibleNumbersWithColors().filter(v => v.num !== null && v.num !== undefined);
+      const colors = ['violett', 'blau', 'gruen', 'orange'];
+
+      if(visible.length === 0){
+        // Fallback (soll in deiner Logik praktisch nicht passieren)
+        return { num: 1, color: 'violett' };
+      }
+
+      // wir versuchen mehrere Male, bis kein Start-Treffer möglich ist
+      const MAX_TRIES = 250;
+
+      for(let tries=0; tries<MAX_TRIES; tries++){
+        const pickNumObj = getRandomItem(visible);
+        const pickNum = pickNumObj.num;
+        const pickColor = getRandomItem(colors);
+
+        // harte Sperre: wenn (Zahl,Farbe) als sichtbare Kombi existiert -> neu
+        const comboVisible = visible.some(v => v.num === pickNum && v.color === pickColor);
+        if(comboVisible) continue;
+
+        // temporär platzieren und prüfen, ob Trefferlogik bereits erfüllt wäre
+        const candidate = { num: pickNum, color: pickColor };
+
+        // DOM kurz setzen -> checkTrefferNow -> wieder löschen, falls ungültig
+        clearTargetNumbers();
+        placeTargetNumbers(candidate);
+
+        const isHitAtStart = checkTrefferNow();
+        if(isHitAtStart){
+          clearTargetNumbers();
+          continue;
+        }
+
+        // gültig
+        clearTargetNumbers();
+        return candidate;
+      }
+
+      // letzter Fallback: nimm eine Zahl, aber zwinge Farbe ≠ sichtbarer Slot-Farbe
+      const fallbackNumObj = getRandomItem(visible);
+      const fallbackNum = fallbackNumObj.num;
+      const forbiddenColors = new Set(visible.filter(v => v.num === fallbackNum).map(v => v.color));
+      const allowedColors = colors.filter(c => !forbiddenColors.has(c));
+      const fallbackColor = allowedColors.length ? getRandomItem(allowedColors) : getRandomItem(colors);
+
+      return { num: fallbackNum, color: fallbackColor };
     }
 
     let currentTarget = null;
 
-    const colorFieldCoords = {
-      'violett': [
-        { coord: '3A', rot: 90 },
-        { coord: '8D', rot: 180 },
-        { coord: '8E', rot: 180 },
-        { coord: '3H', rot: -90 }
-      ],
-      'blau': [
-        { coord: '1F', rot: 0 },
-        { coord: '8F', rot: 180 },
-        { coord: '4A', rot: 90 },
-        { coord: '5A', rot: 90 }
-      ],
-      'gruen': [
-        { coord: '1C', rot: 0 },
-        { coord: '8C', rot: 180 },
-        { coord: '4H', rot: -90 },
-        { coord: '5H', rot: -90 }
-      ],
-      'orange': [
-        { coord: '1D', rot: 0 },
-        { coord: '1E', rot: 0 },
-        { coord: '6A', rot: 90 },
-        { coord: '6H', rot: -90 }
-      ]
-    };
-
     function placeTargetNumbers(target){
       clearTargetNumbers();
-      
+
       const fields = colorFieldCoords[target.color];
       if(!fields) return;
-      
+
       const cellPx = numVar("--cell") || 142;
       const sizePx = numVar("--colorSize") || 126;
-      
+
       fields.forEach(field => {
         const { row, col } = coordToXY(field.coord);
         const visualRow = row + HEADER_ROW_OFFSET;
-        
+
         const leftCell = (col - 1) * cellPx;
         const topCell = (visualRow - 1) * cellPx;
-        
+
         const pad = (cellPx - sizePx) / 2;
         const x = leftCell + pad;
         const y = topCell + pad;
-        
+
         const container = document.createElement("div");
         container.className = "targetNumber";
+        container.dataset.targetNum = String(target.num);
         container.style.position = "absolute";
         container.style.left = x + "px";
         container.style.top = y + "px";
@@ -1215,23 +1318,26 @@
         container.style.justifyContent = "center";
         container.style.zIndex = "8";
         container.style.pointerEvents = "none";
-        
+
         const numSpan = document.createElement("span");
         numSpan.style.fontWeight = "900";
         numSpan.style.color = "#111";
         numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
         numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
         numSpan.style.lineHeight = "1";
-        numSpan.style.transform = `rotate(${field.rot}deg)`;
+
+        // Rotation: Zahlenfuß Richtung Grid-Mitte (Achsen)
+        const rot = computeTargetRotation(field.coord);
+        numSpan.style.transform = `rotate(${rot}deg)`;
         numSpan.style.transformOrigin = "50% 50%";
-        
+
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
-        
+
         if(target.num >= 10){
           numSpan.style.letterSpacing = "-0.08em";
         }
-        
+
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
       });
@@ -1360,6 +1466,14 @@
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+
+      // Treffercheck (nur Logik, keine UI-Veränderung)
+      if(selectedLevel === "trainee" && currentTarget){
+        const hit = checkTrefferNow();
+        if(hit){
+          console.log("TREFFER erkannt!");
+        }
+      }
     }
 
     function reroll12_keepEmpty(){
@@ -1470,7 +1584,7 @@
       advanceFullCW();
       showW();
       renderW();
-      
+
       if(stopAtNextW){
         stopAtNextW = false;
         runningPreview = false;
@@ -1489,14 +1603,14 @@
         advanceFullCW();
         showW();
         renderW();
-        
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
           showKippAnzahlView();
           return;
         }
-        
+
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1508,14 +1622,14 @@
         advanceFullCW();
         showW();
         renderW();
-        
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
           showKippAnzahlView();
           return;
         }
-        
+
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1611,7 +1725,7 @@
 
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
-      
+
       kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
@@ -1671,8 +1785,9 @@
       levelView.classList.remove("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.add("hidden");
-      
+
       clearTargetNumbers();
+      currentTarget = null;
     }
 
     function showKspView(){
@@ -1685,8 +1800,9 @@
       btnSchauen.querySelector('.btnText').textContent = "SCHAUEN & MERKEN";
 
       sliderContainer.classList.add("sliderLocked");
-      
+
       clearTargetNumbers();
+      currentTarget = null;
     }
 
     function showKippAnzahlView(){
@@ -1696,12 +1812,12 @@
       kippAnzahlView.classList.remove("hidden");
 
       buildKippAnzahlButtons(selectedLevel);
-      
+
       if(selectedLevel === "trainee"){
-        currentTarget = generateTargetNumberColor();
+        // Trainee: Random-Ziel erzeugen, das KEINEN Start-Treffer erzeugt
+        currentTarget = generateTargetNumberColorSafe();
         placeTargetNumbers(currentTarget);
-        
-        console.log("Target generiert:", currentTarget);
+        console.log("Target generiert (safe):", currentTarget);
       }
     }
 
@@ -1757,7 +1873,7 @@
 
     function handleAnzahlClick(anzahl){
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
-      
+
       if(selectedLevel === "trainee"){
         runKippCycles(anzahl);
       }
@@ -1775,7 +1891,8 @@
 
         advanceFullCW();
         showW();
-        renderW();
+        renderW(); // renderW enthält Treffercheck (nur Logik)
+
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1802,7 +1919,7 @@
         console.log("Demo beendet");
       } else if(buttonState === "spielen"){
         const isWVisible = !wFaceGroup.classList.contains("hidden");
-        
+
         if(isWVisible){
           cancelPreview();
           console.log("Gehe ins Spiel!");
