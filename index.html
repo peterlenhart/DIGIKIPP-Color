@@ -635,13 +635,14 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: calc(12px * var(--uiscale));
+      gap: calc(18px * var(--uiscale));
       pointer-events: auto;
       z-index: 10;
       justify-content: center;
     }
 
     .directionBtn{
+      width: calc(64px * var(--uiscale));
       height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
@@ -656,7 +657,6 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-      padding: 0 calc(20px * var(--uiscale));
     }
     .directionBtn:active{
       transform: scale(0.98);
@@ -668,44 +668,29 @@
       filter: saturate(0.8);
     }
 
-    .directionIcon{
-      width: calc(32px * var(--uiscale));
-      height: calc(32px * var(--uiscale));
-      border: calc(3px * var(--uiscale)) solid #7a3f2b;
-      border-radius: 50%;
+    .arrowIcon{
+      width: calc(28px * var(--uiscale));
+      height: calc(28px * var(--uiscale));
       position: relative;
-      border-right-color: transparent;
-      border-top-color: transparent;
     }
 
-    .directionIcon::after{
+    .arrowIcon::before{
       content: "";
       position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
+      width: calc(20px * var(--uiscale));
+      height: calc(20px * var(--uiscale));
+      border-top: calc(4px * var(--uiscale)) solid #7a3f2b;
+      border-right: calc(4px * var(--uiscale)) solid #7a3f2b;
+      top: 50%;
+      left: 50%;
     }
 
-    .directionIcon.clockwise{
-      transform: rotate(-45deg);
-    }
-    .directionIcon.clockwise::after{
-      border-width: calc(8px * var(--uiscale)) 0 calc(8px * var(--uiscale)) calc(12px * var(--uiscale));
-      border-color: transparent transparent transparent #7a3f2b;
-      top: 50%;
-      left: 100%;
-      transform: translate(-60%, -50%) rotate(0deg);
+    .arrowIcon.cw::before{
+      transform: translate(-65%, -50%) rotate(90deg);
     }
 
-    .directionIcon.counterclockwise{
-      transform: rotate(135deg);
-    }
-    .directionIcon.counterclockwise::after{
-      border-width: calc(8px * var(--uiscale)) 0 calc(8px * var(--uiscale)) calc(12px * var(--uiscale));
-      border-color: transparent transparent transparent #7a3f2b;
-      top: 50%;
-      left: 100%;
-      transform: translate(-60%, -50%) rotate(0deg);
+    .arrowIcon.ccw::before{
+      transform: translate(-35%, -50%) rotate(-90deg);
     }
 
     .slot{
@@ -1214,10 +1199,10 @@
 
           <div class="brainDirectionBtns hidden" id="brainDirectionBtns">
             <button class="directionBtn" id="btnClockwise" data-direction="clockwise" type="button">
-              <div class="directionIcon clockwise"></div>
+              <div class="arrowIcon cw"></div>
             </button>
             <button class="directionBtn" id="btnCounterclockwise" data-direction="counterclockwise" type="button">
-              <div class="directionIcon counterclockwise"></div>
+              <div class="arrowIcon ccw"></div>
             </button>
           </div>
 
@@ -1416,7 +1401,7 @@
     function getCurrentFulfilledCombos(){
       const fulfilled = new Set();
       const visible = getVisibleNumbers();
-
+      
       for(const v of visible){
         if(v.num == null) continue;
         const coord = getSlotCoord(v.slotEl);
@@ -1426,7 +1411,7 @@
           fulfilled.add(`${v.num}-${c}`);
         }
       }
-
+      
       return fulfilled;
     }
 
@@ -1450,7 +1435,7 @@
     // ============================================================
     // PATHFINDING ALGORITHMUS FÜR BRAINY
     // ============================================================
-
+    
     const slotCoordsByRot = [
       ["3B", "4B", "2C", "2D"],
       ["2D", "3D", "3B", "4B"],
@@ -1468,7 +1453,7 @@
     function calculateMinKipps(targetNum, targetColor){
       let numFaceIndex = -1;
       let numSlotIndex = -1;
-
+      
       for(let f = 0; f < 3; f++){
         const idx = sets[f].indexOf(targetNum);
         if(idx !== -1){
@@ -1481,7 +1466,7 @@
       if(numFaceIndex === -1) return null;
 
       const validKipps = [1, 2, 4, 5, 6];
-
+      
       for(const kipps of validKipps){
         let testFace = faceIndex;
         let testRot = rotIndex;
@@ -1516,7 +1501,7 @@
 
       const fulfilled = getCurrentFulfilledCombos();
       const candidates = [];
-
+      
       for(const n of visibleNums){
         for(const c of allColors){
           const key = `${n}-${c}`;
@@ -1543,15 +1528,15 @@
 
       const fulfilled = getCurrentFulfilledCombos();
       const candidates = [];
-
+      
       for(const num of allNums){
         for(const color of allColors){
           const key = `${num}-${color}`;
-
+          
           if(fulfilled.has(key)) continue;
 
           const kipps = calculateMinKipps(num, color);
-
+          
           if(kipps !== null && kipps <= 6){
             candidates.push({ num, color, kipps });
           }
@@ -1574,7 +1559,7 @@
     // ============================================================
     // BRAIN DECK-SYSTEM
     // ============================================================
-
+    
     let brainDeck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
     function resetBrainDeck(){
@@ -1600,7 +1585,7 @@
       let color = allColors[Math.floor(Math.random() * 4)];
 
       const fulfilled = getCurrentFulfilledCombos();
-
+      
       let attempts = 0;
       while(fulfilled.has(`${num}-${color}`) && attempts < 20){
         color = allColors[Math.floor(Math.random() * 4)];
@@ -1608,7 +1593,7 @@
       }
 
       brainDeck = brainDeck.filter(n => n !== num);
-
+      
       if(brainDeck.length === 0){
         console.log("Brain - Deck leer! Wird beim nächsten Ziel neu gemischt.");
       }
@@ -1750,7 +1735,7 @@
         } else {
           shadowIndex = rotIndex;
         }
-
+        
         allShadows.forEach((s, i) => {
           if(i === shadowIndex) s.classList.add("visible");
           else s.classList.remove("visible");
@@ -1803,30 +1788,60 @@
       }
     }
 
-    // =========================
-    // FIX 1: renderKip CCW = curr rechts, target-preview links
-    // =========================
+    // ============================================================
+    // ZWISCHENKIPP-IDs SYSTEM
+    // ============================================================
+
+    let zwischenKippData = {
+      "0_1": { left: [null,null,null,null], right: [null,null,null,null] },
+      "1_2": { left: [null,null,null,null], right: [null,null,null,null] },
+      "2_0": { left: [null,null,null,null], right: [null,null,null,null] }
+    };
+
+    function getZwischenKippID(fromFace, toFace){
+      if((fromFace === 0 && toFace === 1) || (fromFace === 1 && toFace === 0)) return "0_1";
+      if((fromFace === 1 && toFace === 2) || (fromFace === 2 && toFace === 1)) return "1_2";
+      if((fromFace === 2 && toFace === 0) || (fromFace === 0 && toFace === 2)) return "2_0";
+      console.error("Ungültige Face-Kombination:", fromFace, toFace);
+      return "0_1";
+    }
+
+    function buildZwischenKippData(){
+      // 0_1: Face 0 → Face 1
+      zwischenKippData["0_1"].right = sets[0].slice();
+      zwischenKippData["0_1"].left = mapHiddenToVisible_CW(sets[1]);
+
+      // 1_2: Face 1 → Face 2
+      zwischenKippData["1_2"].right = sets[1].slice();
+      zwischenKippData["1_2"].left = mapHiddenToVisible_CW(sets[2]);
+
+      // 2_0: Face 2 → Face 0
+      zwischenKippData["2_0"].right = sets[2].slice();
+      zwischenKippData["2_0"].left = mapHiddenToVisible_CW(sets[0]);
+
+      console.log("Zwischenkipp-Daten erstellt:", zwischenKippData);
+    }
+
     function renderKip(direction){
       setRotationSnap();
-      const curr = sets[faceIndex];
 
+      let fromFace, toFace;
+      
       if(direction === "clockwise" || !direction){
-        // Uhrzeigersinn: Links = nächste (Preview), Rechts = aktuell
-        const nextFaceIndex = (faceIndex + 1) % 3;
-        const next = sets[nextFaceIndex];
-
-        for(let i=0;i<4;i++) renderNumber(slotTargetsKipRight[i], curr[i]);
-        const nextPreview = mapHiddenToVisible_CW(next);
-        for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], nextPreview[i]);
+        fromFace = (faceIndex - 1 + 3) % 3;
+        toFace = faceIndex;
       } else {
-        // Gegen-Uhrzeigersinn: Links = Ziel (Preview), Rechts = aktuell
-        const targetFaceIndex = (faceIndex - 1 + 3) % 3;
-        const target = sets[targetFaceIndex];
-
-        for(let i=0;i<4;i++) renderNumber(slotTargetsKipRight[i], curr[i]);
-        const targetPreview = mapHiddenToVisible_CW(target);
-        for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], targetPreview[i]);
+        fromFace = (faceIndex + 1) % 3;
+        toFace = faceIndex;
       }
+
+      const zkID = getZwischenKippID(fromFace, toFace);
+      const data = zwischenKippData[zkID];
+
+      console.log(`renderKip: direction=${direction}, from=${fromFace}, to=${toFace}, zkID=${zkID}`);
+
+      for(let i=0;i<4;i++) renderNumber(slotTargetsKipRight[i], data.right[i]);
+      for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], data.left[i]);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1995,7 +2010,12 @@
       showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      ensureAssigned(0); renderW();
+      ensureAssigned(0); 
+      ensureAssigned(1);
+      ensureAssigned(2);
+      buildZwischenKippData();
+      
+      renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip("clockwise"); renderKip("clockwise");
@@ -2004,7 +2024,7 @@
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      ensureAssigned(1); renderW();
+      renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       showKip("clockwise"); renderKip("clockwise");
@@ -2013,7 +2033,7 @@
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      ensureAssigned(2); renderW();
+      renderW();
 
       buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
@@ -2150,8 +2170,8 @@
 
       kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
-      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
-      brainDirectionBtns.style.top = (row11Baseline - 80) + "px";
+      kippAnzahlBtns.style.top = (row11Baseline - 142 - 142) + "px";
+      brainDirectionBtns.style.top = (row11Baseline - 80 - 142) + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -2347,7 +2367,7 @@
       if(selectedLevel === "brain"){
         brainSelectedAnzahl = Number(btn.dataset.anzahl);
         console.log("Brain - Anzahl gewählt:", brainSelectedAnzahl);
-
+        
         kippAnzahlBtns.querySelectorAll(".squareBtn").forEach(b => {
           b.style.opacity = (b === btn) ? "1" : "0.5";
         });
@@ -2416,9 +2436,6 @@
       }
     }
 
-    // =========================
-    // FIX 2: CCW nicht mehr "vor-advance", sondern wie CW: erst Zwischenbild, dann advance
-    // =========================
     async function runKippCycles(count, direction){
       if(runningPreview) return;
       runningPreview = true;
@@ -2428,22 +2445,25 @@
       clearHitVisuals();
 
       for(let i = 0; i < count; i++){
-        // 1) Zwischenkipp IMMER aus dem aktuellen Zustand zeigen
-        showKip(direction);
-        renderKip(direction);
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        // 2) Dann erst den Vollzustand weiterschalten
         if(direction === "counterclockwise"){
           advanceFullCCW();
+          showKip(direction);
+          renderKip(direction);
+          if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+          
+          showW();
+          renderW();
+          if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
         } else {
+          showKip(direction);
+          renderKip(direction);
+          if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+          
           advanceFullCW();
+          showW();
+          renderW();
+          if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
         }
-
-        // 3) Vollfläche zeigen
-        showW();
-        renderW();
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
@@ -2458,11 +2478,11 @@
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
         console.log("Level gewählt:", selectedLevel);
-
+        
         if(selectedLevel === "brain"){
           resetBrainDeck();
         }
-
+        
         showKspView();
       });
     });
