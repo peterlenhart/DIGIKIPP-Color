@@ -1,2363 +1,356 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DigiKipp – Schauen & Merken</title>
-
-  <style>
-    :root{
-      --cols: 8;
-      --cell: 142px;
-      --grid-alpha: 0.18;
-
-      --violett: rgb(164, 27, 133);
-      --blau:    rgb(0, 107, 179);
-      --gruen:   rgb(0, 166, 82);
-      --orange:  rgb(249, 150, 30);
-
-      --colorSize: 126px;
-
-      --bg-off-x: 4px;
-      --bg-off-y: 5px;
-
-      --scale: 1;
-      --uiscale: 1;
-      --gridW: calc(var(--cols) * var(--cell));
-      --gridH: 100vh;
-
-      --ui-panel-bg: #4a2418;
-      --ui-text: #ead7be;
-      --btn-bg: #ead7be;
-      --btn-text: #2a160c;
-      --btn-border: rgba(0,0,0,0.35);
-      --slot-border: rgba(0,0,0,0.55);
-      --slot-border-w: 4px;
-
-      /* Würfel-Farben */
-      --cube-wood-base: #d7c2a4;
-      --cube-wood-deep: #c9b08f;
-      --cube-wood-warm: rgba(155, 70, 110, 0.10);
-      --cube-wood-gold: rgba(249, 150, 30, 0.10);
-      --w1-innerframe: rgba(122, 74, 52, 1);
-      --slot-fill: #ead7be;
-
-      --rotSign: 1;
-      --rot: 0deg;
-
-      /* ===========
-         CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein
-         Zeile 1 = Farbfeldzeile
-         Innenraum beginnt bei 2B und endet bei 7G
-         =========== */
-      --clipTop:    calc((2 - 1) * var(--cell)); /* ab Zeile 2 */
-      --clipLeft:   calc((2 - 1) * var(--cell)); /* ab Spalte B (=2) */
-      --clipRight:  calc((8 - 7) * var(--cell)); /* rechts bleibt 1 Spalte (H) */
-      --clipBottom: calc(var(--gridH) - (7 * var(--cell))); /* unten ab Zeile 8 */
-    }
-
-    html, body{
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      touch-action: manipulation;
-    }
-
-    body{
-      background:
-        radial-gradient(120% 90% at 50% 10%, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%),
-        repeating-linear-gradient(
-          90deg,
-          rgba(140,105,70,0.10) 0px,
-          rgba(140,105,70,0.10) 10px,
-          rgba(230,205,165,0.10) 10px,
-          rgba(230,205,165,0.10) 22px
-        ),
-        linear-gradient(180deg, #d9c3a2, #cdb28f);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    .stage{
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .layout{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      transform-origin: top center;
-      transform: translateX(-50%) scale(var(--scale));
-    }
-
-    /* Z-INDEX: 0 - Box Hintergrund PNG */
-    .bgPNG{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      background-image: url("Box_m_Hgr.png");
-      background-repeat: no-repeat;
-      background-size: 100% auto;
-      background-position:
-        calc(0px + var(--bg-off-x))
-        calc(0px + var(--bg-off-y));
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Z-INDEX: 1 - Kugel (UNTER dem Würfel) */
-    .ball{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((4 + 2) * var(--cell));
-      width: calc(var(--cell) * 0.55);
-      height: calc(var(--cell) * 0.55);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      background:
-        radial-gradient(circle at 30% 28%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 45%),
-        radial-gradient(circle at 55% 60%, rgba(0,0,0,0.18), rgba(0,0,0,0.00) 55%),
-        radial-gradient(circle at 50% 55%, #d6b996, #b88d63 70%);
-      box-shadow: 0 5px 10px rgba(0,0,0,0.28);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    .colors{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .colorSq{
-      position:absolute;
-      width: var(--colorSize);
-      height: var(--colorSize);
-      border-radius: 0;
-    }
-    .c-gruen   { background: var(--gruen); }
-    .c-orange  { background: var(--orange); }
-    .c-blau    { background: var(--blau); }
-    .c-violett { background: var(--violett); }
-
-    /* =========================================
-       Z-INDEX: 2 - Würfel-Schatten (vollflächig)
-       - dreht MIT dem Würfel (Pivot im Zentrum)
-       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
-       ========================================= */
-    .cubeShadowLayer{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 2;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .cubeShadowLayer.visible{
-      opacity: 1;
-    }
-
-    /* CLIP-WRAPPER: Schatten-Gefängnis 2B–7G */
-    .cubeShadowClip{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-
-      /* STRIKT: alles außerhalb wird abgeschnitten */
-      clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
-    }
-
-    /* Schatten selbst: folgt der Würfelfläche (gleiche Position wie cubeFace) */
-    .cubeShadowInner{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top:  calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-
-      background: transparent;
-      border-radius: 10px;
-
-      box-shadow:
-        18px 26px 34px rgba(0,0,0,0.36),
-        26px 38px 54px rgba(0,0,0,0.26),
-        34px 50px 78px rgba(0,0,0,0.18);
-
-      filter: drop-shadow(0 0 0 rgba(0,0,0,0));
-    }
-
-    .grid{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 2;
-      pointer-events: none;
-      background-image:
-        repeating-linear-gradient(
-          to right,
-          rgba(255,255,255,var(--grid-alpha)) 0px,
-          rgba(255,255,255,var(--grid-alpha)) 1px,
-          rgba(255,255,255,0) 1px,
-          rgba(255,255,255,0) var(--cell)
-        ),
-        repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,var(--grid-alpha)) 0px,
-          rgba(255,255,255,var(--grid-alpha)) 1px,
-          rgba(255,255,255,0) 1px,
-          rgba(255,255,255,0) var(--cell)
-        );
-    }
-
-    /* Z-INDEX: 3 - Zwischenkipp-Schatten PNGs */
-    .zwischenKippSchattenLayer{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 3;
-      pointer-events: none;
-    }
-
-    .zwischenKippSchatten{
-      position: absolute;
-      left: calc(1 * var(--cell));
-      top: calc(3 * var(--cell));
-      width: calc(6 * var(--cell));
-      height: calc(6 * var(--cell));
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-      background-position: 0 0;
-      opacity: 0;
-      transition: opacity 0.1s ease;
-    }
-
-    .zwischenKippSchatten.visible{
-      opacity: 1;
-    }
-
-    #shadowQ0{ background-image: url("SchattenZwischenKipp_Q0.png"); }
-    #shadowQ1{ background-image: url("SchattenZwischenKipp_Q1.png"); }
-    #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
-    #shadowQ3{ background-image: url("SchattenZwischenKipp_Q3.png"); }
-
-    /* Z-INDEX: 4 - Würfel Groups */
-    .wFaceGroup,
-    .kipGroup{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 4;
-      pointer-events: none;
-
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .cubeFace{
-      position: absolute;
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-      box-sizing: border-box;
-      border-radius: 0;
-      background:
-        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
-        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
-        repeating-linear-gradient(
-          20deg,
-          rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 17px,
-          rgba(255,255,255,0.02) 17px,
-          rgba(255,255,255,0.02) 30px
-        ),
-        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
-        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
-      box-shadow:
-        inset 0 0 0 5px var(--w1-innerframe),
-        0 0 0 2px rgba(255,255,255,0.08) inset;
-      z-index: 2;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-    }
-
-    .uiLayer{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 100;
-      pointer-events: none;
-    }
-
-    .uiTitle{
-      position:absolute;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-
-      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-
-      color: rgba(255,255,255,0.96);
-
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 18px rgba(0,0,0,0.70);
-
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.28);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
-
-      white-space: nowrap;
-      user-select: none;
-    }
-
-    #kippAnzahlTitle{
-      color: rgba(234,215,190,0.96);
-    }
-
-    .levelBtns{
-      position:absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      gap: 71px;
-      pointer-events: auto;
-      z-index: 10;
-    }
-
-    .levelBtn{
-      width: 284px;
-      height: 106px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-
-      border-radius: 14px;
-
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      color: rgba(0,0,0,0.92);
-
-      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-
-      user-select:none;
-      white-space: nowrap;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .levelBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-
-    .kspBlock{
-      position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      z-index: 10;
-      pointer-events: auto;
-    }
-
-    .kspTop{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .btnSchauen{
-      width: calc(260px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      pointer-events: auto;
-    }
-    .btnSchauen:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-    .btnSchauen[disabled]{
-      opacity: 0.55;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
-
-    .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
-      color: #7a3f2b;
-      text-align: center;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    .squareBtn{
-      width: calc(44px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    .squareBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-    .squareBtn.selected{
-      background: rgba(249, 150, 30, 0.95);
-      border-color: rgba(0,0,0,0.85);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.32),
-        0 0 0 2px rgba(255,255,255,0.25) inset,
-        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-      transform: scale(1.05);
-    }
-    .squareBtn[disabled]{
-      opacity: 0.45;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
-
-    .anzahlText{
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      color: #7a3f2b;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      font-size: calc(18px * var(--uiscale));
-      line-height: 1;
-    }
-
-    .sliderRow{
-      position: absolute;
-      width: var(--gridW);
-      height: auto;
-      pointer-events: auto;
-    }
-
-    .speedIcon{
-      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
-      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
-      opacity: 0.98;
-      position: absolute;
-      filter:
-        brightness(0) saturate(100%)
-        drop-shadow(0 1px 0 rgba(0,0,0,0.15));
-      pointer-events: none;
-    }
-
-    .speedIcon.snail{
-      left: calc(var(--cell) - var(--cell) / 5);
-      transform: translateX(-50%);
-      top: 0;
-    }
-
-    .speedIcon.hase{
-      left: calc(7 * var(--cell) + var(--cell) / 5);
-      transform: translateX(-50%);
-      top: 0;
-    }
-
-    .sliderContainer{
-      position: absolute;
-      left: calc(1.5 * var(--cell));
-      width: calc(5 * var(--cell));
-      display: flex;
-      flex-direction: column;
-      gap: calc(6px * var(--uiscale));
-      pointer-events: auto;
-    }
-
-    .speedScale{
-      display:flex;
-      justify-content: space-between;
-      width: 100%;
-      color: #000000;
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      font-size: calc(18px * var(--uiscale));
-      line-height: 1;
-      user-select:none;
-      text-shadow: none;
-      pointer-events: auto;
-    }
-    .speedScale span{
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      padding: 6px 8px;
-      border-radius: 10px;
-    }
-    .speedScale span:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-
-    input[type="range"]{
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: calc(10px * var(--uiscale));
-      border-radius: 999px;
-      background: #000000;
-      outline: none;
-      border: none;
-      box-shadow: none;
-      touch-action: pan-x;
-      pointer-events: auto;
-    }
-    input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance: none;
-      appearance: none;
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill);
-      border: 2px solid rgba(0,0,0,0.35);
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor: pointer;
-    }
-    input[type="range"]::-moz-range-thumb{
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill);
-      border: 2px solid rgba(0,0,0,0.35);
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor: pointer;
-    }
-
-    .sliderLocked{
-      opacity: 0.45;
-      filter: saturate(0.8);
-    }
-    .sliderLocked input[type="range"]{
-      pointer-events: none;
-    }
-    .sliderLocked .speedScale{
-      pointer-events: none;
-    }
-
-    .kippAnzahlSubtitle{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-
-      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.14em;
-
-      color: rgba(255,255,255,0.96);
-
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 18px rgba(0,0,0,0.70);
-
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.28);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
-
-      white-space: nowrap;
-      user-select: none;
-    }
-
-    .kippAnzahlBtns{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-wrap: nowrap;
-      gap: calc(24px * var(--uiscale));
-      pointer-events: auto;
-      z-index: 10;
-      justify-content: center;
-    }
-
-    .kippAnzahlBtns.compact{
-      gap: calc(12px * var(--uiscale));
-    }
-
-    .slot{
-      position: absolute;
-      width: var(--cell);
-      height: var(--cell);
-      box-sizing: border-box;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border: var(--slot-border-w) solid var(--slot-border);
-      border-radius: 0;
-      z-index: 7;
-      box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,
-        -2px -2px 0 rgba(0,0,0,0.15) inset,
-        0 6px 12px rgba(0,0,0,0.35),
-        4px 4px 7px -2px rgba(0,0,0,0.30);
-    }
-
-    .slot .num{
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      z-index: 9;
-    }
-
-    .slot .num > span{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 0.70);
-      letter-spacing: -0.02em;
-      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
-      transform: rotate(var(--num-rot, 0deg));
-      transform-origin: 50% 50%;
-      position: relative;
-      line-height: 1;
-    }
-
-    .slot .num > span.twodigit{
-      letter-spacing: -0.16em !important;
-      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
-    }
-
-    .targetNumber > span.twodigit{
-      letter-spacing: -0.16em;
-      transform: translateX(-0.18em) rotate(var(--tn-rot, 0deg));
-      transform-origin: 50% 50%;
-    }
-
-    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
-    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
-    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
-    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
-
-    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .kipScale{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        scaleX(0.6666667)
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .kipShadow{ display: none; }
-
-    .kipEdgeCore{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: 10px;
-      height: calc(3 * var(--cell));
-      transform: translateX(-50%);
-      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
-      z-index: 1;
-      opacity: 0.95;
-    }
-
-    .kipFaceQ0{
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .kipFaceQ1{
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .k-3e{ left: calc(4 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-4e{ left: calc(4 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-2f{ left: calc(5 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2g{ left: calc(6 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .hidden{ display:none !important; }
-
-    .kippBilanzBtn{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 300px;
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgb(198, 168, 128);
-      color: rgba(0,0,0,0.92);
-      font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-tap-highlight-color: transparent;
-      z-index: 20;
-    }
-    .kippBilanzBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-
-    .scoreDisplay{
-      position: absolute;
-      right: 0;
-      top: 0;
-      font-size: clamp(100px, 14vmin, 180px);
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft,
-    .titleRight{
-      position: absolute;
-      top: 0;
-      font-size: clamp(40px, 8vmin, 75px);
-      font-weight: 1000;
-      letter-spacing: 0.05em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      text-align: center;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft{
-      left: 0;
-    }
-
-    .titleRight{
-      right: 0;
-      font-size: clamp(32px, 6.5vmin, 60px);
-      font-weight: 600;
-      text-transform: lowercase;
-    }
-
-    .navBtn{
-      position: absolute;
-      width: calc(56px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
-      background: none;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      pointer-events: auto;
-      z-index: 100;
-      padding: 0;
-    }
-    .navBtn:active{
-      transform: scale(0.95);
-      opacity: 0.8;
-    }
-    .navBtn[disabled]{
-      opacity: 0.35;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
-
-    .backIcon{
-      width: 0;
-      height: 0;
-      border-top: calc(18px * var(--uiscale)) solid transparent;
-      border-bottom: calc(18px * var(--uiscale)) solid transparent;
-      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
-    }
-
-    .closeIcon{
-      position: relative;
-      width: calc(32px * var(--uiscale));
-      height: calc(32px * var(--uiscale));
-    }
-    .closeIcon::before,
-    .closeIcon::after{
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: calc(32px * var(--uiscale));
-      height: calc(5px * var(--uiscale));
-      background: rgba(234,215,190,0.96);
-      border-radius: calc(2.5px * var(--uiscale));
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
-    }
-    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
-    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
-
-    .modalOverlay{
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      pointer-events: auto;
-    }
-
-    .modalBox{
-      background: rgba(234,215,190,0.98);
-      border: 3px solid rgba(0,0,0,0.65);
-      border-radius: 20px;
-      padding: 40px 48px;
-      box-shadow:
-        0 20px 40px rgba(0,0,0,0.35),
-        0 0 0 1px rgba(255,255,255,0.15) inset;
-      text-align: center;
-      max-width: 85%;
-      width: auto;
-    }
-
-    .modalTitle{
-      font-size: clamp(22px, 5.5vmin, 36px);
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      color: #2a160c;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      margin-bottom: 24px;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .modalText{
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 600;
-      color: #4a2418;
-      margin-bottom: 32px;
-      line-height: 1.5;
-    }
-
-    .modalBtns{
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-
-    .modalBtn{
-      padding: 16px 40px;
-      border-radius: 14px;
-      border: 2px solid rgba(0,0,0,0.65);
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.18),
-        0 0 0 1px rgba(255,255,255,0.15) inset;
-      white-space: nowrap;
-    }
-    .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    .modalBtn.cancel{
-      background: #a8927a;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
-    }
-
-    .modalBtn.confirm{
-      background: #d64545;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
-    }
-
-    /* Animation Target */
-    .targetNumber span{
-      animation: targetBreath 1.05s ease-in-out infinite;
-      will-change: transform, filter;
-    }
-    @keyframes targetBreath{
-      0%, 100% {
-        transform: rotate(var(--target-rot, 0deg)) scale(1);
-        filter: brightness(1);
-      }
-      50% {
-        transform: rotate(var(--target-rot, 0deg)) scale(1.06);
-        filter: brightness(1.12);
-      }
-    }
-
-    .targetHitPulse span{ animation: targetHit 0.42s ease-in-out 2 !important; }
-    @keyframes targetHit{
-      0%   { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
-      50%  { transform: rotate(var(--target-rot, 0deg)) scale(1.18); filter: brightness(1.28); }
-      100% { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
-    }
-
-    .slot.hit-gruen{ background: var(--gruen) !important; }
-    .slot.hit-orange{ background: var(--orange) !important; }
-    .slot.hit-blau{ background: var(--blau) !important; }
-    .slot.hit-violett{ background: var(--violett) !important; }
-
-    .slot.slotHitPulse .num > span{ animation: slotHit 0.32s ease-in-out 3; }
-    @keyframes slotHit{
-      0%   { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
-      50%  { transform: rotate(var(--num-rot,0deg)) scale(1.18); filter: brightness(1.18); }
-      100% { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DigiKipp – KIPP-ANZAHL Stellrad Demo</title>
+
+<style>
+  :root{
+    --bg: #2b1411;
+    --panel: rgba(75, 40, 30, 0.75);
+    --beige: rgba(234,215,190,0.96);
+    --rotbraun: #7a3f2b;
+
+    --slot: #4a2418;
+    --shadow: rgba(0,0,0,0.55);
+  }
+
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(1200px 700px at 50% 30%, rgba(255,255,255,0.06), rgba(0,0,0,0)),
+      linear-gradient(180deg, #3a1b16, #140707);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: var(--beige);
+  }
+
+  /* Panel (Zeile 9–11 Gefühl: kompakt, breit) */
+  .kippPanel{
+    width: min(92vw, 720px);
+    height: 210px;
+    border-radius: 18px;
+    padding: 16px 18px;
+    position: relative;
+    background: var(--panel);
+    border: 2px solid rgba(0,0,0,0.55);
+    box-shadow:
+      0 18px 36px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+
+  .title{
+    font-weight: 1000;
+    letter-spacing: 0.06em;
+    font-size: clamp(28px, 5.6vw, 46px);
+    text-shadow:
+      0 3px 0 rgba(0,0,0,0.85),
+      0 10px 24px rgba(0,0,0,0.55);
+    margin-bottom: 10px;
+  }
+
+  /* Doppelpfeil: Linie + Spitzen */
+  .doubleArrow{
+    position: absolute;
+    left: 18px;
+    top: 74px;
+    width: min(520px, 64%);
+    height: 24px;
+    opacity: 0.95;
+    display: flex;
+    align-items:center;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .doubleArrow .tip{
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+  .doubleArrow .tip.left{  border-right: 14px solid rgba(234,215,190,0.9); }
+  .doubleArrow .tip.right{ border-left: 14px solid rgba(234,215,190,0.9); }
+  .doubleArrow .line{
+    flex:1;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(234,215,190,0.88);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.65);
+  }
+
+  /* Bereich links: Rad + Fenster + Skala */
+  .leftArea{
+    position:absolute;
+    left:18px;
+    right: 160px; /* Platz für KIPP Button */
+    top: 96px;
+    height: 96px;
+  }
+
+  /* Minimaler Schlitz (kaum sichtbar) */
+  .slot{
+    position:absolute;
+    left: 6px;
+    top: 18px;
+    width: 72%;
+    height: 18px;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.20)),
+      var(--slot);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,0.14),
+      inset 0 -4px 8px rgba(0,0,0,0.55);
+    opacity: 0.75; /* wirklich nur „Hauch“ */
+  }
+
+  /* Stellrad: silber + geriffelt */
+  .wheel{
+    position:absolute;
+    left: 18px;
+    top: 0px;
+    width: 66%;
+    height: 52px;
+    border-radius: 999px;
+    cursor: grab;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+
+    background:
+      radial-gradient(140% 160% at 20% 20%, rgba(255,255,255,0.90), rgba(255,255,255,0.0) 44%),
+      linear-gradient(180deg, #f2f2f2, #d4d4d4 35%, #bcbcbc 55%, #f6f6f6),
+      repeating-linear-gradient(
+        90deg,
+        rgba(0,0,0,0.22) 0px,
+        rgba(0,0,0,0.22) 2px,
+        rgba(255,255,255,0.18) 2px,
+        rgba(255,255,255,0.18) 7px
+      );
+    border: 2px solid rgba(0,0,0,0.60);
+    box-shadow:
+      0 14px 18px rgba(0,0,0,0.33),
+      inset 0 2px 0 rgba(255,255,255,0.60),
+      inset 0 -10px 14px rgba(0,0,0,0.28);
+
+    transform: rotate(var(--wheel-rot, 0deg));
+    transform-origin: 50% 50%;
+  }
+  .wheel:active{ cursor: grabbing; }
+  .wheel:focus{
+    outline:none;
+    box-shadow:
+      0 14px 18px rgba(0,0,0,0.33),
+      inset 0 2px 0 rgba(255,255,255,0.60),
+      inset 0 -10px 14px rgba(0,0,0,0.28),
+      0 0 0 4px rgba(249,150,30,0.55);
+  }
+
+  /* Sichtfenster (tiefer) */
+  .window{
+    position:absolute;
+    left: 18px;
+    top: 58px;
+    width: 86px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--beige);
+    border: 2px solid rgba(0,0,0,0.60);
+    box-shadow:
+      inset 0 8px 12px rgba(0,0,0,0.22),
+      inset 0 -2px 0 rgba(255,255,255,0.25),
+      0 12px 18px rgba(0,0,0,0.22);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .window span{
+    font-weight: 1000;
+    letter-spacing: 0.08em;
+    color: var(--rotbraun);
+    font-size: 44px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  }
+
+  /* Min/Max Skala */
+  .minmax{
+    position:absolute;
+    left: 120px;
+    top: 72px;
+    width: calc(66% - 120px);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight: 1000;
+    letter-spacing: 0.10em;
+    font-size: 24px;
+    text-shadow:
+      0 2px 0 rgba(0,0,0,0.85),
+      0 8px 18px rgba(0,0,0,0.50);
+  }
+  .minmax span{
+    padding: 6px 10px;
+    border-radius: 12px;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+    border: 2px solid rgba(0,0,0,0.0);
+  }
+  .minmax span:active{ transform: scale(0.98); }
+  .minmax span:hover{ border-color: rgba(255,255,255,0.10); }
+
+  /* KIPP Button rechts */
+  .kippBtn{
+    position:absolute;
+    right: 18px;
+    top: 96px;
+    width: 130px;
+    height: 70px;
+    border-radius: 16px;
+    border: 2px solid rgba(0,0,0,0.65);
+    background: var(--beige);
+    color: rgba(0,0,0,0.92);
+    font-weight: 1000;
+    letter-spacing: 0.08em;
+    font-size: 30px;
+    box-shadow:
+      0 14px 20px rgba(0,0,0,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.18);
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kippBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
+
+  /* optional: kleines „Pulse“ (nur Titel) */
+  .pulse .title{ animation: titlePulse 1.05s ease-in-out infinite; }
+  @keyframes titlePulse{
+    0%,100%{ filter: brightness(1); }
+    50%{ filter: brightness(1.12); }
+  }
+
+  /* kleine Demo-Ausgabe */
+  .out{
+    margin-top: 10px;
+    font-size: 16px;
+    opacity: 0.85;
+    letter-spacing: 0.02em;
+  }
+</style>
 </head>
 
 <body>
-  <div class="stage" id="stage">
-    <div class="layout" id="layout">
-      <!-- Z-INDEX 0: Box Hintergrund -->
-      <div class="bgPNG" aria-hidden="true"></div>
+  <div class="kippPanel pulse" id="panel">
+    <div class="title">KIPP-ANZAHL</div>
 
-      <!-- Z-INDEX 1: Kugel -->
-      <div class="ball" aria-label="Kugel"></div>
-
-      <!-- Z-INDEX 1: Farbfelder -->
-      <div class="colors" id="colors" aria-hidden="true"></div>
-
-      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, geclippt 2B–7G, dreht mit) -->
-      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
-        <div class="cubeShadowClip">
-          <div class="cubeShadowInner"></div>
-        </div>
-      </div>
-
-      <!-- Z-INDEX 3: Zwischenkipp-Schatten PNGs -->
-      <div class="zwischenKippSchattenLayer" aria-hidden="true">
-        <div id="shadowQ0" class="zwischenKippSchatten"></div>
-        <div id="shadowQ1" class="zwischenKippSchatten"></div>
-        <div id="shadowQ2" class="zwischenKippSchatten"></div>
-        <div id="shadowQ3" class="zwischenKippSchatten"></div>
-      </div>
-
-      <!-- Z-INDEX 4: Würfel Groups -->
-      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
-        <div class="cubeFace" aria-label="Würfelfläche"></div>
-
-        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
-        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span></span></div></div>
-        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span></span></div></div>
-        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
-      </div>
-
-      <!-- ======================================================
-           3x Zwischenkipp-Gruppen: 0_1 / 1_2 / 2_0
-           (Fixe IDs wie von dir gewünscht)
-           ====================================================== -->
-
-      <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
-
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
-        </div>
-      </div>
-
-      <div id="kipGroup_1_2" class="kipGroup hidden" data-kip="1_2" aria-label="Kipp Gruppe 1_2">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
-
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
-        </div>
-      </div>
-
-      <div id="kipGroup_2_0" class="kipGroup hidden" data-kip="2_0" aria-label="Kipp Gruppe 2_0">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
-
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
-        </div>
-      </div>
-
-      <!-- UI Layer -->
-      <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <!-- Header Elemente -->
-        <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
-        <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        
-        <!-- Titel Links und Rechts -->
-        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
-        <div class="titleRight" id="titleRight">color</div>
-
-        <!-- Kippspeed - IMMER sichtbar in Zeile 13 -->
-        <div class="sliderRow" id="sliderRow">
-          <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
-
-          <div class="sliderContainer" id="sliderContainer">
-            <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
-
-            <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
-              <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
-            </div>
-          </div>
-
-          <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
-        </div>
-
-        <div id="kspView" class="hidden">
-          <div class="kspBlock" id="kspBlock">
-            <div class="kspTop" id="kspTop">
-              <button id="btnSchauen" class="btnSchauen" type="button">
-                <span class="btnText">SCHAUEN & MERKEN</span>
-              </button>
-            </div>
-          </div>
-
-          <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
-
-        <div id="kippAnzahlView" class="hidden">
-          <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
-
-          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
-          </div>
-
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
-
-          <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
-            <span class="anzahlText">T</span>
-          </button>
-
-          <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
-            <div class="backIcon"></div>
-          </button>
-
-          <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
-      </div>
-
-      <div class="grid" id="grid" aria-hidden="true"></div>
+    <!-- Doppelpfeil (zeigt: links/rechts drehen) -->
+    <div class="doubleArrow" aria-hidden="true">
+      <div class="tip left"></div>
+      <div class="line"></div>
+      <div class="tip right"></div>
     </div>
-  </div>
 
-  <div id="closeModal" class="modalOverlay hidden">
-    <div class="modalBox">
-      <div class="modalTitle">Spiel beenden?</div>
-      <div class="modalText">Möchtest du das Spiel wirklich beenden?<br>Der aktuelle Fortschritt geht verloren.</div>
-      <div class="modalBtns">
-        <button class="modalBtn cancel" id="modalCancel">Abbrechen</button>
-        <button class="modalBtn confirm" id="modalConfirm">Beenden</button>
+    <div class="leftArea">
+      <div class="slot" aria-hidden="true"></div>
+
+      <div class="wheel" id="wheel" role="slider" tabindex="0"
+           aria-label="Kippanzahl Stellrad" aria-valuemin="1" aria-valuemax="11" aria-valuenow="4"></div>
+
+      <div class="window"><span id="val">04</span></div>
+
+      <div class="minmax">
+        <span id="min">01</span>
+        <span id="max">11</span>
       </div>
     </div>
+
+    <button class="kippBtn" id="kippBtn" type="button">KIPP</button>
+
+    <div class="out" id="out">Drag links/rechts am Stellrad → Kippanzahl ändern.</div>
   </div>
 
-  <script>
-    const colorsEl = document.getElementById("colors");
-    const kspView      = document.getElementById("kspView");
-    const kspBlock     = document.getElementById("kspBlock");
-    const kspTop       = document.getElementById("kspTop");
-    const sliderRow    = document.getElementById("sliderRow");
-    const btnSchauen   = document.getElementById("btnSchauen");
-    const speedSlider  = document.getElementById("speedSlider");
-    const sliderContainer = document.getElementById("sliderContainer");
-    const speedScaleEl = document.getElementById("speedScale");
+<script>
+  const wheel = document.getElementById("wheel");
+  const valEl = document.getElementById("val");
+  const out   = document.getElementById("out");
+  const minEl = document.getElementById("min");
+  const maxEl = document.getElementById("max");
+  const kippBtn = document.getElementById("kippBtn");
+  const panel = document.getElementById("panel");
 
-    const kippAnzahlView     = document.getElementById("kippAnzahlView");
-    const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
-    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
-    const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
+  let current = 4;
 
-    const closeBtnKsp    = document.getElementById("closeBtnKsp");
-    const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
-    const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
+  const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+  const fmt2  = (n)=>String(n).padStart(2,"0");
 
-    const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
-    const scoreDisplay  = document.getElementById("scoreDisplay");
-    const titleLeft  = document.getElementById("titleLeft");
-    const titleRight  = document.getElementById("titleRight");
+  function setValue(n){
+    current = clamp(n,1,11);
+    valEl.textContent = fmt2(current);
+    wheel.setAttribute("aria-valuenow", String(current));
 
-    const closeModal = document.getElementById("closeModal");
-    const modalCancel = document.getElementById("modalCancel");
-    const modalConfirm = document.getElementById("modalConfirm");
+    // nur fürs Feeling: leichte „Rotation“
+    const rot = (current-1) * 6; // 0..60°
+    wheel.style.setProperty("--wheel-rot", rot + "deg");
+  }
 
-    const testTargetBtn = document.getElementById("testTargetBtn");
+  // Drag LEFT/RIGHT (West/Ost)
+  (function initDragLR(){
+    let dragging = false;
+    let startX = 0;
+    let startVal = 4;
 
-    const shadowQ0 = document.getElementById("shadowQ0");
-    const shadowQ1 = document.getElementById("shadowQ1");
-    const shadowQ2 = document.getElementById("shadowQ2");
-    const shadowQ3 = document.getElementById("shadowQ3");
-    const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
+    const stepPx = 22; // je kleiner, desto empfindlicher
 
-    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
-
-    let currentView = "level";
-    let selectedLevel = null;
-
-    let buttonState = "schauen";
-
-    function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-    const wFaceGroup = document.getElementById("wFaceGroup");
-
-    // ============================
-    // FIXE Zwischenkipp-Gruppen:
-    // 0_1 / 1_2 / 2_0
-    // ============================
-    const kipGroups = {
-      "0_1": document.getElementById("kipGroup_0_1"),
-      "1_2": document.getElementById("kipGroup_1_2"),
-      "2_0": document.getElementById("kipGroup_2_0"),
-    };
-
-    let activeKipId = "0_1";
-    function getKipId(fromFace, toFace){
-      return `${fromFace}_${toFace}`;
-    }
-    function setActiveKipGroup(kipId){
-      activeKipId = kipId;
-      Object.entries(kipGroups).forEach(([id, el]) => {
-        if(!el) return;
-        if(id === kipId) el.classList.remove("hidden");
-        else el.classList.add("hidden");
-      });
-      updateShadowVisibility();
-    }
-    function getActiveKipGroup(){
-      return kipGroups[activeKipId];
+    function getX(e){
+      return (e.touches ? e.touches[0].clientX : e.clientX);
     }
 
-    const slotTargetsW = [
-      wFaceGroup.querySelector('[data-slot="S1"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S2"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S3"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S4"] .num > span'),
-    ];
-
-    const slotElsW = [
-      wFaceGroup.querySelector('[data-slot="S1"]'),
-      wFaceGroup.querySelector('[data-slot="S2"]'),
-      wFaceGroup.querySelector('[data-slot="S3"]'),
-      wFaceGroup.querySelector('[data-slot="S4"]'),
-    ];
-
-    // Cache pro kipGroup (damit wir sauber in der aktiven Gruppe rendern)
-    const kipSlotCache = {};
-    function getKipSlots(kipId){
-      if(kipSlotCache[kipId]) return kipSlotCache[kipId];
-      const g = kipGroups[kipId];
-      if(!g){
-        kipSlotCache[kipId] = { right:[null,null,null,null], left:[null,null,null,null] };
-        return kipSlotCache[kipId];
-      }
-      const right = [
-        g.querySelector('[data-slot="W1_1"] .num > span'),
-        g.querySelector('[data-slot="W1_2"] .num > span'),
-        g.querySelector('[data-slot="W1_3"] .num > span'),
-        g.querySelector('[data-slot="W1_4"] .num > span'),
-      ];
-      const left = [
-        g.querySelector('[data-slot="W2_A"] .num > span'),
-        g.querySelector('[data-slot="W2_B"] .num > span'),
-        g.querySelector('[data-slot="W2_C"] .num > span'),
-        g.querySelector('[data-slot="W2_D"] .num > span'),
-      ];
-      kipSlotCache[kipId] = { right, left };
-      return kipSlotCache[kipId];
-    }
-
-    const innerFieldColor = {
-      "2C": "gruen",
-      "4G": "gruen",
-      "5G": "gruen",
-      "7C": "gruen",
-
-      "2D": "orange",
-      "2E": "orange",
-      "6B": "orange",
-      "6G": "orange",
-
-      "2F": "blau",
-      "4B": "blau",
-      "5B": "blau",
-      "7F": "blau",
-
-      "3B": "violett",
-      "3G": "violett",
-      "7D": "violett",
-      "7E": "violett",
-    };
-
-    const allColors = ["violett","blau","gruen","orange"];
-
-    const HEADER_ROW_OFFSET = 2;
-    const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-    const colMapInv = ["","A","B","C","D","E","F","G","H"];
-
-    function numVar(name){
-      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
-    }
-
-    function coordToXY(coord){
-      const row = parseInt(coord, 10);
-      const colLetter = coord.replace(String(row), "");
-      return { row, col: colMap[colLetter] };
-    }
-
-    function pixelToCoordFromLayout(xPx, yPx){
-      const cellPx = numVar("--cell") || 142;
-
-      const col = Math.floor(xPx / cellPx) + 1;
-      const rowVisual = Math.floor(yPx / cellPx) + 1;
-      const row = rowVisual - HEADER_ROW_OFFSET;
-
-      if(col < 1 || col > 8) return null;
-      if(row < 1) return null;
-
-      const letter = colMapInv[col];
-      return `${row}${letter}`;
-    }
-
-    function getSlotCoord(slotEl){
-      const layout = document.getElementById("layout");
-      const rLayout = layout.getBoundingClientRect();
-      const r = slotEl.getBoundingClientRect();
-      const cx = r.left + r.width/2;
-      const cy = r.top  + r.height/2;
-
-      const scale = numVar("--scale") || 1;
-      const x = (cx - rLayout.left) / scale;
-      const y = (cy - rLayout.top) / scale;
-
-      return pixelToCoordFromLayout(x, y);
-    }
-
-    let currentTarget = null;
-    
-    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
-    let cardDeck = [];
-    let targetsGenerated = 0;
-    const MAX_TARGETS = 10;
-
-    // Zwei-Tasten-Auswahl System
-    let selectedButtons = [];
-
-    function getVisibleNumbers(){
-      const curr = sets[faceIndex];
-      return [
-        { slotEl: slotElsW[0], num: curr[0] },
-        { slotEl: slotElsW[1], num: curr[1] },
-        { slotEl: slotElsW[2], num: curr[2] },
-        { slotEl: slotElsW[3], num: curr[3] },
-      ];
-    }
-
-    function isImmediateHitCombo(candidate){
-      const visible = getVisibleNumbers();
-      for(const v of visible){
-        if(v.num == null) continue;
-        if(v.num !== candidate.num) continue;
-
-        const coord = getSlotCoord(v.slotEl);
-        if(!coord) continue;
-
-        const c = innerFieldColor[coord];
-        if(c && c === candidate.color){
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // ============================================================
-    // PATHFINDING ALGORITHMUS FÜR BRAINY
-    // ============================================================
-
-    const slotCoordsByRot = [
-      ["3B", "4B", "2C", "2D"],
-      ["2D", "3D", "3B", "4B"],
-      ["4F", "3F", "5D", "4D"],
-      ["5D", "4D", "4F", "3F"],
-    ];
-
-    function simulateKipp(face, rot){
-      return {
-        face: (face + 1) % 3,
-        rot: (rot + 1) % 4
-      };
-    }
-
-    function calculateMinKipps(targetNum, targetColor){
-      let numFaceIndex = -1;
-      let numSlotIndex = -1;
-
-      for(let f = 0; f < 3; f++){
-        const idx = sets[f].indexOf(targetNum);
-        if(idx !== -1){
-          numFaceIndex = f;
-          numSlotIndex = idx;
-          break;
-        }
-      }
-
-      if(numFaceIndex === -1) return null;
-
-      const validKipps = [1, 2, 4, 5, 6];
-
-      for(const kipps of validKipps){
-        let testFace = faceIndex;
-        let testRot = rotIndex;
-
-        for(let i = 0; i < kipps; i++){
-          const next = simulateKipp(testFace, testRot);
-          testFace = next.face;
-          testRot = next.rot;
-        }
-
-        if(testFace !== numFaceIndex) continue;
-
-        const coords = slotCoordsByRot[testRot];
-        const coord = coords[numSlotIndex];
-
-        if(innerFieldColor[coord] === targetColor){
-          return kipps;
-        }
-      }
-
-      return null;
-    }
-
-    function generateTargetNumberColor_Brainy(){
-      // Wenn max Targets erreicht, stopp
-      if(targetsGenerated >= MAX_TARGETS){
-        return null;
-      }
-
-      // Wenn Deck leer: neu mischen mit aktuell unsichtbaren Zahlen
-      if(cardDeck.length === 0){
-        initializeCardDeck();
-      }
-
-      // Wenn immer noch leer (alle Zahlen sichtbar?), stopp
-      if(cardDeck.length === 0){
-        return null;
-      }
-
-      // Zufällige Karte aus Deck ziehen UND ENTFERNEN
-      const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck.splice(randomIndex, 1)[0];
-      
-      targetsGenerated++;
-      return { num: card.num, color: card.color };
-    }
-
-    function initializeCardDeck(){
-      // Die 4 aktuell sichtbaren ZAHLEN ermitteln (egal welche Farbe!)
-      const visible = getVisibleNumbers();
-      const visibleNumbers = new Set();
-      
-      for(const v of visible){
-        if(v.num != null){
-          visibleNumbers.add(v.num);
-        }
-      }
-
-      // Alle 48 Kombinationen erstellen, aber NUR mit unsichtbaren Zahlen
-      cardDeck = [];
-      for(let num = 1; num <= 12; num++){
-        // Wenn diese Zahl sichtbar ist, überspringen!
-        if(visibleNumbers.has(num)) continue;
-        
-        // Sonst: alle 4 Farben dieser Zahl ins Deck
-        for(const color of allColors){
-          cardDeck.push({ num, color });
-        }
-      }
-    }
-
-    function rotationForCoord(coord){
-      const { row, col } = coordToXY(coord);
-      if(col === 1) return -90;
-      if(col === 8) return 90;
-      if(row === 1) return 0;
-      if(row === 8) return 180;
-      return 0;
-    }
-
-    const colorFieldCoords = {
-      'violett': ['3A','8D','8E','3H'],
-      'blau':    ['1F','8F','4A','5A'],
-      'gruen':   ['1C','8C','4H','5H'],
-      'orange':  ['1D','1E','6A','6H']
-    };
-
-    function clearTargetNumbers(){
-      document.querySelectorAll('.targetNumber').forEach(el => el.remove());
-    }
-
-    function placeTargetNumbers(target){
-      clearTargetNumbers();
-
-      const coords = colorFieldCoords[target.color];
-      if(!coords) return;
-
-      const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 126;
-
-      coords.forEach(coord => {
-        const { row, col } = coordToXY(coord);
-        const visualRow = row + HEADER_ROW_OFFSET;
-
-        const leftCell = (col - 1) * cellPx;
-        const topCell = (visualRow - 1) * cellPx;
-
-        const pad = (cellPx - sizePx) / 2;
-        const x = leftCell + pad;
-        const y = topCell + pad;
-
-        const container = document.createElement("div");
-        container.className = "targetNumber";
-        container.style.position = "absolute";
-        container.style.left = x + "px";
-        container.style.top = y + "px";
-        container.style.width = sizePx + "px";
-        container.style.height = sizePx + "px";
-        container.style.display = "flex";
-        container.style.alignItems = "center";
-        container.style.justifyContent = "center";
-        container.style.zIndex = "8";
-        container.style.pointerEvents = "none";
-
-        const numSpan = document.createElement("span");
-        numSpan.style.fontWeight = "900";
-        numSpan.style.color = "#111";
-        numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
-        numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
-        numSpan.style.lineHeight = "1";
-
-        const rot = rotationForCoord(coord);
-        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
-        numSpan.textContent = text;
-
-        numSpan.style.setProperty("--target-rot", rot + "deg");
-
-        if(target.num >= 10){
-          numSpan.classList.add("twodigit");
-          numSpan.style.setProperty("--tn-rot", rot + "deg");
-        }
-
-        container.appendChild(numSpan);
-        colorsEl.appendChild(container);
-      });
-    }
-
-    function clearHitVisuals(){
-      slotElsW.forEach(el => {
-        el.classList.remove("hit-gruen","hit-orange","hit-blau","hit-violett","slotHitPulse");
-      });
-      document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
-    }
-
-    function applyHitVisual(slotEl, targetColor){
-      const cls = "hit-" + targetColor;
-      slotEl.classList.add(cls);
-
-      slotEl.classList.add("slotHitPulse");
-      setTimeout(() => slotEl.classList.remove("slotHitPulse"), 1100);
-
-      document.querySelectorAll(".targetNumber").forEach(el => el.classList.add("targetHitPulse"));
-      setTimeout(() => {
-        document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
-      }, 1100);
-    }
-
-    function checkHitAndSignal(){
-      if(!currentTarget) return false;
-
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++){
-        const n = curr[i];
-        if(n == null) continue;
-        if(n !== currentTarget.num) continue;
-
-        const slotEl = slotElsW[i];
-        const coord = getSlotCoord(slotEl);
-        if(!coord) continue;
-
-        const c = innerFieldColor[coord];
-        if(c && c === currentTarget.color){
-          clearHitVisuals();
-          applyHitVisual(slotEl, currentTarget.color);
-          console.log("TREFFER:", {target: currentTarget, slot: i+1, coord});
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function updateShadowVisibility(){
-      const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
-      const isWVisible = !wFaceGroup.classList.contains("hidden");
-
-      if(isKipVisible){
-        allShadows.forEach((s, i) => {
-          if(i === rotIndex) s.classList.add("visible");
-          else s.classList.remove("visible");
-        });
-      } else {
-        allShadows.forEach(s => s.classList.remove("visible"));
-      }
-
-      if(isWVisible){
-        cubeShadowLayer.classList.add("visible");
-      } else {
-        cubeShadowLayer.classList.remove("visible");
-      }
-    }
-
-    function showW(){
-      Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
-      wFaceGroup.classList.remove("hidden");
-      updateShadowVisibility();
-    }
-
-    function showKip(){
-      wFaceGroup.classList.add("hidden");
-      // aktive kipGroup wird sichtbar (setActiveKipGroup kümmert sich darum)
-      updateShadowVisibility();
-    }
-
-    function mapHiddenToVisible_CW(face){
-      const [f1,f2,f3,f4] = face;
-      return [f4, f3, f2, f1];
-    }
-
-    function renderNumber(span, n){
-      if(!span) return;
-
-      span.classList.remove("twodigit");
-
-      if(n === null || n === undefined){
-        span.textContent = "";
-        span.style.letterSpacing = "";
-        return;
-      }
-      const text = (n === 9 || n === 6) ? `${n}.` : String(n);
-      span.textContent = text;
-
-      if(n >= 10){
-        span.classList.add("twodigit");
-      } else {
-        span.style.letterSpacing = "";
-      }
-    }
-
-    function renderKip(){
-      setRotationSnap();
-
-      const curr = sets[faceIndex];
-      const nextFaceIndex = (faceIndex + 1) % 3;
-      const next = sets[nextFaceIndex];
-
-      // >>> HIER der Kern: passende Zwischenkipp-ID wählen
-      const kipId = getKipId(faceIndex, nextFaceIndex);
-      setActiveKipGroup(kipId);
-
-      const { right, left } = getKipSlots(kipId);
-
-      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-      const nextPreview = mapHiddenToVisible_CW(next);
-      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
-    }
-
-    function getUniqueRandomNumbers(count, min, max){
-      const pool = [];
-      for(let i=min; i<=max; i++) pool.push(i);
-      for(let i=pool.length-1; i>0; i--){
-        const j = Math.floor(Math.random() * (i+1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
-      return pool.slice(0, count);
-    }
-
-    function getTiming(){
-      const v = Number(speedSlider.value || 2);
-      const hold = Math.max(520, Math.round(2400 - v * 450));
-      const kip = Math.max(160, Math.round(hold * 0.50));
-      const wfull = hold;
-      return { holdMs: hold, kipMs: kip, wMs: wfull };
-    }
-
-    const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
-    let faceIndex = 0;
-
-    function setRotationSnap(){
-      const deg = rotDeg[rotIndex];
-      wFaceGroup.style.setProperty("--rot", deg + "deg");
-      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
-      updateShadowVisibility();
-    }
-
-    function advanceFullCW(){
-      rotIndex  = (rotIndex + 1) % 4;
-      faceIndex = (faceIndex + 1) % 3;
-      setRotationSnap();
-    }
-
-    function getAllKipSpans(){
-      const spans = [];
-      Object.keys(kipGroups).forEach(id => {
-        const { right, left } = getKipSlots(id);
-        spans.push(...right, ...left);
-      });
-      return spans;
-    }
-
-    function clearAllNumbers(){
-      [...slotTargetsW, ...getAllKipSpans()].forEach(s => {
-        if(s) s.textContent = "";
-      });
-    }
-
-    function renderWEmpty(){
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
-    }
-
-    function resetToW1Q0_Empty(){
-      rotIndex = 0;
-      faceIndex = 0;
-      setRotationSnap();
-      clearAllNumbers();
-      showW();
-      renderWEmpty();
-    }
-
-    let planned = [
-      [null,null,null,null],
-      [null,null,null,null],
-      [null,null,null,null],
-    ];
-    let sets = [
-      [null,null,null,null],
-      [null,null,null,null],
-      [null,null,null,null],
-    ];
-    let assigned = [false,false,false];
-
-    function ensureAssigned(idx){
-      if(assigned[idx]) return;
-      sets[idx] = planned[idx].slice();
-      assigned[idx] = true;
-    }
-
-    function renderW(){
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-    }
-
-    function reroll12_keepEmpty(){
-      const twelve = getUniqueRandomNumbers(12, 1, 12);
-      planned[0] = twelve.slice(0,4);
-      planned[1] = twelve.slice(4,8);
-      planned[2] = twelve.slice(8,12);
-
-      sets = [
-        [null,null,null,null],
-        [null,null,null,null],
-        [null,null,null,null],
-      ];
-      assigned = [false,false,false];
-
-      rotIndex  = 0;
-      faceIndex = 0;
-
-      clearAllNumbers();
-      setRotationSnap();
-    }
-
-    let runningPreview = false;
-    let previewToken = 0;
-    let stopAtNextW = false;
-
-    speedScaleEl.querySelectorAll("span").forEach(sp => {
-      sp.addEventListener("click", () => {
-        const v = Number(sp.dataset.v);
-        speedSlider.value = String(v);
-        speedSlider.dispatchEvent(new Event("input", { bubbles:true }));
-      });
-    });
-
-    speedSlider.addEventListener("input", () => {
-      const value = parseInt(speedSlider.value, 10);
-      console.log(`Speed: ${value}`);
-    });
-
-    async function waitOrPause(type, myToken){
-      const startTime = Date.now();
-
-      while(myToken === previewToken){
-        const T = getTiming();
-        const targetMs = (type === 'kip') ? T.kipMs : T.wMs;
-        const elapsed = Date.now() - startTime;
-
-        if(elapsed >= targetMs) break;
-        await sleep(50);
-      }
-
-      return (myToken === previewToken);
-    }
-
-    function setSchauenEnabled(enabled){
-      btnSchauen.disabled = !enabled;
-    }
-
-    function setSchauenText(txt){
-      btnSchauen.querySelector('.btnText').textContent = txt;
-    }
-
-    async function runSetNumbersCycle(){
-      if(runningPreview) return;
-      runningPreview = true;
-      const myToken = ++previewToken;
-
-      currentTarget = null;
-      clearTargetNumbers();
-      clearHitVisuals();
-
-      buttonState = "running";
-      setSchauenEnabled(false);
-      setSchauenText("SCHAUEN & MERKEN");
-
-      reroll12_keepEmpty();
-
-      showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(0); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(1); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(2); renderW();
-
-      // Zahlen sind gesetzt, aber Zielzahl kommt erst beim Klick auf "STOPP & SPIELEN?"
-
-      buttonState = "spielen";
-      setSchauenText("STOPP & SPIELEN?");
-      setSchauenEnabled(true);
-
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW();
-      showW();
-      renderW();
-
-      const EXTRA_CYCLES = 3;
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW();
-        showW();
-        renderW();
-
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
-        }
-
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      while(myToken === previewToken){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW();
-        showW();
-        renderW();
-
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
-        }
-
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      runningPreview = false;
-    }
-
-    function cancelPreview(){
-      previewToken++;
-      runningPreview = false;
-    }
-
-    function setScaleToFitWidth(){
-      const cols = numVar("--cols") || 8;
-      const cell = numVar("--cell") || 142;
-
-      const gridW = cols * cell;
-      const vw = window.innerWidth;
-
-      const targetW = vw * 0.94;
-      const scale = Math.min(1, targetW / gridW);
-
-      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
-      document.documentElement.style.setProperty("--gridW", gridW + "px");
-
-      const uiscale = 1 / (scale || 1);
-      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
-
-      return { cols, cell, gridW, scale };
-    }
-
-    function placeColorSquare(coord, cls, cellPx, sizePx){
-      const { row, col } = coordToXY(coord);
-      const visualRow = row + HEADER_ROW_OFFSET;
-
-      const leftCell = (col - 1) * cellPx;
-      const topCell  = (visualRow - 1) * cellPx;
-
-      const pad = (cellPx - sizePx) / 2;
-      const x = leftCell + pad;
-      const y = topCell  + pad;
-
-      const d = document.createElement("div");
-      d.className = "colorSq " + cls;
-      d.style.left = x + "px";
-      d.style.top  = y + "px";
-      colorsEl.appendChild(d);
-    }
-
-    function rebuildColors(){
-      colorsEl.innerHTML = "";
-
-      const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 126;
-
-      const placements = [
-        ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
-        ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
-        ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
-        ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
-      ];
-
-      for(const [coord, cls] of placements){
-        placeColorSquare(coord, cls, cellPx, sizePx);
-      }
-    }
-
-    function positionUI(){
-      const cellPx = numVar("--cell") || 142;
-
-      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const midY = (row9VisualTop + row10VisualTop) / 2;
-
-      kspTop.style.top = midY + "px";
-      
-      // Kippspeed-Bereich in Zeile 13
-      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row13Center = row13VisualTop + cellPx / 2;
-      sliderRow.style.top = row13Center + "px";
-
-      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row11Baseline = row11VisualTop + cellPx;
-
-      kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
-      kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
-      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
-
-      // Header Elemente positionieren
-      const headerY = 1.0 * cellPx; // Zwischen Zeile 0.1 und 0.2
-      
-      // Kipp Bilanz Button: linksbündig in der HALBEN Spalte B
-      kippBilanzBtn.style.left = (cellPx + cellPx / 2) + "px";
-      kippBilanzBtn.style.top = headerY + "px";
-      kippBilanzBtn.style.transform = "translateY(-50%)";
-      
-      // Score Display: rechts, gleiche Y-Position
-      scoreDisplay.style.right = "70px";
-      scoreDisplay.style.top = headerY + "px";
-      scoreDisplay.style.transform = "translateY(-50%)";
-      
-      // Titel Links: Zeile 1, zentriert über Spalten A+B
-      const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
-      titleLeft.style.left = cellPx + "px";
-      titleLeft.style.top = row1Y + "px";
-      titleLeft.style.transform = "translate(-50%, -50%)";
-      
-      // Titel Rechts: Zeile 1, zentriert über Spalten G+H
-      titleRight.style.left = (7 * cellPx) + "px";
-      titleRight.style.top = row1Y + "px";
-      titleRight.style.transform = "translate(-50%, -50%)";
-
-      positionNavButtons(cellPx);
-      positionTestButton(cellPx);
-    }
-
-    function positionNavButtons(cellPx){
-      const backCol = 8;
-      const backRow = 8;
-      const backVisualRow = backRow + HEADER_ROW_OFFSET;
-
-      const backLeft = (backCol - 1) * cellPx + cellPx / 2;
-      const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
-
-      backBtnAnzahl.style.left = backLeft + "px";
-      backBtnAnzahl.style.top = backTop + "px";
-      backBtnAnzahl.style.transform = "translate(-50%, -50%)";
-
-      const closeCol = 1;
-      const closeY = 1.0 * cellPx;
-
-      const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
-      const closeTop = closeY;
-
-      [closeBtnKsp, closeBtnAnzahl].forEach(btn => {
-        btn.style.left = closeLeft + "px";
-        btn.style.top = closeTop + "px";
-        btn.style.transform = "translate(-50%, -50%)";
-      });
-    }
-
-    function positionTestButton(cellPx){
-      const row = 10;
-      const col = 8;
-      const visualRow = row + HEADER_ROW_OFFSET;
-
-      const left = (col - 1) * cellPx + cellPx/2;
-      const top  = (visualRow - 1) * cellPx + cellPx/2;
-
-      testTargetBtn.style.position = "absolute";
-      testTargetBtn.style.left = left + "px";
-      testTargetBtn.style.top = top + "px";
-      testTargetBtn.style.transform = "translate(-50%, -50%)";
-      testTargetBtn.style.zIndex = "30";
-      testTargetBtn.style.pointerEvents = "auto";
-    }
-
-    function rebuild(){
-      const { cell, scale } = setScaleToFitWidth();
-
-      const vh = window.innerHeight;
-      const effectiveLayoutHeight = vh / scale;
-      const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
-
-      const gridH = rows * cell;
-      document.documentElement.style.setProperty("--gridH", gridH + "px");
-
-      rebuildColors();
-      positionUI();
-      updateShadowVisibility();
-    }
-
-    function showKspView(){
-      currentView = "ksp";
-      kspView.classList.remove("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      // Automatically set to Brainy level (no level selection)
-      selectedLevel = "brainy";
-
-      buttonState = "schauen";
-      setSchauenText("SCHAUEN & MERKEN");
-      setSchauenEnabled(true);
-
-      // Kippspeed bleibt immer aktiv (kein Lock mehr)
-      // sliderContainer.classList.add("sliderLocked"); // REMOVED
-
-      // Target-Counter zurücksetzen
-      targetsGenerated = 0;
-
-      // KEIN Target beim Start - erst nachdem Zahlen gesetzt sind!
-      clearHitVisuals();
-      clearTargetNumbers();
-      currentTarget = null;
-
-      showW();
-    }
-
-    function showKippAnzahlView(){
-      currentView = "anzahl";
-      kspView.classList.add("hidden");
-      kippAnzahlView.classList.remove("hidden");
-
-      buildKippAnzahlButtons();
-      testTargetBtn.classList.remove("hidden");
-      testTargetBtn.disabled = false;
-
-      // Erstes Kippziel generieren
-      clearHitVisuals();
-      currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget){
-        placeTargetNumbers(currentTarget);
-      }
-    }
-
-    function buildKippAnzahlButtons(){
-      kippAnzahlBtns.innerHTML = "";
-      kippAnzahlBtns.classList.add("compact");
-      kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
-
-      [1, 2, 3, 4, 5, 6].forEach(num => {
-        const btn = document.createElement("button");
-        btn.className = "squareBtn";
-        btn.dataset.anzahl = num;
-        btn.type = "button";
-        btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleAnzahlClick(num));
-        kippAnzahlBtns.appendChild(btn);
-      });
-    }
-
-    function setBackLocked(locked){
-      backBtnAnzahl.disabled = locked;
-    }
-
-    function setAnzahlButtonsLocked(locked){
-      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
-      testTargetBtn.disabled = locked;
-    }
-
-    function handleAnzahlClick(anzahl){
-      if(selectedLevel !== "brainy") return;
-
-      // Button finden
-      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button")).find(
-        b => parseInt(b.dataset.anzahl) === anzahl
-      );
-      if(!clickedBtn) return;
-
-      // Wenn Button bereits selektiert: Ausführen
-      if(selectedButtons.includes(anzahl)){
-        // Kipps ausführen
-        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-        
-        // Buttons sperren während Kipp-Zyklus
-        setBackLocked(true);
-        setAnzahlButtonsLocked(true);
-
-        runKippCycles(totalKipps).finally(() => {
-          // Selektion zurücksetzen
-          selectedButtons = [];
-          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-          
-          setBackLocked(false);
-          setAnzahlButtonsLocked(false);
-        });
-        return;
-      }
-
-      // Button selektieren (max 2)
-      if(selectedButtons.length < 2){
-        selectedButtons.push(anzahl);
-        clickedBtn.classList.add("selected");
-
-        // Wenn jetzt 2 Buttons selektiert: automatisch ausführen
-        if(selectedButtons.length === 2){
-          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-          
-          setBackLocked(true);
-          setAnzahlButtonsLocked(true);
-
-          runKippCycles(totalKipps).finally(() => {
-            selectedButtons = [];
-            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-            
-            setBackLocked(false);
-            setAnzahlButtonsLocked(false);
-          });
-        }
-      }
-    }
-
-    async function runKippCycles(count){
-      if(runningPreview) return;
-      runningPreview = true;
-      const myToken = ++previewToken;
-
-      clearHitVisuals();
-
-      for(let i = 0; i < count; i++){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW();
-        showW();
-        renderW();
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      runningPreview = false;
-
-      if(currentTarget){
-        const hit = checkHitAndSignal();
-        if(hit){
-          // Treffer! Neues Target aus Deck ziehen
-          clearTargetNumbers();
-          currentTarget = generateTargetNumberColor_Brainy();
-          if(currentTarget){
-            placeTargetNumbers(currentTarget);
-          } else {
-            // Deck leer oder max Targets erreicht
-            console.log("Spiel beendet - keine weiteren Targets verfügbar");
-          }
-        }
-      }
-    }
-
-    btnSchauen.addEventListener("click", async () => {
-      if(buttonState === "schauen"){
-        // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
-        await runSetNumbersCycle();
-
-      } else if(buttonState === "spielen"){
-        const isWVisible = !wFaceGroup.classList.contains("hidden");
-
-        if(isWVisible){
-          cancelPreview();
-          showKippAnzahlView();
-        } else {
-          stopAtNextW = true;
-        }
-      }
-    });
-
-    backBtnAnzahl.addEventListener("click", () => {
-      showKspView();
-    });
-
-    testTargetBtn.addEventListener("click", () => {
-      clearHitVisuals();
-      currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget){
-        placeTargetNumbers(currentTarget);
-      }
-    });
-
-    function showCloseModal(){
-      cancelPreview();
-      closeModal.classList.remove("hidden");
-    }
-
-    function hideCloseModal(){
-      closeModal.classList.add("hidden");
-    }
-
-    closeBtnKsp.addEventListener("click", showCloseModal);
-    closeBtnAnzahl.addEventListener("click", showCloseModal);
-
-    modalCancel.addEventListener("click", hideCloseModal);
-
-    modalConfirm.addEventListener("click", () => {
-      hideCloseModal();
-      showKspView(); // Restart with Brainy
-    });
-
-    closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal){
-        hideCloseModal();
-      }
-    });
-
-    kippBilanzBtn.addEventListener("click", () => {
-      console.log("KIPP BILANZ wurde geklickt");
-    });
-
-    window.addEventListener("load", () => {
-      rebuild();
-      resetToW1Q0_Empty();
-      showKspView(); // Start directly with Brainy level
-      updateShadowVisibility();
-    });
-    window.addEventListener("resize", rebuild);
-
-    document.addEventListener("touchmove", (e) => {
-      const inRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
-      if(inRange) return;
+    function down(e){
+      dragging = true;
+      startX = getX(e);
+      startVal = current;
+      wheel.setPointerCapture?.(e.pointerId || 1);
       e.preventDefault();
-    }, { passive:false });
-  </script>
+    }
+    function move(e){
+      if(!dragging) return;
+      const x = getX(e);
+      const dx = x - startX;      // rechts = größer
+      const delta = Math.round(dx / stepPx);
+      setValue(startVal + delta);
+      e.preventDefault();
+    }
+    function up(){ dragging = false; }
+
+    wheel.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move, {passive:false});
+    window.addEventListener("pointerup", up);
+
+    // Touch fallback
+    wheel.addEventListener("touchstart", down, {passive:false});
+    window.addEventListener("touchmove", move, {passive:false});
+    window.addEventListener("touchend", up);
+  })();
+
+  // Keyboard
+  wheel.addEventListener("keydown", (e)=>{
+    if(e.key==="ArrowRight") setValue(current+1);
+    if(e.key==="ArrowLeft")  setValue(current-1);
+  });
+
+  // Min/Max taps
+  minEl.addEventListener("click", ()=>setValue(1));
+  maxEl.addEventListener("click", ()=>setValue(11));
+
+  // KIPP Demo
+  kippBtn.addEventListener("click", ()=>{
+    panel.classList.remove("pulse");
+    out.textContent = `KIPP gedrückt – aktuelle Kippanzahl = ${fmt2(current)} (Demo).`;
+    setTimeout(()=>panel.classList.add("pulse"), 700);
+  });
+
+  setValue(4);
+</script>
 </body>
 </html>
