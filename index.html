@@ -768,21 +768,11 @@
 
     .hidden{ display:none !important; }
 
-    .permanentRow13{
-      position: absolute;
-      left: 0;
-      width: var(--gridW);
-      height: var(--cell);
-      z-index: 15;
-      pointer-events: none;
-    }
-
     .kippBilanzBtn{
       position: absolute;
-      left: 55px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: calc(180px * var(--uiscale));
+      left: 0;
+      top: 0;
+      width: calc(300px * var(--uiscale));
       height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
@@ -801,17 +791,17 @@
       cursor: pointer;
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
+      z-index: 20;
     }
     .kippBilanzBtn:active{
-      transform: translateY(-50%) scale(0.98);
+      transform: scale(0.98);
       filter: brightness(0.98);
     }
 
-    .punkteAnzeige{
+    .scoreDisplay{
       position: absolute;
-      right: 70px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 0;
+      top: 0;
       font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
@@ -822,30 +812,36 @@
       user-select: none;
       white-space: nowrap;
       line-height: 1;
+      z-index: 20;
+      pointer-events: none;
     }
 
-    .digiKippTitle{
+    .titleLeft,
+    .titleRight{
       position: absolute;
-      left: calc(50% + 92px);
       top: 0;
-      transform: translate(-50%, -50%);
-      z-index: 20;
-      font-size: 90px;
+      font-size: clamp(40px, 8vmin, 75px);
       font-weight: 1000;
       letter-spacing: 0.05em;
-      word-spacing: -0.3em;
       color: rgba(234,215,190,0.96);
       text-shadow:
-        0 4px 0 rgba(0,0,0,0.85),
-        0 10px 24px rgba(0,0,0,0.70);
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
       user-select: none;
       white-space: nowrap;
       line-height: 1;
       text-align: center;
+      z-index: 20;
+      pointer-events: none;
     }
 
-    .digiKippTitle .color{
-      font-size: 60px;
+    .titleLeft{
+      left: 0;
+    }
+
+    .titleRight{
+      right: 0;
+      font-size: clamp(32px, 6.5vmin, 60px);
       font-weight: 600;
       text-transform: lowercase;
     }
@@ -1127,12 +1123,13 @@
 
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
-
-        <div class="permanentRow13" id="permanentRow13">
-          <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
-          <div class="punkteAnzeige" id="punkteAnzeige">P00/80</div>
-        </div>
+        <!-- Header Elemente -->
+        <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
+        <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
+        
+        <!-- Titel Links und Rechts -->
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
+        <div class="titleRight" id="titleRight">color</div>
 
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
@@ -1243,10 +1240,10 @@
     const backBtnKsp     = document.getElementById("backBtnKsp");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
-    const permanentRow13 = document.getElementById("permanentRow13");
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
-    const punkteAnzeige  = document.getElementById("punkteAnzeige");
-    const digiKippTitle  = document.getElementById("digiKippTitle");
+    const scoreDisplay  = document.getElementById("scoreDisplay");
+    const titleLeft  = document.getElementById("titleLeft");
+    const titleRight  = document.getElementById("titleRight");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
@@ -2087,11 +2084,30 @@
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
-      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      permanentRow13.style.top = row13VisualTop + "px";
-
-      const titleY = 1.0 * cellPx;
-      digiKippTitle.style.top = titleY + "px";
+      // Header Elemente positionieren
+      const headerY = 1.0 * cellPx; // Zwischen Zeile 0.1 und 0.2
+      
+      // Kipp Bilanz Button: linksbündig in Spalte B, 40px Abstand zum Schließenkreuz
+      const closeLeft = cellPx / 2; // Mitte von Spalte A
+      kippBilanzBtn.style.left = (closeLeft + 40) + "px";
+      kippBilanzBtn.style.top = headerY + "px";
+      kippBilanzBtn.style.transform = "translateY(-50%)";
+      
+      // Score Display: rechts, gleiche Y-Position
+      scoreDisplay.style.right = "70px";
+      scoreDisplay.style.top = headerY + "px";
+      scoreDisplay.style.transform = "translateY(-50%)";
+      
+      // Titel Links: Zeile 1, zentriert über Spalten A+B (2 Spalten = 284px)
+      const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
+      titleLeft.style.left = cellPx + "px"; // Mitte von 2 Spalten
+      titleLeft.style.top = row1Y + "px";
+      titleLeft.style.transform = "translate(-50%, -50%)";
+      
+      // Titel Rechts: Zeile 1, zentriert über Spalten G+H
+      titleRight.style.left = (7 * cellPx) + "px"; // Mitte von Spalten G+H
+      titleRight.style.top = row1Y + "px";
+      titleRight.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
