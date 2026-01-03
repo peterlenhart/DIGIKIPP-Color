@@ -2075,7 +2075,11 @@
       levelBtnsEl.style.top  = (midY + 70) + "px";
 
       kspTop.style.top = midY + "px";
-      sliderRow.style.top = (midY + 265) + "px";
+      
+      // Kippspeed-Bereich in Zeile 13
+      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row13Center = row13VisualTop + cellPx / 2;
+      sliderRow.style.top = row13Center + "px";
 
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
