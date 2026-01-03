@@ -1150,20 +1150,6 @@
           <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
         </div>
 
-        <div id="levelView">
-          <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
-
-          <div class="levelBtns" id="levelBtns">
-            <button class="levelBtn" data-level="trainee">Trainee</button>
-            <button class="levelBtn" data-level="brainy">Brainy</button>
-            <button class="levelBtn" data-level="brain">Brain</button>
-          </div>
-
-          <button class="navBtn closeBtn" id="closeBtnLevel" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
-
         <div id="kspView" class="hidden">
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
@@ -1172,10 +1158,6 @@
               </button>
             </div>
           </div>
-
-          <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
-            <div class="backIcon"></div>
-          </button>
 
           <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
             <div class="closeIcon"></div>
@@ -1222,9 +1204,6 @@
 
   <script>
     const colorsEl = document.getElementById("colors");
-    const levelTitleEl = document.getElementById("levelTitle");
-    const levelBtnsEl  = document.getElementById("levelBtns");
-    const levelView    = document.getElementById("levelView");
     const kspView      = document.getElementById("kspView");
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
@@ -1239,10 +1218,8 @@
     const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
-    const closeBtnLevel  = document.getElementById("closeBtnLevel");
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
     const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
-    const backBtnKsp     = document.getElementById("backBtnKsp");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
     const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
@@ -2056,9 +2033,6 @@
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
-      levelTitleEl.style.top = midY + "px";
-      levelBtnsEl.style.top  = (midY + 70) + "px";
-
       kspTop.style.top = midY + "px";
       
       // Kippspeed-Bereich in Zeile 13
@@ -2109,11 +2083,9 @@
       const backLeft = (backCol - 1) * cellPx + cellPx / 2;
       const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
 
-      [backBtnKsp, backBtnAnzahl].forEach(btn => {
-        btn.style.left = backLeft + "px";
-        btn.style.top = backTop + "px";
-        btn.style.transform = "translate(-50%, -50%)";
-      });
+      backBtnAnzahl.style.left = backLeft + "px";
+      backBtnAnzahl.style.top = backTop + "px";
+      backBtnAnzahl.style.transform = "translate(-50%, -50%)";
 
       const closeCol = 1;
       const closeY = 1.0 * cellPx;
@@ -2121,7 +2093,7 @@
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = closeY;
 
-      [closeBtnLevel, closeBtnKsp, closeBtnAnzahl].forEach(btn => {
+      [closeBtnKsp, closeBtnAnzahl].forEach(btn => {
         btn.style.left = closeLeft + "px";
         btn.style.top = closeTop + "px";
         btn.style.transform = "translate(-50%, -50%)";
@@ -2159,22 +2131,8 @@
       updateShadowVisibility();
     }
 
-    function showLevelView(){
-      currentView = "level";
-      levelView.classList.remove("hidden");
-      kspView.classList.add("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      clearTargetNumbers();
-      clearHitVisuals();
-      currentTarget = null;
-
-      showW();
-    }
-
     function showKspView(){
       currentView = "ksp";
-      levelView.classList.add("hidden");
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
 
@@ -2329,13 +2287,6 @@
       }
     }
 
-    document.querySelectorAll('.levelBtn').forEach(btn => {
-      btn.addEventListener("click", () => {
-        selectedLevel = btn.dataset.level;
-        showKspView();
-      });
-    });
-
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
         // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
@@ -2351,11 +2302,6 @@
           stopAtNextW = true;
         }
       }
-    });
-
-    backBtnKsp.addEventListener("click", () => {
-      cancelPreview();
-      showLevelView();
     });
 
     backBtnAnzahl.addEventListener("click", () => {
@@ -2379,7 +2325,6 @@
       closeModal.classList.add("hidden");
     }
 
-    closeBtnLevel.addEventListener("click", showCloseModal);
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
 
