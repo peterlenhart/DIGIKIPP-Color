@@ -1535,17 +1535,24 @@
     }
 
     function generateTargetNumberColor_Brainy(){
-      // Deck NEU aufbauen mit aktuell sichtbaren Zahlen
-      initializeCardDeck();
-      
-      // Wenn Deck leer oder max Targets erreicht, kein neues Ziel
-      if(cardDeck.length === 0 || targetsGenerated >= MAX_TARGETS){
+      // Wenn max Targets erreicht, stopp
+      if(targetsGenerated >= MAX_TARGETS){
         return null;
       }
 
-      // Zufällige Karte aus Deck ziehen
+      // Wenn Deck leer: neu mischen mit aktuell unsichtbaren Zahlen
+      if(cardDeck.length === 0){
+        initializeCardDeck();
+      }
+
+      // Wenn immer noch leer (alle Zahlen sichtbar?), stopp
+      if(cardDeck.length === 0){
+        return null;
+      }
+
+      // Zufällige Karte aus Deck ziehen UND ENTFERNEN
       const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck[randomIndex];
+      const card = cardDeck.splice(randomIndex, 1)[0];
       
       targetsGenerated++;
       return { num: card.num, color: card.color };
