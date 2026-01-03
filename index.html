@@ -1135,6 +1135,21 @@
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
         <div class="titleRight" id="titleRight">color</div>
 
+        <!-- Kippspeed - IMMER sichtbar in Zeile 13 -->
+        <div class="sliderRow" id="sliderRow">
+          <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+
+          <div class="sliderContainer" id="sliderContainer">
+            <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
+
+            <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
+              <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
+            </div>
+          </div>
+
+          <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
+        </div>
+
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
@@ -1156,20 +1171,6 @@
                 <span class="btnText">SCHAUEN & MERKEN</span>
               </button>
             </div>
-          </div>
-
-          <div class="sliderRow" id="sliderRow">
-            <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
-
-            <div class="sliderContainer sliderLocked" id="sliderContainer">
-              <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
-
-              <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
-                <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
-              </div>
-            </div>
-
-            <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
           </div>
 
           <button class="navBtn backBtn" id="backBtnKsp" aria-label="Zurück">
