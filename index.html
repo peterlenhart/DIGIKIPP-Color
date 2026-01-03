@@ -1371,6 +1371,90 @@
       return false;
     }
 
+    // ============================================================
+    // PATHFINDING ALGORITHMUS FÜR BRAINY
+    // ============================================================
+    
+    /**
+     * Slot-Positionen für jede Rotation (0°, 90°, 180°, 270°)
+     * Slot-Index: 0=S1(3B), 1=S2(4B), 2=S3(2C), 3=S4(2D)
+     */
+    const slotCoordsByRot = [
+      ["3B", "4B", "2C", "2D"],  // rot=0°
+      ["2D", "3D", "3B", "4B"],  // rot=90°
+      ["4F", "3F", "5D", "4D"],  // rot=180°
+      ["5D", "4D", "4F", "3F"],  // rot=270°
+    ];
+
+    /**
+     * Simuliert einen Kipp-Schritt
+     * @param {number} face - aktueller Face-Index (0-2)
+     * @param {number} rot - aktuelle Rotation (0-3)
+     * @returns {object} - {face, rot} nach Kipp
+     */
+    function simulateKipp(face, rot){
+      return {
+        face: (face + 1) % 3,
+        rot: (rot + 1) % 4
+      };
+    }
+
+    /**
+     * Berechnet minimale Kipps für eine Zahl-Farb-Kombination
+     * @param {number} targetNum - Zielzahl (1-12)
+     * @param {string} targetColor - Zielfarbe ("gruen", "orange", "blau", "violett")
+     * @returns {number|null} - Anzahl Kipps (1-6) oder null wenn unerreichbar
+     */
+    function calculateMinKipps(targetNum, targetColor){
+      // Finde in welchem Face die Zahl liegt
+      let numFaceIndex = -1;
+      let numSlotIndex = -1;
+      
+      for(let f = 0; f < 3; f++){
+        const idx = sets[f].indexOf(targetNum);
+        if(idx !== -1){
+          numFaceIndex = f;
+          numSlotIndex = idx;
+          break;
+        }
+      }
+
+      if(numFaceIndex === -1) return null; // Zahl nicht gefunden
+
+      // Prüfe alle möglichen Kipp-Anzahlen (1-6, aber nicht 3)
+      const validKipps = [1, 2, 4, 5, 6];
+      
+      for(const kipps of validKipps){
+        let testFace = faceIndex;
+        let testRot = rotIndex;
+
+        // Simuliere die Kipps
+        for(let i = 0; i < kipps; i++){
+          const next = simulateKipp(testFace, testRot);
+          testFace = next.face;
+          testRot = next.rot;
+        }
+
+        // Prüfe ob die Zahl nach den Kipps sichtbar ist
+        if(testFace !== numFaceIndex) continue;
+
+        // Hole die Slot-Koordinaten für diese Rotation
+        const coords = slotCoordsByRot[testRot];
+        const coord = coords[numSlotIndex];
+
+        // Prüfe ob die Farbe passt
+        if(innerFieldColor[coord] === targetColor){
+          return kipps;
+        }
+      }
+
+      return null; // Nicht mit ≤6 Kipps erreichbar
+    }
+
+    /**
+     * Generiert Target für TRAINEE Level
+     * (wie bisher - nur sichtbare Zahlen)
+     */
     function generateTargetNumberColor_Trainee(){
       const visibleNums = getVisibleNumbers()
         .filter(v => v.num != null)
@@ -1403,6 +1487,76 @@
       }
 
       return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    /**
+     * Generiert Target für BRAINY Level
+     * Regeln:
+     * - Nur VERDECKTE Zahlen (nicht die 4 sichtbaren)
+     * - Nicht die 4 aktuell erfüllten Kombinationen
+     * - Nur Kombinationen mit ≤6 Kipps
+     */
+    function generateTargetNumberColor_Brainy(){
+      // 1. Hole alle sichtbaren Zahlen
+      const visible = getVisibleNumbers();
+      const visibleNums = visible
+        .filter(v => v.num != null)
+        .map(v => v.num);
+
+      // 2. Hole alle verdeckten Zahlen (8 Stück)
+      const allNums = [];
+      for(let f = 0; f < 3; f++){
+        allNums.push(...sets[f]);
+      }
+      const hiddenNums = allNums.filter(n => n != null && !visibleNums.includes(n));
+
+      console.log("Brainy - Verdeckte Zahlen:", hiddenNums);
+
+      // 3. Baue Liste der aktuell erfüllten Kombinationen
+      const fulfilledCombos = new Set();
+      for(const v of visible){
+        if(v.num == null) continue;
+        const coord = getSlotCoord(v.slotEl);
+        if(!coord) continue;
+        const c = innerFieldColor[coord];
+        if(c){
+          fulfilledCombos.add(`${v.num}-${c}`);
+        }
+      }
+
+      console.log("Brainy - Erfüllte Kombinationen:", Array.from(fulfilledCombos));
+
+      // 4. Generiere alle möglichen Kandidaten (verdeckte Zahlen × alle Farben)
+      const candidates = [];
+      for(const num of hiddenNums){
+        for(const color of allColors){
+          const key = `${num}-${color}`;
+          
+          // Ausschluss: bereits erfüllte Kombis
+          if(fulfilledCombos.has(key)) continue;
+
+          // Berechne minimale Kipps
+          const kipps = calculateMinKipps(num, color);
+          
+          // Nur Kombinationen mit ≤6 Kipps
+          if(kipps !== null && kipps <= 6){
+            candidates.push({ num, color, kipps });
+          }
+        }
+      }
+
+      console.log("Brainy - Kandidaten (≤6 Kipps):", candidates);
+
+      // 5. Wähle zufälligen Kandidaten
+      if(candidates.length === 0){
+        console.warn("Brainy - KEINE GÜLTIGEN KANDIDATEN! Fallback auf Trainee-Logik");
+        return generateTargetNumberColor_Trainee();
+      }
+
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      console.log("Brainy - Gewählt:", chosen);
+
+      return { num: chosen.num, color: chosen.color };
     }
 
     function rotationForCoord(coord){
@@ -1619,7 +1773,7 @@
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
       kipGroup.style.setProperty("--rot", deg + "deg");
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg"); /* Schatten dreht MIT */
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
       updateShadowVisibility();
     }
 
@@ -1986,7 +2140,6 @@
       clearHitVisuals();
       currentTarget = null;
 
-      /* Startbild soll Schatten zeigen */
       showW();
     }
 
@@ -2017,18 +2170,25 @@
 
       buildKippAnzahlButtons(selectedLevel);
 
-      if(selectedLevel === "trainee"){
+      // Test-Button nur für Trainee UND Brainy
+      if(selectedLevel === "trainee" || selectedLevel === "brainy"){
         testTargetBtn.classList.remove("hidden");
         testTargetBtn.disabled = false;
       } else {
         testTargetBtn.classList.add("hidden");
       }
 
+      // Target generieren
       if(selectedLevel === "trainee"){
         clearHitVisuals();
         currentTarget = generateTargetNumberColor_Trainee();
         placeTargetNumbers(currentTarget);
-        console.log("Target generiert:", currentTarget);
+        console.log("Trainee Target generiert:", currentTarget);
+      } else if(selectedLevel === "brainy"){
+        clearHitVisuals();
+        currentTarget = generateTargetNumberColor_Brainy();
+        placeTargetNumbers(currentTarget);
+        console.log("Brainy Target generiert:", currentTarget);
       }
     }
 
@@ -2091,7 +2251,7 @@
     function handleAnzahlClick(anzahl){
       console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
 
-      if(selectedLevel === "trainee"){
+      if(selectedLevel === "trainee" || selectedLevel === "brainy"){
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
@@ -2168,11 +2328,17 @@
     });
 
     testTargetBtn.addEventListener("click", () => {
-      if(selectedLevel !== "trainee") return;
-      clearHitVisuals();
-      currentTarget = generateTargetNumberColor_Trainee();
-      placeTargetNumbers(currentTarget);
-      console.log("TEST Target:", currentTarget);
+      if(selectedLevel === "trainee"){
+        clearHitVisuals();
+        currentTarget = generateTargetNumberColor_Trainee();
+        placeTargetNumbers(currentTarget);
+        console.log("TEST Target (Trainee):", currentTarget);
+      } else if(selectedLevel === "brainy"){
+        clearHitVisuals();
+        currentTarget = generateTargetNumberColor_Brainy();
+        placeTargetNumbers(currentTarget);
+        console.log("TEST Target (Brainy):", currentTarget);
+      }
     });
 
     function showCloseModal(){
@@ -2206,7 +2372,6 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
-    /* START: sofort Schatten + Startbild korrekt */
     window.addEventListener("load", () => {
       rebuild();
       resetToW1Q0_Empty();
