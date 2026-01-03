@@ -475,6 +475,15 @@
       transform: scale(0.98);
       filter: brightness(0.98);
     }
+    .squareBtn.selected{
+      background: rgba(249, 150, 30, 0.95);
+      border-color: rgba(0,0,0,0.85);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.32),
+        0 0 0 2px rgba(255,255,255,0.25) inset,
+        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
+      transform: scale(1.05);
+    }
     .squareBtn[disabled]{
       opacity: 0.45;
       pointer-events: none;
@@ -694,7 +703,7 @@
 
     .targetNumber > span.twodigit{
       letter-spacing: -0.16em;
-      transform: translateX(-0.10em) rotate(var(--tn-rot, 0deg));
+      transform: translateX(-0.18em) rotate(var(--tn-rot, 0deg));
       transform-origin: 50% 50%;
     }
 
@@ -1396,6 +1405,14 @@
     }
 
     let currentTarget = null;
+    
+    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
+    let cardDeck = [];
+    let targetsGenerated = 0;
+    const MAX_TARGETS = 10;
+
+    // Zwei-Tasten-Auswahl System
+    let selectedButtons = [];
 
     function getVisibleNumbers(){
       const curr = sets[faceIndex];
@@ -1517,47 +1534,51 @@
     }
 
     function generateTargetNumberColor_Brainy(){
-      const visible = getVisibleNumbers();
-      const visibleNums = visible
-        .filter(v => v.num != null)
-        .map(v => v.num);
-
-      const allNums = [];
-      for(let f = 0; f < 3; f++){
-        allNums.push(...sets[f]);
+      // Wenn Deck leer oder max Targets erreicht, kein neues Ziel
+      if(cardDeck.length === 0 || targetsGenerated >= MAX_TARGETS){
+        return null;
       }
-      const hiddenNums = allNums.filter(n => n != null && !visibleNums.includes(n));
 
-      const fulfilledCombos = new Set();
+      // Zufällige Karte aus Deck ziehen
+      const randomIndex = Math.floor(Math.random() * cardDeck.length);
+      const card = cardDeck.splice(randomIndex, 1)[0];
+      
+      targetsGenerated++;
+      return { num: card.num, color: card.color };
+    }
+
+    function initializeCardDeck(){
+      // Reset
+      cardDeck = [];
+      targetsGenerated = 0;
+
+      // Alle 48 Kombinationen erstellen
+      const allCombos = [];
+      for(let num = 1; num <= 12; num++){
+        for(const color of allColors){
+          allCombos.push({ num, color });
+        }
+      }
+
+      // Die 4 aktuell sichtbaren Kombinationen ermitteln
+      const visible = getVisibleNumbers();
+      const visibleCombos = new Set();
+      
       for(const v of visible){
         if(v.num == null) continue;
         const coord = getSlotCoord(v.slotEl);
         if(!coord) continue;
         const c = innerFieldColor[coord];
         if(c){
-          fulfilledCombos.add(`${v.num}-${c}`);
+          visibleCombos.add(`${v.num}-${c}`);
         }
       }
 
-      const candidates = [];
-      for(const num of hiddenNums){
-        for(const color of allColors){
-          const key = `${num}-${color}`;
-          if(fulfilledCombos.has(key)) continue;
-
-          const kipps = calculateMinKipps(num, color);
-          if(kipps !== null && kipps <= 6){
-            candidates.push({ num, color, kipps });
-          }
-        }
-      }
-
-      if(candidates.length === 0){
-        return generateTargetNumberColor_Trainee();
-      }
-
-      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-      return { num: chosen.num, color: chosen.color };
+      // Nur nicht-sichtbare Kombinationen ins Deck
+      cardDeck = allCombos.filter(combo => {
+        const key = `${combo.num}-${combo.color}`;
+        return !visibleCombos.has(key);
+      });
     }
 
     function rotationForCoord(coord){
@@ -2195,7 +2216,11 @@
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
-      sliderContainer.classList.add("sliderLocked");
+      // Kippspeed bleibt immer aktiv (kein Lock mehr)
+      // sliderContainer.classList.add("sliderLocked"); // REMOVED
+
+      // Kartendeck initialisieren
+      initializeCardDeck();
 
       // Generate target immediately (Brainy logic)
       clearHitVisuals();
@@ -2288,14 +2313,54 @@
     }
 
     function handleAnzahlClick(anzahl){
-      if(selectedLevel === "trainee" || selectedLevel === "brainy"){
+      if(selectedLevel !== "brainy") return;
+
+      // Button finden
+      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button")).find(
+        b => parseInt(b.dataset.anzahl) === anzahl
+      );
+      if(!clickedBtn) return;
+
+      // Wenn Button bereits selektiert: Ausführen
+      if(selectedButtons.includes(anzahl)){
+        // Kipps ausführen
+        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+        
+        // Buttons sperren während Kipp-Zyklus
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
-        runKippCycles(anzahl).finally(() => {
+        runKippCycles(totalKipps).finally(() => {
+          // Selektion zurücksetzen
+          selectedButtons = [];
+          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+          
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
+        return;
+      }
+
+      // Button selektieren (max 2)
+      if(selectedButtons.length < 2){
+        selectedButtons.push(anzahl);
+        clickedBtn.classList.add("selected");
+
+        // Wenn jetzt 2 Buttons selektiert: automatisch ausführen
+        if(selectedButtons.length === 2){
+          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+          
+          setBackLocked(true);
+          setAnzahlButtonsLocked(true);
+
+          runKippCycles(totalKipps).finally(() => {
+            selectedButtons = [];
+            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+            
+            setBackLocked(false);
+            setAnzahlButtonsLocked(false);
+          });
+        }
       }
     }
 
@@ -2320,7 +2385,18 @@
       runningPreview = false;
 
       if(currentTarget){
-        checkHitAndSignal();
+        const hit = checkHitAndSignal();
+        if(hit){
+          // Treffer! Neues Target aus Deck ziehen
+          clearTargetNumbers();
+          currentTarget = generateTargetNumberColor_Brainy();
+          if(currentTarget){
+            placeTargetNumbers(currentTarget);
+          } else {
+            // Deck leer oder max Targets erreicht
+            console.log("Spiel beendet - keine weiteren Targets verfügbar");
+          }
+        }
       }
     }
 
@@ -2333,7 +2409,7 @@
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
-        sliderContainer.classList.remove("sliderLocked");
+        // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
         await runSetNumbersCycle();
 
       } else if(buttonState === "spielen"){
