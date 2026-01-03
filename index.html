@@ -560,12 +560,10 @@
       width: 100%;
       height: calc(10px * var(--uiscale));
       border-radius: 999px;
-      background: #000;
+      background: #000000;
       outline: none;
-      border: 1px solid #000;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.10) inset,
-        0 1px 0 rgba(0,0,0,0.35) inset;
+      border: none;
+      box-shadow: none;
       touch-action: pan-x;
       pointer-events: auto;
     }
@@ -898,6 +896,131 @@
     .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
     .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
 
+    /* Kippanzahl Control Area */
+    .kippAnzahlControl{
+      position: absolute;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .kippAnzahlLabel{
+      position: absolute;
+      font-size: clamp(18px, 4vmin, 28px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      color: #000;
+      text-shadow: none;
+      user-select: none;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .dialControl{
+      position: absolute;
+      width: calc(60px * var(--uiscale));
+      height: calc(60px * var(--uiscale));
+      border-radius: 50%;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent 50%),
+        linear-gradient(135deg, #c0c0c0, #808080);
+      border: 2px solid rgba(0,0,0,0.3);
+      box-shadow:
+        0 4px 8px rgba(0,0,0,0.3),
+        inset 0 1px 2px rgba(255,255,255,0.4),
+        inset 0 -1px 2px rgba(0,0,0,0.2);
+      cursor: pointer;
+      pointer-events: auto;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .dialControl::before{
+      content: '';
+      position: absolute;
+      top: 8%;
+      left: 50%;
+      width: 3px;
+      height: 30%;
+      background: rgba(0,0,0,0.6);
+      transform: translateX(-50%);
+      border-radius: 2px;
+    }
+
+    .dialControl:active{
+      transform: scale(0.98);
+    }
+
+    .kippAnzahlDisplay{
+      position: absolute;
+      width: calc(var(--cell) * 1);
+      height: calc(50px * var(--uiscale));
+      background: rgba(255,255,255,0.95);
+      border: 3px solid rgba(0,0,0,0.4);
+      border-radius: calc(10px * var(--uiscale));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(28px, 6vmin, 42px);
+      font-weight: 1000;
+      color: #4a2418;
+      text-shadow: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .kippAnzahlMinMax{
+      position: absolute;
+      font-size: clamp(16px, 3.5vmin, 24px);
+      font-weight: 1000;
+      color: #ead7be;
+      text-shadow: 
+        0 2px 0 rgba(0,0,0,0.7),
+        0 4px 8px rgba(0,0,0,0.5);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .kippBtn{
+      position: absolute;
+      height: var(--cell);
+      background: rgb(198, 168, 128);
+      border: 2px solid rgba(0,0,0,0.65);
+      border-radius: calc(16px * var(--uiscale));
+      color: #4a2418;
+      font-size: clamp(24px, 5.5vmin, 38px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      animation: kippBtnPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes kippBtnPulse{
+      0%, 100% { 
+        transform: scale(1); 
+        filter: brightness(1);
+      }
+      50% { 
+        transform: scale(1.03); 
+        filter: brightness(1.08);
+      }
+    }
+
+    .kippBtn:active{
+      animation: none;
+      transform: scale(0.98);
+      filter: brightness(0.95);
+    }
+
     .modalOverlay{
       position: fixed;
       top: 0;
@@ -1128,6 +1251,16 @@
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
         <div class="titleRight" id="titleRight">color</div>
 
+        <!-- Kippanzahl Control Area -->
+        <div class="kippAnzahlControl" id="kippAnzahlControl">
+          <div class="kippAnzahlLabel" id="kippAnzahlLabel">KIPP-ANZAHL</div>
+          <div class="dialControl" id="dialControl"></div>
+          <div class="kippAnzahlMinMax" id="minValue">01</div>
+          <div class="kippAnzahlDisplay" id="kippAnzahlDisplay">04</div>
+          <div class="kippAnzahlMinMax" id="maxValue">11</div>
+          <button class="kippBtn" id="kippBtn" type="button">KIPP</button>
+        </div>
+
         <div id="levelView">
           <div class="uiTitle" id="levelTitle">LEVEL WÄHLEN</div>
 
@@ -1241,6 +1374,16 @@
     const scoreDisplay  = document.getElementById("scoreDisplay");
     const titleLeft  = document.getElementById("titleLeft");
     const titleRight  = document.getElementById("titleRight");
+
+    const kippAnzahlControl = document.getElementById("kippAnzahlControl");
+    const kippAnzahlLabel = document.getElementById("kippAnzahlLabel");
+    const dialControl = document.getElementById("dialControl");
+    const kippAnzahlDisplay = document.getElementById("kippAnzahlDisplay");
+    const minValue = document.getElementById("minValue");
+    const maxValue = document.getElementById("maxValue");
+    const kippBtn = document.getElementById("kippBtn");
+
+    let currentKippAnzahl = 4;
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
@@ -2109,6 +2252,45 @@
       titleRight.style.top = row1Y + "px";
       titleRight.style.transform = "translate(-50%, -50%)";
 
+      // Kippanzahl Control Area
+      // Zeile 9: KIPP-ANZAHL Label, linksbündig in halber Spalte A
+      const row9Y = (9 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
+      kippAnzahlLabel.style.left = (cellPx / 2) + "px";
+      kippAnzahlLabel.style.top = row9Y + "px";
+      kippAnzahlLabel.style.transform = "translateY(-50%)";
+
+      // Zeile 10: Silbernes Stellrad
+      const row10Y = (10 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
+      dialControl.style.left = (cellPx / 2) + "px";
+      dialControl.style.top = row10Y + "px";
+      dialControl.style.transform = "translate(-50%, -50%)";
+
+      // Zeile 11: Display, Min/Max, Button
+      const row11Y = (11 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
+      
+      // Min Value (01) in Spalte B
+      minValue.style.left = (cellPx + cellPx / 2) + "px";
+      minValue.style.top = row11Y + "px";
+      minValue.style.transform = "translate(-50%, -50%)";
+      
+      // Display in Spalte C
+      kippAnzahlDisplay.style.left = (2 * cellPx + cellPx / 2) + "px";
+      kippAnzahlDisplay.style.top = row11Y + "px";
+      kippAnzahlDisplay.style.transform = "translate(-50%, -50%)";
+      
+      // Max Value (11) in Spalte D
+      maxValue.style.left = (3 * cellPx + cellPx / 2) + "px";
+      maxValue.style.top = row11Y + "px";
+      maxValue.style.transform = "translate(-50%, -50%)";
+      
+      // KIPP Button: halbe Spalte E bis halbe Spalte G
+      const btnLeft = 4 * cellPx + cellPx / 2; // halbe Spalte E
+      const btnWidth = 2 * cellPx; // von halber E bis halber G
+      kippBtn.style.left = btnLeft + "px";
+      kippBtn.style.top = row11Y + "px";
+      kippBtn.style.width = btnWidth + "px";
+      kippBtn.style.transform = "translate(0, -50%)";
+
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
     }
@@ -2395,6 +2577,68 @@
 
     kippBilanzBtn.addEventListener("click", () => {
       console.log("KIPP BILANZ wurde geklickt");
+    });
+
+    // Dial Control Interaction
+    let isDragging = false;
+    let startAngle = 0;
+    let currentAngle = 0;
+
+    function updateKippAnzahl(value) {
+      currentKippAnzahl = Math.max(1, Math.min(11, value));
+      kippAnzahlDisplay.textContent = String(currentKippAnzahl).padStart(2, '0');
+    }
+
+    dialControl.addEventListener("mousedown", startDrag);
+    dialControl.addEventListener("touchstart", startDrag, { passive: false });
+
+    function startDrag(e) {
+      e.preventDefault();
+      isDragging = true;
+      const rect = dialControl.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startAngle = Math.atan2(clientY - centerY, clientX - centerX);
+
+      document.addEventListener("mousemove", handleDrag);
+      document.addEventListener("touchmove", handleDrag, { passive: false });
+      document.addEventListener("mouseup", stopDrag);
+      document.addEventListener("touchend", stopDrag);
+    }
+
+    function handleDrag(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+      
+      const rect = dialControl.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const angle = Math.atan2(clientY - centerY, clientX - centerX);
+      
+      const deltaAngle = angle - startAngle;
+      const steps = Math.round(deltaAngle / (Math.PI / 5)); // 11 steps for values 1-11
+      
+      if (steps !== 0) {
+        updateKippAnzahl(currentKippAnzahl + steps);
+        startAngle = angle;
+      }
+    }
+
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener("mousemove", handleDrag);
+      document.removeEventListener("touchmove", handleDrag);
+      document.removeEventListener("mouseup", stopDrag);
+      document.removeEventListener("touchend", stopDrag);
+    }
+
+    kippBtn.addEventListener("click", () => {
+      console.log(`KIPP Button geklickt - Anzahl: ${currentKippAnzahl}`);
+      // Hier die Kipp-Aktion ausführen
     });
 
     window.addEventListener("load", () => {
