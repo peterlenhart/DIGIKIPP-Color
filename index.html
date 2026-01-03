@@ -642,7 +642,7 @@
     }
 
     .directionBtn{
-      width: calc(64px * var(--uiscale));
+      width: calc(72px * var(--uiscale));
       height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
@@ -668,29 +668,60 @@
       filter: saturate(0.8);
     }
 
-    .arrowIcon{
-      width: calc(28px * var(--uiscale));
-      height: calc(28px * var(--uiscale));
+    .circleArrow{
+      width: calc(36px * var(--uiscale));
+      height: calc(36px * var(--uiscale));
       position: relative;
     }
 
-    .arrowIcon::before{
+    .circleArrow::before{
       content: "";
       position: absolute;
-      width: calc(20px * var(--uiscale));
-      height: calc(20px * var(--uiscale));
-      border-top: calc(4px * var(--uiscale)) solid #7a3f2b;
-      border-right: calc(4px * var(--uiscale)) solid #7a3f2b;
+      width: calc(28px * var(--uiscale));
+      height: calc(28px * var(--uiscale));
+      border: calc(4px * var(--uiscale)) solid #7a3f2b;
+      border-radius: 50%;
       top: 50%;
       left: 50%;
+      transform: translate(-50%, -50%);
     }
 
-    .arrowIcon.cw::before{
-      transform: translate(-65%, -50%) rotate(90deg);
+    .circleArrow.cw::before{
+      border-left-color: transparent;
+      border-bottom-color: transparent;
+      transform: translate(-50%, -50%) rotate(45deg);
     }
 
-    .arrowIcon.ccw::before{
-      transform: translate(-35%, -50%) rotate(-90deg);
+    .circleArrow.cw::after{
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 calc(6px * var(--uiscale)) calc(10px * var(--uiscale)) calc(6px * var(--uiscale));
+      border-color: transparent transparent #7a3f2b transparent;
+      top: calc(4px * var(--uiscale));
+      right: calc(4px * var(--uiscale));
+      transform: rotate(45deg);
+    }
+
+    .circleArrow.ccw::before{
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .circleArrow.ccw::after{
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 calc(6px * var(--uiscale)) calc(10px * var(--uiscale)) calc(6px * var(--uiscale));
+      border-color: transparent transparent #7a3f2b transparent;
+      top: calc(4px * var(--uiscale));
+      left: calc(4px * var(--uiscale));
+      transform: rotate(-45deg);
     }
 
     .slot{
@@ -1199,10 +1230,10 @@
 
           <div class="brainDirectionBtns hidden" id="brainDirectionBtns">
             <button class="directionBtn" id="btnClockwise" data-direction="clockwise" type="button">
-              <div class="arrowIcon cw"></div>
+              <div class="circleArrow cw"></div>
             </button>
             <button class="directionBtn" id="btnCounterclockwise" data-direction="counterclockwise" type="button">
-              <div class="arrowIcon ccw"></div>
+              <div class="circleArrow ccw"></div>
             </button>
           </div>
 
@@ -1398,23 +1429,6 @@
       ];
     }
 
-    function getCurrentFulfilledCombos(){
-      const fulfilled = new Set();
-      const visible = getVisibleNumbers();
-      
-      for(const v of visible){
-        if(v.num == null) continue;
-        const coord = getSlotCoord(v.slotEl);
-        if(!coord) continue;
-        const c = innerFieldColor[coord];
-        if(c){
-          fulfilled.add(`${v.num}-${c}`);
-        }
-      }
-      
-      return fulfilled;
-    }
-
     function isImmediateHitCombo(candidate){
       const visible = getVisibleNumbers();
       for(const v of visible){
@@ -1432,10 +1446,6 @@
       return false;
     }
 
-    // ============================================================
-    // PATHFINDING ALGORITHMUS FÜR BRAINY
-    // ============================================================
-    
     const slotCoordsByRot = [
       ["3B", "4B", "2C", "2D"],
       ["2D", "3D", "3B", "4B"],
@@ -1499,41 +1509,60 @@
         return { num: 1, color: "orange" };
       }
 
-      const fulfilled = getCurrentFulfilledCombos();
       const candidates = [];
-      
       for(const n of visibleNums){
         for(const c of allColors){
-          const key = `${n}-${c}`;
-          if(!fulfilled.has(key)){
-            candidates.push({ num: n, color: c });
+          const cand = { num: n, color: c };
+          if(!isImmediateHitCombo(cand)){
+            candidates.push(cand);
           }
         }
       }
 
       if(candidates.length === 0){
         const n = visibleNums[Math.floor(Math.random()*visibleNums.length)];
-        const c = allColors[Math.floor(Math.random()*allColors.length)];
-        return { num: n, color: c };
+        const okColors = allColors.filter(c => !isImmediateHitCombo({num:n,color:c}));
+        if(okColors.length){
+          return { num: n, color: okColors[Math.floor(Math.random()*okColors.length)] };
+        }
+        const otherNums = visibleNums.filter(x => x !== n);
+        const n2 = otherNums.length ? otherNums[Math.floor(Math.random()*otherNums.length)] : n;
+        const c2 = allColors[Math.floor(Math.random()*allColors.length)];
+        return { num: n2, color: c2 };
       }
 
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
     function generateTargetNumberColor_Brainy(){
+      const visible = getVisibleNumbers();
+      const visibleNums = visible
+        .filter(v => v.num != null)
+        .map(v => v.num);
+
       const allNums = [];
       for(let f = 0; f < 3; f++){
-        allNums.push(...sets[f].filter(n => n != null));
+        allNums.push(...sets[f]);
+      }
+      const hiddenNums = allNums.filter(n => n != null && !visibleNums.includes(n));
+
+      const fulfilledCombos = new Set();
+      for(const v of visible){
+        if(v.num == null) continue;
+        const coord = getSlotCoord(v.slotEl);
+        if(!coord) continue;
+        const c = innerFieldColor[coord];
+        if(c){
+          fulfilledCombos.add(`${v.num}-${c}`);
+        }
       }
 
-      const fulfilled = getCurrentFulfilledCombos();
       const candidates = [];
-      
-      for(const num of allNums){
+      for(const num of hiddenNums){
         for(const color of allColors){
           const key = `${num}-${color}`;
           
-          if(fulfilled.has(key)) continue;
+          if(fulfilledCombos.has(key)) continue;
 
           const kipps = calculateMinKipps(num, color);
           
@@ -1542,8 +1571,6 @@
           }
         }
       }
-
-      console.log("Brainy - Kandidaten (≤6 Kipps):", candidates);
 
       if(candidates.length === 0){
         console.warn("Brainy - KEINE GÜLTIGEN KANDIDATEN! Fallback auf Trainee-Logik");
@@ -1554,54 +1581,6 @@
       console.log("Brainy - Gewählt:", chosen);
 
       return { num: chosen.num, color: chosen.color };
-    }
-
-    // ============================================================
-    // BRAIN DECK-SYSTEM
-    // ============================================================
-    
-    let brainDeck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-    function resetBrainDeck(){
-      brainDeck = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-      console.log("Brain Deck neu gemischt:", brainDeck);
-    }
-
-    function generateTargetNumberColor_Brain(){
-      const visible = getVisibleNumbers().map(v => v.num).filter(n => n != null);
-      const hidden = brainDeck.filter(n => !visible.includes(n));
-
-      console.log("Brain - Deck:", brainDeck);
-      console.log("Brain - Sichtbar:", visible);
-      console.log("Brain - Verdeckt:", hidden);
-
-      if(hidden.length === 0){
-        console.warn("Brain - Keine verdeckten Zahlen im Deck! Deck wird neu gemischt.");
-        resetBrainDeck();
-        return generateTargetNumberColor_Brain();
-      }
-
-      let num = hidden[Math.floor(Math.random() * hidden.length)];
-      let color = allColors[Math.floor(Math.random() * 4)];
-
-      const fulfilled = getCurrentFulfilledCombos();
-      
-      let attempts = 0;
-      while(fulfilled.has(`${num}-${color}`) && attempts < 20){
-        color = allColors[Math.floor(Math.random() * 4)];
-        attempts++;
-      }
-
-      brainDeck = brainDeck.filter(n => n !== num);
-      
-      if(brainDeck.length === 0){
-        console.log("Brain - Deck leer! Wird beim nächsten Ziel neu gemischt.");
-      }
-
-      console.log("Brain - Gewählt:", { num, color });
-      console.log("Brain - Deck nach Ziehung:", brainDeck);
-
-      return { num, color };
     }
 
     function rotationForCoord(coord){
@@ -1724,20 +1703,13 @@
       return false;
     }
 
-    function updateShadowVisibility(direction){
+    function updateShadowVisibility(){
       const isKipVisible = !kipGroup.classList.contains("hidden");
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
       if(isKipVisible){
-        let shadowIndex;
-        if(direction === "clockwise" || !direction){
-          shadowIndex = rotIndex;
-        } else {
-          shadowIndex = rotIndex;
-        }
-        
         allShadows.forEach((s, i) => {
-          if(i === shadowIndex) s.classList.add("visible");
+          if(i === rotIndex) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1757,10 +1729,10 @@
       updateShadowVisibility();
     }
 
-    function showKip(direction){
+    function showKip(){
       wFaceGroup.classList.add("hidden");
       kipGroup.classList.remove("hidden");
-      updateShadowVisibility(direction);
+      updateShadowVisibility();
     }
 
     function mapHiddenToVisible_CW(face){
@@ -1788,60 +1760,15 @@
       }
     }
 
-    // ============================================================
-    // ZWISCHENKIPP-IDs SYSTEM
-    // ============================================================
-
-    let zwischenKippData = {
-      "0_1": { left: [null,null,null,null], right: [null,null,null,null] },
-      "1_2": { left: [null,null,null,null], right: [null,null,null,null] },
-      "2_0": { left: [null,null,null,null], right: [null,null,null,null] }
-    };
-
-    function getZwischenKippID(fromFace, toFace){
-      if((fromFace === 0 && toFace === 1) || (fromFace === 1 && toFace === 0)) return "0_1";
-      if((fromFace === 1 && toFace === 2) || (fromFace === 2 && toFace === 1)) return "1_2";
-      if((fromFace === 2 && toFace === 0) || (fromFace === 0 && toFace === 2)) return "2_0";
-      console.error("Ungültige Face-Kombination:", fromFace, toFace);
-      return "0_1";
-    }
-
-    function buildZwischenKippData(){
-      // 0_1: Face 0 → Face 1
-      zwischenKippData["0_1"].right = sets[0].slice();
-      zwischenKippData["0_1"].left = mapHiddenToVisible_CW(sets[1]);
-
-      // 1_2: Face 1 → Face 2
-      zwischenKippData["1_2"].right = sets[1].slice();
-      zwischenKippData["1_2"].left = mapHiddenToVisible_CW(sets[2]);
-
-      // 2_0: Face 2 → Face 0
-      zwischenKippData["2_0"].right = sets[2].slice();
-      zwischenKippData["2_0"].left = mapHiddenToVisible_CW(sets[0]);
-
-      console.log("Zwischenkipp-Daten erstellt:", zwischenKippData);
-    }
-
-    function renderKip(direction){
+    function renderKip(){
       setRotationSnap();
+      const curr = sets[faceIndex];
+      const nextFaceIndex = (faceIndex + 1) % 3;
+      const next = sets[nextFaceIndex];
 
-      let fromFace, toFace;
-      
-      if(direction === "clockwise" || !direction){
-        fromFace = (faceIndex - 1 + 3) % 3;
-        toFace = faceIndex;
-      } else {
-        fromFace = (faceIndex + 1) % 3;
-        toFace = faceIndex;
-      }
-
-      const zkID = getZwischenKippID(fromFace, toFace);
-      const data = zwischenKippData[zkID];
-
-      console.log(`renderKip: direction=${direction}, from=${fromFace}, to=${toFace}, zkID=${zkID}`);
-
-      for(let i=0;i<4;i++) renderNumber(slotTargetsKipRight[i], data.right[i]);
-      for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], data.left[i]);
+      for(let i=0;i<4;i++) renderNumber(slotTargetsKipRight[i], curr[i]);
+      const nextPreview = mapHiddenToVisible_CW(next);
+      for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], nextPreview[i]);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1857,7 +1784,7 @@
     function getTiming(){
       const v = Number(speedSlider.value || 2);
       const hold = Math.max(520, Math.round(2400 - v * 450));
-      const kip = Math.max(160, Math.round(hold * 0.33));
+      const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
     }
@@ -1953,7 +1880,6 @@
     let runningPreview = false;
     let previewToken = 0;
     let stopAtNextW = false;
-    let currentKippDirection = "clockwise";
 
     speedScaleEl.querySelectorAll("span").forEach(sp => {
       sp.addEventListener("click", () => {
@@ -1996,7 +1922,6 @@
       runningPreview = true;
       const myToken = ++previewToken;
 
-      currentKippDirection = "clockwise";
       currentTarget = null;
       clearTargetNumbers();
       clearHitVisuals();
@@ -2010,30 +1935,25 @@
       showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      ensureAssigned(0); 
-      ensureAssigned(1);
-      ensureAssigned(2);
-      buildZwischenKippData();
-      
-      renderW();
+      ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip("clockwise"); renderKip("clockwise");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      renderW();
+      ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip("clockwise"); renderKip("clockwise");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      renderW();
+      ensureAssigned(2); renderW();
 
       buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
@@ -2041,7 +1961,7 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip("clockwise"); renderKip("clockwise");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW();
@@ -2052,8 +1972,8 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip("clockwise");
-        renderKip("clockwise");
+        showKip();
+        renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW();
@@ -2071,8 +1991,8 @@
       }
 
       while(myToken === previewToken){
-        showKip("clockwise");
-        renderKip("clockwise");
+        showKip();
+        renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW();
@@ -2170,8 +2090,8 @@
 
       kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
-      kippAnzahlBtns.style.top = (row11Baseline - 142 - 142) + "px";
-      brainDirectionBtns.style.top = (row11Baseline - 80 - 142) + "px";
+      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
+      brainDirectionBtns.style.top = (row11Baseline - 80) + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -2298,11 +2218,6 @@
         currentTarget = generateTargetNumberColor_Brainy();
         placeTargetNumbers(currentTarget);
         console.log("Brainy Target generiert:", currentTarget);
-      } else if(selectedLevel === "brain"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Brain();
-        placeTargetNumbers(currentTarget);
-        console.log("Brain Target generiert:", currentTarget);
       }
     }
 
@@ -2312,7 +2227,6 @@
       brainDirectionBtns.classList.add("hidden");
 
       if(level === "trainee"){
-        kippAnzahlTitle.textContent = "KIPP-ANZAHL";
         kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
 
         [3, 6, 9].forEach(num => {
@@ -2321,12 +2235,11 @@
           btn.dataset.anzahl = num;
           btn.type = "button";
           btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num));
+          btn.addEventListener("click", () => handleAnzahlClick(num, "clockwise"));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brainy"){
-        kippAnzahlTitle.textContent = "KIPP-ANZAHL";
         kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
         kippAnzahlBtns.classList.add("compact");
 
@@ -2336,13 +2249,12 @@
           btn.dataset.anzahl = num;
           btn.type = "button";
           btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num));
+          btn.addEventListener("click", () => handleAnzahlClick(num, "clockwise"));
           kippAnzahlBtns.appendChild(btn);
         });
 
       } else if(level === "brain"){
-        kippAnzahlTitle.textContent = "KIPP - ANZAHL • RICHTUNG";
-        kippAnzahlSubtitle.classList.add("hidden");
+        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
         kippAnzahlBtns.classList.add("compact");
 
         [1, 2, 3, 4, 5, 6].forEach(num => {
@@ -2422,14 +2334,14 @@
       btnCounterclockwise.disabled = locked;
     }
 
-    function handleAnzahlClick(anzahl){
-      console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
+    function handleAnzahlClick(anzahl, direction){
+      console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel}, Richtung: ${direction})`);
 
       if(selectedLevel === "trainee" || selectedLevel === "brainy"){
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
-        runKippCycles(anzahl, "clockwise").finally(() => {
+        runKippCycles(anzahl, direction).finally(() => {
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
@@ -2441,29 +2353,22 @@
       runningPreview = true;
       const myToken = ++previewToken;
 
-      currentKippDirection = direction;
       clearHitVisuals();
 
       for(let i = 0; i < count; i++){
-        if(direction === "counterclockwise"){
-          advanceFullCCW();
-          showKip(direction);
-          renderKip(direction);
-          if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-          
-          showW();
-          renderW();
-          if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-        } else {
-          showKip(direction);
-          renderKip(direction);
-          if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-          
+        showKip();
+        renderKip();
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+
+        if(direction === "clockwise"){
           advanceFullCW();
-          showW();
-          renderW();
-          if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+        } else {
+          advanceFullCCW();
         }
+        
+        showW();
+        renderW();
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
@@ -2478,11 +2383,6 @@
       btn.addEventListener("click", () => {
         selectedLevel = btn.dataset.level;
         console.log("Level gewählt:", selectedLevel);
-        
-        if(selectedLevel === "brain"){
-          resetBrainDeck();
-        }
-        
         showKspView();
       });
     });
@@ -2529,11 +2429,6 @@
         currentTarget = generateTargetNumberColor_Brainy();
         placeTargetNumbers(currentTarget);
         console.log("TEST Target (Brainy):", currentTarget);
-      } else if(selectedLevel === "brain"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Brain();
-        placeTargetNumbers(currentTarget);
-        console.log("TEST Target (Brain):", currentTarget);
       }
     });
 
