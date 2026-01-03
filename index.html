@@ -1500,40 +1500,6 @@
       return null;
     }
 
-    function generateTargetNumberColor_Trainee(){
-      const visibleNums = getVisibleNumbers()
-        .filter(v => v.num != null)
-        .map(v => v.num);
-
-      if(visibleNums.length === 0){
-        return { num: 1, color: "orange" };
-      }
-
-      const candidates = [];
-      for(const n of visibleNums){
-        for(const c of allColors){
-          const cand = { num: n, color: c };
-          if(!isImmediateHitCombo(cand)){
-            candidates.push(cand);
-          }
-        }
-      }
-
-      if(candidates.length === 0){
-        const n = visibleNums[Math.floor(Math.random()*visibleNums.length)];
-        const okColors = allColors.filter(c => !isImmediateHitCombo({num:n,color:c}));
-        if(okColors.length){
-          return { num: n, color: okColors[Math.floor(Math.random()*okColors.length)] };
-        }
-        const otherNums = visibleNums.filter(x => x !== n);
-        const n2 = otherNums.length ? otherNums[Math.floor(Math.random()*otherNums.length)] : n;
-        const c2 = allColors[Math.floor(Math.random()*allColors.length)];
-        return { num: n2, color: c2 };
-      }
-
-      return candidates[Math.floor(Math.random() * candidates.length)];
-    }
-
     function generateTargetNumberColor_Brainy(){
       // Wenn max Targets erreicht, stopp
       if(targetsGenerated >= MAX_TARGETS){
@@ -1964,11 +1930,7 @@
 
       ensureAssigned(2); renderW();
 
-      // JETZT sind alle Zahlen gesetzt - erstes Target generieren!
-      currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget){
-        placeTargetNumbers(currentTarget);
-      }
+      // Zahlen sind gesetzt, aber Zielzahl kommt erst beim Klick auf "STOPP & SPIELEN?"
 
       buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
@@ -2239,75 +2201,35 @@
 
     function showKippAnzahlView(){
       currentView = "anzahl";
-      levelView.classList.add("hidden");
       kspView.classList.add("hidden");
       kippAnzahlView.classList.remove("hidden");
 
-      buildKippAnzahlButtons(selectedLevel);
+      buildKippAnzahlButtons();
+      testTargetBtn.classList.remove("hidden");
+      testTargetBtn.disabled = false;
 
-      if(selectedLevel === "trainee" || selectedLevel === "brainy"){
-        testTargetBtn.classList.remove("hidden");
-        testTargetBtn.disabled = false;
-      } else {
-        testTargetBtn.classList.add("hidden");
-      }
-
-      if(selectedLevel === "trainee"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Trainee();
-        placeTargetNumbers(currentTarget);
-      } else if(selectedLevel === "brainy"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Brainy();
+      // Erstes Kippziel generieren
+      clearHitVisuals();
+      currentTarget = generateTargetNumberColor_Brainy();
+      if(currentTarget){
         placeTargetNumbers(currentTarget);
       }
     }
 
-    function buildKippAnzahlButtons(level){
+    function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
-      kippAnzahlBtns.classList.remove("compact");
+      kippAnzahlBtns.classList.add("compact");
+      kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
-      if(level === "trainee"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
-
-        [3, 6, 9].forEach(num => {
-          const btn = document.createElement("button");
-          btn.className = "squareBtn";
-          btn.dataset.anzahl = num;
-          btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num));
-          kippAnzahlBtns.appendChild(btn);
-        });
-
-      } else if(level === "brainy"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
-        kippAnzahlBtns.classList.add("compact");
-
-        [1, 2, 3, 4, 5, 6].forEach(num => {
-          const btn = document.createElement("button");
-          btn.className = "squareBtn";
-          btn.dataset.anzahl = num;
-          btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num));
-          kippAnzahlBtns.appendChild(btn);
-        });
-
-      } else if(level === "brain"){
-        kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
-        kippAnzahlBtns.classList.add("compact");
-
-        [1, 2, 3, 4, 5, 6].forEach(num => {
-          const btn = document.createElement("button");
-          btn.className = "squareBtn";
-          btn.dataset.anzahl = num;
-          btn.type = "button";
-          btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num));
-          kippAnzahlBtns.appendChild(btn);
-        });
-      }
+      [1, 2, 3, 4, 5, 6].forEach(num => {
+        const btn = document.createElement("button");
+        btn.className = "squareBtn";
+        btn.dataset.anzahl = num;
+        btn.type = "button";
+        btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+        btn.addEventListener("click", () => handleAnzahlClick(num));
+        kippAnzahlBtns.appendChild(btn);
+      });
     }
 
     function setBackLocked(locked){
@@ -2441,13 +2363,9 @@
     });
 
     testTargetBtn.addEventListener("click", () => {
-      if(selectedLevel === "trainee"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Trainee();
-        placeTargetNumbers(currentTarget);
-      } else if(selectedLevel === "brainy"){
-        clearHitVisuals();
-        currentTarget = generateTargetNumberColor_Brainy();
+      clearHitVisuals();
+      currentTarget = generateTargetNumberColor_Brainy();
+      if(currentTarget){
         placeTargetNumbers(currentTarget);
       }
     });
