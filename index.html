@@ -34,6 +34,7 @@
       --slot-border: rgba(0,0,0,0.55);
       --slot-border-w: 4px;
 
+      /* Würfel-Farben */
       --cube-wood-base: #d7c2a4;
       --cube-wood-deep: #c9b08f;
       --cube-wood-warm: rgba(155, 70, 110, 0.10);
@@ -44,10 +45,15 @@
       --rotSign: 1;
       --rot: 0deg;
 
-      --clipTop:    calc((2 - 1) * var(--cell));
-      --clipLeft:   calc((2 - 1) * var(--cell));
-      --clipRight:  calc((8 - 7) * var(--cell));
-      --clipBottom: calc(var(--gridH) - (7 * var(--cell)));
+      /* ===========
+         CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein
+         Zeile 1 = Farbfeldzeile
+         Innenraum beginnt bei 2B und endet bei 7G
+         =========== */
+      --clipTop:    calc((2 - 1) * var(--cell)); /* ab Zeile 2 */
+      --clipLeft:   calc((2 - 1) * var(--cell)); /* ab Spalte B (=2) */
+      --clipRight:  calc((8 - 7) * var(--cell)); /* rechts bleibt 1 Spalte (H) */
+      --clipBottom: calc(var(--gridH) - (7 * var(--cell))); /* unten ab Zeile 8 */
     }
 
     html, body{
@@ -91,6 +97,7 @@
       transform: translateX(-50%) scale(var(--scale));
     }
 
+    /* Z-INDEX: 0 - Box Hintergrund PNG */
     .bgPNG{
       position:absolute;
       left: 0;
@@ -107,6 +114,7 @@
       z-index: 0;
     }
 
+    /* Z-INDEX: 1 - Kugel (UNTER dem Würfel) */
     .ball{
       position: absolute;
       left: calc(4 * var(--cell));
@@ -145,6 +153,11 @@
     .c-blau    { background: var(--blau); }
     .c-violett { background: var(--violett); }
 
+    /* =========================================
+       Z-INDEX: 2 - Würfel-Schatten (vollflächig)
+       - dreht MIT dem Würfel (Pivot im Zentrum)
+       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
+       ========================================= */
     .cubeShadowLayer{
       position: absolute;
       left: 0;
@@ -170,13 +183,17 @@
       opacity: 1;
     }
 
+    /* CLIP-WRAPPER: Schatten-Gefängnis 2B–7G */
     .cubeShadowClip{
       position:absolute;
       inset:0;
       pointer-events:none;
+
+      /* STRIKT: alles außerhalb wird abgeschnitten */
       clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
     }
 
+    /* Schatten selbst: folgt der Würfelfläche (gleiche Position wie cubeFace) */
     .cubeShadowInner{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -187,11 +204,13 @@
       background: transparent;
       border-radius: 10px;
 
+      /* Breiter & kräftiger – wirkt wie echter Schlagschatten auf Boxboden */
       box-shadow:
         18px 26px 34px rgba(0,0,0,0.36),
         26px 38px 54px rgba(0,0,0,0.26),
         34px 50px 78px rgba(0,0,0,0.18);
 
+      /* Ganz leichte Bodenabdunklung direkt unter dem Würfel */
       filter: drop-shadow(0 0 0 rgba(0,0,0,0));
     }
 
@@ -220,6 +239,7 @@
         );
     }
 
+    /* Z-INDEX: 3 - Zwischenkipp-Schatten PNGs */
     .zwischenKippSchattenLayer{
       position: absolute;
       left: 0;
@@ -252,6 +272,7 @@
     #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
     #shadowQ3{ background-image: url("SchattenZwischenKipp_Q3.png"); }
 
+    /* Z-INDEX: 4 - Würfel Groups */
     .wFaceGroup,
     .kipGroup{
       position: absolute;
@@ -630,100 +651,6 @@
       gap: calc(12px * var(--uiscale));
     }
 
-    .brainDirectionBtns{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: calc(18px * var(--uiscale));
-      pointer-events: auto;
-      z-index: 10;
-      justify-content: center;
-    }
-
-    .directionBtn{
-      width: calc(72px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    .directionBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-    .directionBtn[disabled]{
-      opacity: 0.45;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
-
-    .circleArrow{
-      width: calc(36px * var(--uiscale));
-      height: calc(36px * var(--uiscale));
-      position: relative;
-    }
-
-    .circleArrow::before{
-      content: "";
-      position: absolute;
-      width: calc(28px * var(--uiscale));
-      height: calc(28px * var(--uiscale));
-      border: calc(4px * var(--uiscale)) solid #7a3f2b;
-      border-radius: 50%;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-
-    .circleArrow.cw::before{
-      border-left-color: transparent;
-      border-bottom-color: transparent;
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-
-    .circleArrow.cw::after{
-      content: "";
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 0 calc(6px * var(--uiscale)) calc(10px * var(--uiscale)) calc(6px * var(--uiscale));
-      border-color: transparent transparent #7a3f2b transparent;
-      top: calc(4px * var(--uiscale));
-      right: calc(4px * var(--uiscale));
-      transform: rotate(45deg);
-    }
-
-    .circleArrow.ccw::before{
-      border-right-color: transparent;
-      border-bottom-color: transparent;
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
-
-    .circleArrow.ccw::after{
-      content: "";
-      position: absolute;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 0 calc(6px * var(--uiscale)) calc(10px * var(--uiscale)) calc(6px * var(--uiscale));
-      border-color: transparent transparent #7a3f2b transparent;
-      top: calc(4px * var(--uiscale));
-      left: calc(4px * var(--uiscale));
-      transform: rotate(-45deg);
-    }
-
     .slot{
       position: absolute;
       width: var(--cell);
@@ -1080,6 +1007,7 @@
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
+    /* Animation Target */
     .targetNumber span{
       animation: targetBreath 1.05s ease-in-out infinite;
       will-change: transform, filter;
@@ -1119,16 +1047,23 @@
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
+      <!-- Z-INDEX 0: Box Hintergrund -->
       <div class="bgPNG" aria-hidden="true"></div>
+
+      <!-- Z-INDEX 1: Kugel -->
       <div class="ball" aria-label="Kugel"></div>
+
+      <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
+      <!-- Z-INDEX 2: Würfel-Schatten (vollflächig, geclippt 2B–7G, dreht mit) -->
       <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
         <div class="cubeShadowClip">
           <div class="cubeShadowInner"></div>
         </div>
       </div>
 
+      <!-- Z-INDEX 3: Zwischenkipp-Schatten PNGs -->
       <div class="zwischenKippSchattenLayer" aria-hidden="true">
         <div id="shadowQ0" class="zwischenKippSchatten"></div>
         <div id="shadowQ1" class="zwischenKippSchatten"></div>
@@ -1136,6 +1071,7 @@
         <div id="shadowQ3" class="zwischenKippSchatten"></div>
       </div>
 
+      <!-- Z-INDEX 4: Würfel Groups -->
       <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
         <div class="cubeFace" aria-label="Würfelfläche"></div>
 
@@ -1165,6 +1101,7 @@
         </div>
       </div>
 
+      <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="digiKippTitle" id="digiKippTitle">DIGIKIPP <span class="color">color</span></div>
 
@@ -1228,15 +1165,6 @@
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
-          <div class="brainDirectionBtns hidden" id="brainDirectionBtns">
-            <button class="directionBtn" id="btnClockwise" data-direction="clockwise" type="button">
-              <div class="circleArrow cw"></div>
-            </button>
-            <button class="directionBtn" id="btnCounterclockwise" data-direction="counterclockwise" type="button">
-              <div class="circleArrow ccw"></div>
-            </button>
-          </div>
-
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
           </button>
@@ -1284,9 +1212,6 @@
     const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
     const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
-    const brainDirectionBtns = document.getElementById("brainDirectionBtns");
-    const btnClockwise       = document.getElementById("btnClockwise");
-    const btnCounterclockwise = document.getElementById("btnCounterclockwise");
 
     const closeBtnLevel  = document.getElementById("closeBtnLevel");
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
@@ -1446,13 +1371,27 @@
       return false;
     }
 
+    // ============================================================
+    // PATHFINDING ALGORITHMUS FÜR BRAINY
+    // ============================================================
+    
+    /**
+     * Slot-Positionen für jede Rotation (0°, 90°, 180°, 270°)
+     * Slot-Index: 0=S1(3B), 1=S2(4B), 2=S3(2C), 3=S4(2D)
+     */
     const slotCoordsByRot = [
-      ["3B", "4B", "2C", "2D"],
-      ["2D", "3D", "3B", "4B"],
-      ["4F", "3F", "5D", "4D"],
-      ["5D", "4D", "4F", "3F"],
+      ["3B", "4B", "2C", "2D"],  // rot=0°
+      ["2D", "3D", "3B", "4B"],  // rot=90°
+      ["4F", "3F", "5D", "4D"],  // rot=180°
+      ["5D", "4D", "4F", "3F"],  // rot=270°
     ];
 
+    /**
+     * Simuliert einen Kipp-Schritt
+     * @param {number} face - aktueller Face-Index (0-2)
+     * @param {number} rot - aktuelle Rotation (0-3)
+     * @returns {object} - {face, rot} nach Kipp
+     */
     function simulateKipp(face, rot){
       return {
         face: (face + 1) % 3,
@@ -1460,7 +1399,14 @@
       };
     }
 
+    /**
+     * Berechnet minimale Kipps für eine Zahl-Farb-Kombination
+     * @param {number} targetNum - Zielzahl (1-12)
+     * @param {string} targetColor - Zielfarbe ("gruen", "orange", "blau", "violett")
+     * @returns {number|null} - Anzahl Kipps (1-6) oder null wenn unerreichbar
+     */
     function calculateMinKipps(targetNum, targetColor){
+      // Finde in welchem Face die Zahl liegt
       let numFaceIndex = -1;
       let numSlotIndex = -1;
       
@@ -1473,33 +1419,42 @@
         }
       }
 
-      if(numFaceIndex === -1) return null;
+      if(numFaceIndex === -1) return null; // Zahl nicht gefunden
 
+      // Prüfe alle möglichen Kipp-Anzahlen (1-6, aber nicht 3)
       const validKipps = [1, 2, 4, 5, 6];
       
       for(const kipps of validKipps){
         let testFace = faceIndex;
         let testRot = rotIndex;
 
+        // Simuliere die Kipps
         for(let i = 0; i < kipps; i++){
           const next = simulateKipp(testFace, testRot);
           testFace = next.face;
           testRot = next.rot;
         }
 
+        // Prüfe ob die Zahl nach den Kipps sichtbar ist
         if(testFace !== numFaceIndex) continue;
 
+        // Hole die Slot-Koordinaten für diese Rotation
         const coords = slotCoordsByRot[testRot];
         const coord = coords[numSlotIndex];
 
+        // Prüfe ob die Farbe passt
         if(innerFieldColor[coord] === targetColor){
           return kipps;
         }
       }
 
-      return null;
+      return null; // Nicht mit ≤6 Kipps erreichbar
     }
 
+    /**
+     * Generiert Target für TRAINEE Level
+     * (wie bisher - nur sichtbare Zahlen)
+     */
     function generateTargetNumberColor_Trainee(){
       const visibleNums = getVisibleNumbers()
         .filter(v => v.num != null)
@@ -1534,18 +1489,30 @@
       return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
+    /**
+     * Generiert Target für BRAINY Level
+     * Regeln:
+     * - Nur VERDECKTE Zahlen (nicht die 4 sichtbaren)
+     * - Nicht die 4 aktuell erfüllten Kombinationen
+     * - Nur Kombinationen mit ≤6 Kipps
+     */
     function generateTargetNumberColor_Brainy(){
+      // 1. Hole alle sichtbaren Zahlen
       const visible = getVisibleNumbers();
       const visibleNums = visible
         .filter(v => v.num != null)
         .map(v => v.num);
 
+      // 2. Hole alle verdeckten Zahlen (8 Stück)
       const allNums = [];
       for(let f = 0; f < 3; f++){
         allNums.push(...sets[f]);
       }
       const hiddenNums = allNums.filter(n => n != null && !visibleNums.includes(n));
 
+      console.log("Brainy - Verdeckte Zahlen:", hiddenNums);
+
+      // 3. Baue Liste der aktuell erfüllten Kombinationen
       const fulfilledCombos = new Set();
       for(const v of visible){
         if(v.num == null) continue;
@@ -1557,21 +1524,30 @@
         }
       }
 
+      console.log("Brainy - Erfüllte Kombinationen:", Array.from(fulfilledCombos));
+
+      // 4. Generiere alle möglichen Kandidaten (verdeckte Zahlen × alle Farben)
       const candidates = [];
       for(const num of hiddenNums){
         for(const color of allColors){
           const key = `${num}-${color}`;
           
+          // Ausschluss: bereits erfüllte Kombis
           if(fulfilledCombos.has(key)) continue;
 
+          // Berechne minimale Kipps
           const kipps = calculateMinKipps(num, color);
           
+          // Nur Kombinationen mit ≤6 Kipps
           if(kipps !== null && kipps <= 6){
             candidates.push({ num, color, kipps });
           }
         }
       }
 
+      console.log("Brainy - Kandidaten (≤6 Kipps):", candidates);
+
+      // 5. Wähle zufälligen Kandidaten
       if(candidates.length === 0){
         console.warn("Brainy - KEINE GÜLTIGEN KANDIDATEN! Fallback auf Trainee-Logik");
         return generateTargetNumberColor_Trainee();
@@ -1804,12 +1780,6 @@
     function advanceFullCW(){
       rotIndex  = (rotIndex + 1) % 4;
       faceIndex = (faceIndex + 1) % 3;
-      setRotationSnap();
-    }
-
-    function advanceFullCCW(){
-      rotIndex  = (rotIndex - 1 + 4) % 4;
-      faceIndex = (faceIndex - 1 + 3) % 3;
       setRotationSnap();
     }
 
@@ -2091,7 +2061,6 @@
       kippAnzahlTitle.style.top = (row11Baseline - 85 - 230) + "px";
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
-      brainDirectionBtns.style.top = (row11Baseline - 80) + "px";
 
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       permanentRow13.style.top = row13VisualTop + "px";
@@ -2201,6 +2170,7 @@
 
       buildKippAnzahlButtons(selectedLevel);
 
+      // Test-Button nur für Trainee UND Brainy
       if(selectedLevel === "trainee" || selectedLevel === "brainy"){
         testTargetBtn.classList.remove("hidden");
         testTargetBtn.disabled = false;
@@ -2208,6 +2178,7 @@
         testTargetBtn.classList.add("hidden");
       }
 
+      // Target generieren
       if(selectedLevel === "trainee"){
         clearHitVisuals();
         currentTarget = generateTargetNumberColor_Trainee();
@@ -2224,7 +2195,6 @@
     function buildKippAnzahlButtons(level){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.remove("compact");
-      brainDirectionBtns.classList.add("hidden");
 
       if(level === "trainee"){
         kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>';
@@ -2235,7 +2205,7 @@
           btn.dataset.anzahl = num;
           btn.type = "button";
           btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num, "clockwise"));
+          btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
@@ -2249,7 +2219,7 @@
           btn.dataset.anzahl = num;
           btn.type = "button";
           btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-          btn.addEventListener("click", () => handleAnzahlClick(num, "clockwise"));
+          btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
 
@@ -2263,62 +2233,11 @@
           btn.dataset.anzahl = num;
           btn.type = "button";
           btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+          btn.addEventListener("click", () => handleAnzahlClick(num));
           kippAnzahlBtns.appendChild(btn);
         });
-
-        brainDirectionBtns.classList.remove("hidden");
       }
     }
-
-    let brainSelectedAnzahl = null;
-
-    kippAnzahlBtns.addEventListener("click", (e) => {
-      const btn = e.target.closest(".squareBtn");
-      if(!btn) return;
-
-      if(selectedLevel === "brain"){
-        brainSelectedAnzahl = Number(btn.dataset.anzahl);
-        console.log("Brain - Anzahl gewählt:", brainSelectedAnzahl);
-        
-        kippAnzahlBtns.querySelectorAll(".squareBtn").forEach(b => {
-          b.style.opacity = (b === btn) ? "1" : "0.5";
-        });
-      }
-    });
-
-    btnClockwise.addEventListener("click", () => {
-      if(selectedLevel === "brain" && brainSelectedAnzahl !== null){
-        console.log(`Brain - Uhrzeigersinn ${brainSelectedAnzahl} Kipps`);
-        setBackLocked(true);
-        setAnzahlButtonsLocked(true);
-        setDirectionButtonsLocked(true);
-
-        runKippCycles(brainSelectedAnzahl, "clockwise").finally(() => {
-          setBackLocked(false);
-          setAnzahlButtonsLocked(false);
-          setDirectionButtonsLocked(false);
-          brainSelectedAnzahl = null;
-          kippAnzahlBtns.querySelectorAll(".squareBtn").forEach(b => b.style.opacity = "1");
-        });
-      }
-    });
-
-    btnCounterclockwise.addEventListener("click", () => {
-      if(selectedLevel === "brain" && brainSelectedAnzahl !== null){
-        console.log(`Brain - Gegen-Uhrzeigersinn ${brainSelectedAnzahl} Kipps`);
-        setBackLocked(true);
-        setAnzahlButtonsLocked(true);
-        setDirectionButtonsLocked(true);
-
-        runKippCycles(brainSelectedAnzahl, "counterclockwise").finally(() => {
-          setBackLocked(false);
-          setAnzahlButtonsLocked(false);
-          setDirectionButtonsLocked(false);
-          brainSelectedAnzahl = null;
-          kippAnzahlBtns.querySelectorAll(".squareBtn").forEach(b => b.style.opacity = "1");
-        });
-      }
-    });
 
     function setBackLocked(locked){
       backBtnAnzahl.disabled = locked;
@@ -2329,26 +2248,21 @@
       testTargetBtn.disabled = locked;
     }
 
-    function setDirectionButtonsLocked(locked){
-      btnClockwise.disabled = locked;
-      btnCounterclockwise.disabled = locked;
-    }
-
-    function handleAnzahlClick(anzahl, direction){
-      console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel}, Richtung: ${direction})`);
+    function handleAnzahlClick(anzahl){
+      console.log(`Anzahl gewählt: ${anzahl} (Level: ${selectedLevel})`);
 
       if(selectedLevel === "trainee" || selectedLevel === "brainy"){
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
-        runKippCycles(anzahl, direction).finally(() => {
+        runKippCycles(anzahl).finally(() => {
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
       }
     }
 
-    async function runKippCycles(count, direction){
+    async function runKippCycles(count){
       if(runningPreview) return;
       runningPreview = true;
       const myToken = ++previewToken;
@@ -2360,19 +2274,14 @@
         renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        if(direction === "clockwise"){
-          advanceFullCW();
-        } else {
-          advanceFullCCW();
-        }
-        
+        advanceFullCW();
         showW();
         renderW();
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       runningPreview = false;
-      console.log(`${count} Kipp-Zyklen (${direction}) abgeschlossen`);
+      console.log(`${count} Kipp-Zyklen abgeschlossen`);
 
       if(currentTarget){
         checkHitAndSignal();
