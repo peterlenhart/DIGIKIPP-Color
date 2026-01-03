@@ -2088,8 +2088,7 @@
       const headerY = 1.0 * cellPx; // Zwischen Zeile 0.1 und 0.2
       
       // Kipp Bilanz Button: linksbündig in der HALBEN Spalte B
-      const halfCell = cellPx / 2; // 71px bei 142px Zellgröße
-      kippBilanzBtn.style.left = halfCell + "px";
+      kippBilanzBtn.style.left = (cellPx + cellPx / 2) + "px"; // Spalte B (142px) + halbe Spalte (71px) = 213px
       kippBilanzBtn.style.top = headerY + "px";
       kippBilanzBtn.style.transform = "translateY(-50%)";
       
