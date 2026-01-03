@@ -1535,6 +1535,9 @@
     }
 
     function generateTargetNumberColor_Brainy(){
+      // Deck NEU aufbauen mit aktuell sichtbaren Zahlen
+      initializeCardDeck();
+      
       // Wenn Deck leer oder max Targets erreicht, kein neues Ziel
       if(cardDeck.length === 0 || targetsGenerated >= MAX_TARGETS){
         return null;
@@ -1542,44 +1545,34 @@
 
       // Zufällige Karte aus Deck ziehen
       const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck.splice(randomIndex, 1)[0];
+      const card = cardDeck[randomIndex];
       
       targetsGenerated++;
       return { num: card.num, color: card.color };
     }
 
     function initializeCardDeck(){
-      // Reset
-      cardDeck = [];
-      targetsGenerated = 0;
-
-      // Alle 48 Kombinationen erstellen
-      const allCombos = [];
-      for(let num = 1; num <= 12; num++){
-        for(const color of allColors){
-          allCombos.push({ num, color });
-        }
-      }
-
-      // Die 4 aktuell sichtbaren Kombinationen ermitteln
+      // Die 4 aktuell sichtbaren ZAHLEN ermitteln (egal welche Farbe!)
       const visible = getVisibleNumbers();
-      const visibleCombos = new Set();
+      const visibleNumbers = new Set();
       
       for(const v of visible){
-        if(v.num == null) continue;
-        const coord = getSlotCoord(v.slotEl);
-        if(!coord) continue;
-        const c = innerFieldColor[coord];
-        if(c){
-          visibleCombos.add(`${v.num}-${c}`);
+        if(v.num != null){
+          visibleNumbers.add(v.num);
         }
       }
 
-      // Nur nicht-sichtbare Kombinationen ins Deck
-      cardDeck = allCombos.filter(combo => {
-        const key = `${combo.num}-${combo.color}`;
-        return !visibleCombos.has(key);
-      });
+      // Alle 48 Kombinationen erstellen, aber NUR mit unsichtbaren Zahlen
+      cardDeck = [];
+      for(let num = 1; num <= 12; num++){
+        // Wenn diese Zahl sichtbar ist, überspringen!
+        if(visibleNumbers.has(num)) continue;
+        
+        // Sonst: alle 4 Farben dieser Zahl ins Deck
+        for(const color of allColors){
+          cardDeck.push({ num, color });
+        }
+      }
     }
 
     function rotationForCoord(coord){
@@ -1964,6 +1957,12 @@
 
       ensureAssigned(2); renderW();
 
+      // JETZT sind alle Zahlen gesetzt - erstes Target generieren!
+      currentTarget = generateTargetNumberColor_Brainy();
+      if(currentTarget){
+        placeTargetNumbers(currentTarget);
+      }
+
       buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
       setSchauenEnabled(true);
@@ -2220,13 +2219,13 @@
       // Kippspeed bleibt immer aktiv (kein Lock mehr)
       // sliderContainer.classList.add("sliderLocked"); // REMOVED
 
-      // Kartendeck initialisieren
-      initializeCardDeck();
+      // Target-Counter zurücksetzen
+      targetsGenerated = 0;
 
-      // Generate target immediately (Brainy logic)
+      // KEIN Target beim Start - erst nachdem Zahlen gesetzt sind!
       clearHitVisuals();
-      currentTarget = generateTargetNumberColor_Brainy();
-      placeTargetNumbers(currentTarget);
+      clearTargetNumbers();
+      currentTarget = null;
 
       showW();
     }
