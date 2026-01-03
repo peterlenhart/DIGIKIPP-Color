@@ -1820,8 +1820,9 @@
         const nextPreview = mapHiddenToVisible_CW(next);
         for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], nextPreview[i]);
       } else {
-        // Gegen-Uhrzeigersinn: Links = vorherige, Rechts = aktuell
-        const prevFaceIndex = (faceIndex - 1 + 3) % 3;
+        // Gegen-Uhrzeigersinn: Rechts = vorherige (wo wir herkommen), Links = aktuell (wo wir sind)
+        // Sequenz: 0→2→1→0, also wenn bei 2, dann vorher bei 0: (2+1)%3=0
+        const prevFaceIndex = (faceIndex + 1) % 3;
         const prev = sets[prevFaceIndex];
 
         for(let i=0;i<4;i++) renderNumber(slotTargetsKipLeft[i], curr[i]);
