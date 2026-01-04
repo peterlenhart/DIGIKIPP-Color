@@ -839,9 +839,7 @@
       pointer-events: none;
     }
 
-    .titleLeft{
-      left: 0;
-    }
+    .titleLeft{ left: 0; }
 
     .titleRight{
       right: 0;
@@ -866,15 +864,8 @@
       z-index: 100;
       padding: 0;
     }
-    .navBtn:active{
-      transform: scale(0.95);
-      opacity: 0.8;
-    }
-    .navBtn[disabled]{
-      opacity: 0.35;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
+    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
+    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
 
     .backIcon{
       width: 0;
@@ -1130,7 +1121,7 @@
         <!-- Header Elemente -->
         <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        
+
         <!-- Titel Links und Rechts -->
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
         <div class="titleRight" id="titleRight">color</div>
@@ -1383,7 +1374,7 @@
     }
 
     let currentTarget = null;
-    
+
     // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
     let cardDeck = [];
     let targetsGenerated = 0;
@@ -1496,7 +1487,7 @@
       // Zufällige Karte aus Deck ziehen UND ENTFERNEN
       const randomIndex = Math.floor(Math.random() * cardDeck.length);
       const card = cardDeck.splice(randomIndex, 1)[0];
-      
+
       targetsGenerated++;
       return { num: card.num, color: card.color };
     }
@@ -1505,7 +1496,7 @@
       // Die 4 aktuell sichtbaren ZAHLEN ermitteln (egal welche Farbe!)
       const visible = getVisibleNumbers();
       const visibleNumbers = new Set();
-      
+
       for(const v of visible){
         if(v.num != null){
           visibleNumbers.add(v.num);
@@ -1517,7 +1508,7 @@
       for(let num = 1; num <= 12; num++){
         // Wenn diese Zahl sichtbar ist, überspringen!
         if(visibleNumbers.has(num)) continue;
-        
+
         // Sonst: alle 4 Farben dieser Zahl ins Deck
         for(const color of allColors){
           cardDeck.push({ num, color });
@@ -2034,7 +2025,7 @@
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
       kspTop.style.top = midY + "px";
-      
+
       // Kippspeed-Bereich in Zeile 13
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row13Center = row13VisualTop + cellPx / 2;
@@ -2049,23 +2040,23 @@
 
       // Header Elemente positionieren
       const headerY = 1.0 * cellPx; // Zwischen Zeile 0.1 und 0.2
-      
+
       // Kipp Bilanz Button: linksbündig in der HALBEN Spalte B
       kippBilanzBtn.style.left = (cellPx + cellPx / 2) + "px";
       kippBilanzBtn.style.top = headerY + "px";
       kippBilanzBtn.style.transform = "translateY(-50%)";
-      
+
       // Score Display: rechts, gleiche Y-Position
       scoreDisplay.style.right = "70px";
       scoreDisplay.style.top = headerY + "px";
       scoreDisplay.style.transform = "translateY(-50%)";
-      
+
       // Titel Links: Zeile 1, zentriert über Spalten A+B
       const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
       titleLeft.style.left = cellPx + "px";
       titleLeft.style.top = row1Y + "px";
       titleLeft.style.transform = "translate(-50%, -50%)";
-      
+
       // Titel Rechts: Zeile 1, zentriert über Spalten G+H
       titleRight.style.left = (7 * cellPx) + "px";
       titleRight.style.top = row1Y + "px";
@@ -2143,9 +2134,6 @@
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
-      // Kippspeed bleibt immer aktiv (kein Lock mehr)
-      // sliderContainer.classList.add("sliderLocked"); // REMOVED
-
       // Target-Counter zurücksetzen
       targetsGenerated = 0;
 
@@ -2202,48 +2190,41 @@
     function handleAnzahlClick(anzahl){
       if(selectedLevel !== "brainy") return;
 
-      // Button finden
       const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button")).find(
         b => parseInt(b.dataset.anzahl) === anzahl
       );
       if(!clickedBtn) return;
 
-      // Wenn Button bereits selektiert: Ausführen
       if(selectedButtons.includes(anzahl)){
-        // Kipps ausführen
         const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-        
-        // Buttons sperren während Kipp-Zyklus
+
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
         runKippCycles(totalKipps).finally(() => {
-          // Selektion zurücksetzen
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-          
+
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
         return;
       }
 
-      // Button selektieren (max 2)
       if(selectedButtons.length < 2){
         selectedButtons.push(anzahl);
         clickedBtn.classList.add("selected");
 
-        // Wenn jetzt 2 Buttons selektiert: automatisch ausführen
         if(selectedButtons.length === 2){
           const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-          
+
           setBackLocked(true);
           setAnzahlButtonsLocked(true);
 
           runKippCycles(totalKipps).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-            
+
             setBackLocked(false);
             setAnzahlButtonsLocked(false);
           });
@@ -2274,13 +2255,11 @@
       if(currentTarget){
         const hit = checkHitAndSignal();
         if(hit){
-          // Treffer! Neues Target aus Deck ziehen
           clearTargetNumbers();
           currentTarget = generateTargetNumberColor_Brainy();
           if(currentTarget){
             placeTargetNumbers(currentTarget);
           } else {
-            // Deck leer oder max Targets erreicht
             console.log("Spiel beendet - keine weiteren Targets verfügbar");
           }
         }
@@ -2289,9 +2268,7 @@
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
-        // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
         await runSetNumbersCycle();
-
       } else if(buttonState === "spielen"){
         const isWVisible = !wFaceGroup.classList.contains("hidden");
 
@@ -2332,7 +2309,7 @@
 
     modalConfirm.addEventListener("click", () => {
       hideCloseModal();
-      showKspView(); // Restart with Brainy
+      showKspView();
     });
 
     closeModal.addEventListener("click", (e) => {
@@ -2345,12 +2322,69 @@
       console.log("KIPP BILANZ wurde geklickt");
     });
 
+    // ============================================================
+    // >>> START-AUTOMATIK (wie besprochen):
+    // Ausgang: face 0 in Q0
+    // Ende:    face 1 in Q0 (Spieler startet auf "Kipp Anzahl")
+    // Hintergrund: Zahlen setzen + 4x CW vorspulen (0->1 bei Q0)
+    // ============================================================
+    function fastInitAndEnterKippAnzahl(){
+      // alles laufende sofort stoppen
+      cancelPreview();
+      stopAtNextW = false;
+
+      // Brainy direkt aktiv
+      selectedLevel = "brainy";
+
+      // Targets zurücksetzen
+      targetsGenerated = 0;
+      cardDeck = [];
+
+      clearHitVisuals();
+      clearTargetNumbers();
+      currentTarget = null;
+
+      // 1) neue 12 Zahlen planen, Sets leer
+      reroll12_keepEmpty();
+
+      // 2) alle 3 Faces "unsichtbar" bestücken
+      ensureAssigned(0);
+      ensureAssigned(1);
+      ensureAssigned(2);
+
+      // 3) Vorspulen: 4x CW (k erfüllt: k%3=1 und k%4=0)
+      // Start (face=0, rot=0/Q0) -> End (face=1, rot=0/Q0)
+      rotIndex = 0;
+      faceIndex = 0;
+      setRotationSnap();
+
+      for(let i=0;i<4;i++){
+        // rein logisch weiter, keine Zwischenansicht
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+      }
+
+      // Q0 fix, face 1 fix (sicherheits-netz)
+      rotIndex = 0;
+      faceIndex = 1;
+      setRotationSnap();
+
+      // 4) nur Endzustand rendern (Würfel sichtbar)
+      showW();
+      renderW();
+
+      // 5) direkt auf KIPP-ANZAHL
+      showKippAnzahlView();
+    }
+
     window.addEventListener("load", () => {
       rebuild();
-      resetToW1Q0_Empty();
-      showKspView(); // Start directly with Brainy level
+      // Startzustand herstellen (face0/Q0 existiert kurz logisch),
+      // dann sofort in Endzustand face1/Q0 + Kipp-Anzahl springen
+      fastInitAndEnterKippAnzahl();
       updateShadowVisibility();
     });
+
     window.addEventListener("resize", rebuild);
 
     document.addEventListener("touchmove", (e) => {
