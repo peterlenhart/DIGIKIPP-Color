@@ -456,7 +456,10 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-      font-size: calc(24px * var(--uiscale));
+
+      /* (4) Icons 1.8× größer */
+      font-size: calc(24px * var(--uiscale) * 1.8);
+      line-height: 1;
       font-weight: 1000;
       color: #7a3f2b;
     }
@@ -878,7 +881,8 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
+        <!-- (2) DIGI-KIPP -> DIGIKIPP -->
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div id="schauenView" class="hidden">
           <div class="schauenTop" id="schauenTop">
@@ -1481,14 +1485,14 @@
       const cellPx = numVar("--cell") || 142;
       const sizePx = numVar("--colorSize") || 126;
 
-      const placements = [
+      const demonstrate = [
         ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
         ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
         ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
         ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
       ];
 
-      for(const [coord, cls] of placements){
+      for(const [coord, cls] of demonstrate){
         placeColorSquare(coord, cls, cellPx, sizePx);
       }
     }
@@ -1519,9 +1523,10 @@
       const headerY = 1.0 * cellPx;  // Grenze zwischen Zeile 01 und 02
 
       const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";
-      score.style.top = headerY + "px";
-      score.style.transform = `translateY(-50%) scale(${getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75})`;
+      score.style.right = "70px";          // (1) waagrechte Position unverändert
+      score.style.top = headerY + "px";    // (1) vertikal exakt wie X (gleicher headerY)
+      const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
+      score.style.transform = `translateY(-50%) scale(${s})`;
       score.style.transformOrigin = "top right";
 
       const title = document.getElementById("titleLeft");
@@ -1536,7 +1541,7 @@
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionRotationButtons(cellPx);  // Neue Funktion für CW/CCW Buttons
+      positionRotationButtons(cellPx);  // CW/CCW Buttons
     }
 
     function positionNavButtons(cellPx){
@@ -1576,8 +1581,11 @@
       // CW/CCW Buttons in Zeile 10 zentrieren
       const row = 10;
       const visualRow = row + HEADER_ROW_OFFSET;
-      const centerY = (visualRow - 1) * cellPx + cellPx / 2;
-      
+      let centerY = (visualRow - 1) * cellPx + cellPx / 2;
+
+      // (3) 40px Richtung Norden
+      centerY -= 40;
+
       rotationBtns.style.top = centerY + "px";
       rotationBtns.style.transform = "translate(-50%, -50%)";
     }
