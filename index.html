@@ -285,1210 +285,846 @@
 
     .cubeFace{
       position: absolute;
+      left: calc(1 * var(--cell));
+      top:  calc((1 + 2) * var(--cell));
       width: calc(3 * var(--cell));
       height: calc(3 * var(--cell));
-      box-sizing: border-box;
-      border-radius: 0;
-      background:
-        radial-gradient(120% 90% at 15% 15%, var(--cube-wood-gold), transparent 55%),
-        radial-gradient(120% 90% at 25% 25%, var(--cube-wood-warm), transparent 60%),
-        repeating-linear-gradient(
-          20deg,
-          rgba(0,0,0,0.02) 0px,
-          rgba(0,0,0,0.02) 17px,
-          rgba(255,255,255,0.02) 17px,
-          rgba(255,255,255,0.02) 30px
-        ),
-        linear-gradient(135deg, rgba(255,255,255,0.16), rgba(0,0,0,0.08)),
-        linear-gradient(180deg, var(--cube-wood-base), var(--cube-wood-deep));
-      box-shadow:
-        inset 0 0 0 5px var(--w1-innerframe),
-        0 0 0 2px rgba(255,255,255,0.08) inset;
-      z-index: 2;
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
+      border-radius: 10px;
+      overflow: hidden;
     }
 
-    .uiLayer{
+    .w0Face{ z-index: 4; }
+    .w1Face{ z-index: 5; }
+    .w2Face{ z-index: 6; }
+    .kipFace{ z-index: 7; }
+
+    .fSlot{
       position:absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      z-index: 100;
-      pointer-events: none;
-    }
-
-    /* Button "SCHAUEN & MERKEN" */
-    .schauenTop{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: auto;
-    }
-
-    .btnSchauen{
-      width: calc(260px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      pointer-events: auto;
-    }
-    .btnSchauen:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .btnSchauen[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
-    .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
-      color: #7a3f2b;
-      text-align: center;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    /* "SCHAU GENAU" = Button im gleichen Stil (Höhe 44) */
-    .btnSchauGenau{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
-      height: calc(44px * var(--uiscale));
-    }
-    .btnSchauGenau:active{ transform: translate(-50%, -50%) scale(0.98); filter: brightness(0.98); }
-    .btnSchauGenau[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
-    .squareBtn{
-      width: calc(44px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-    .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .squareBtn.selected{
-      background: rgba(249, 150, 30, 0.95);
-      border-color: rgba(0,0,0,0.85);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.32),
-        0 0 0 2px rgba(255,255,255,0.25) inset,
-        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-      transform: scale(1.05);
-    }
-    .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
-
-    .anzahlText{
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      color: #7a3f2b;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      font-size: calc(18px * var(--uiscale));
-      line-height: 1;
-    }
-
-    .kippAnzahlBtns{
-      position: absolute;
-      left: 50%;
-      top: 0; /* wird in positionUI() gesetzt */
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-wrap: nowrap;
-      gap: calc(24px * var(--uiscale));
-      pointer-events: auto;
-      z-index: 10;
-      justify-content: center;
-    }
-    .kippAnzahlBtns.compact{ gap: calc(12px * var(--uiscale)); }
-
-    .slot{
-      position: absolute;
       width: var(--cell);
       height: var(--cell);
-      box-sizing: border-box;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
       border: var(--slot-border-w) solid var(--slot-border);
-      border-radius: 0;
-      z-index: 7;
-      box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,
-        -2px -2px 0 rgba(0,0,0,0.15) inset,
-        0 6px 12px rgba(0,0,0,0.35),
-        4px 4px 7px -2px rgba(0,0,0,0.30);
-    }
-
-    .slot .num{
-      position: absolute;
-      inset: 0;
+      box-sizing: border-box;
       display: flex;
       align-items: center;
       justify-content: center;
-      user-select: none;
-      z-index: 9;
+      font-size: 32px;
+      font-weight: 600;
+      color: #2a160c;
+      background: var(--slot-fill);
     }
 
-    .slot .num > span{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 0.70);
-      letter-spacing: -0.02em;
-      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
-      transform: rotate(var(--num-rot, 0deg));
-      transform-origin: 50% 50%;
-      position: relative;
-      line-height: 1;
+    .fSlot.top-left     { left:0; top:0; border-radius: 10px 0 0 0; }
+    .fSlot.top-center   { left: var(--cell); top:0; }
+    .fSlot.top-right    { left: calc(2 * var(--cell)); top:0; border-radius: 0 10px 0 0; }
+    .fSlot.mid-left     { left:0; top: var(--cell); }
+    .fSlot.mid-center   { left: var(--cell); top: var(--cell); }
+    .fSlot.mid-right    { left: calc(2 * var(--cell)); top: var(--cell); }
+    .fSlot.bot-left     { left:0; top: calc(2 * var(--cell)); border-radius: 0 0 0 10px; }
+    .fSlot.bot-center   { left: var(--cell); top: calc(2 * var(--cell)); }
+    .fSlot.bot-right    { left: calc(2 * var(--cell)); top: calc(2 * var(--cell)); border-radius: 0 0 10px 0; }
+
+    .w0Face.cubeFace{ background: var(--cube-wood-base); }
+    .w1Face.cubeFace{
+      background:
+        linear-gradient(135deg, transparent 48%, var(--w1-innerframe) 48%, var(--w1-innerframe) 52%, transparent 52%),
+        var(--cube-wood-base);
+    }
+    .w2Face.cubeFace{ background: var(--cube-wood-deep); }
+    .kipFace.cubeFace{
+      background:
+        radial-gradient(circle at 45% 40%, var(--cube-wood-warm), transparent 50%),
+        radial-gradient(circle at 60% 65%, var(--cube-wood-gold), transparent 50%),
+        var(--cube-wood-deep);
     }
 
-    .slot .num > span.twodigit{
-      letter-spacing: -0.16em !important;
-      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
-    }
+    .kipFace .fSlot.mid-center{ background: transparent; border: none; }
 
-    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
-    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
-    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
-    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
-
-    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .kipScale{
+    .targetNumber{
+      pointer-events: none;
+      z-index: 25;
       position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
+      font-weight: 600;
+      font-size: 46px;
+      line-height: 1;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      text-shadow:
+        0 2px 4px rgba(0,0,0,0.30),
+        0 0 2px rgba(255,255,255,0.50);
+
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
+
       transform:
         translate(var(--pivot-x), var(--pivot-y))
-        scaleX(0.6666667)
+        rotate(var(--rot))
         translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
 
-    .kipShadow{ display: none; }
-
-    .kipEdgeCore{
+    /* Z-INDEX: 30 - UI-Elemente */
+    .closeButton,
+    .testBtn{
       position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: 10px;
-      height: calc(3 * var(--cell));
-      transform: translateX(-50%);
-      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
-      z-index: 1;
-      opacity: 0.95;
-    }
-
-    .kipFaceQ0{
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .kipFaceQ1{
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .k-3e{ left: calc(4 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-4e{ left: calc(4 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-2f{ left: calc(5 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2g{ left: calc(6 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .hidden{ display:none !important; }
-
-    .scoreDisplay{
-      position: absolute;
-      right: 0;
-      top: 0;
-      font-size: clamp(100px, 14vmin, 180px);
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--btn-bg);
+      border: 4px solid var(--btn-border);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.28);
+      color: var(--btn-text);
+      font-weight: 700;
+      font-size: 56px;
+      cursor: pointer;
+      z-index: 30;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1;
-      z-index: 20;
+      padding: 0;
+    }
+    .closeButton:active,
+    .testBtn:active{
+      transform: translate(-50%, -50%) scale(0.96);
+    }
+
+    .logoRow{
+      position: absolute;
+      left: 0;
+      top: calc(1.0 * var(--cell));
+      width: var(--gridW);
+      height: var(--cell);
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logoText{
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: var(--btn-text);
+      text-shadow:
+        0 6px 16px rgba(0,0,0,0.42),
+        0 3px 8px rgba(0,0,0,0.32),
+        0 1px 3px rgba(0,0,0,0.22);
+      padding: 6px 14px;
+      border-radius: 50px;
+      background:
+        linear-gradient(135deg,
+          rgba(237,220,196, 0.9),
+          rgba(226,208,180, 0.92) 40%,
+          rgba(215,194,164, 0.90) 70%,
+          rgba(205,178,144, 0.88));
+      box-shadow:
+        0 4px 14px rgba(0,0,0,0.28),
+        inset 0 1px 2px rgba(255,255,255,0.30),
+        inset 0 -1px 2px rgba(0,0,0,0.15);
+      border: 2px solid rgba(255,255,255,0.20);
+    }
+
+    .scorePanel{
+      position: absolute;
+      top: calc(1.0 * var(--cell));
+      right: calc(1 * var(--cell));
+      width: auto;
+      height: var(--cell);
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scoreText{
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--btn-text);
+      text-shadow:
+        0 5px 14px rgba(0,0,0,0.38),
+        0 3px 7px rgba(0,0,0,0.28),
+        0 1px 3px rgba(0,0,0,0.18);
+      padding: 6px 16px;
+      border-radius: 50px;
+      background:
+        linear-gradient(135deg,
+          rgba(237,220,196, 0.9),
+          rgba(226,208,180, 0.92) 40%,
+          rgba(215,194,164, 0.90) 70%,
+          rgba(205,178,144, 0.88));
+      box-shadow:
+        0 4px 12px rgba(0,0,0,0.28),
+        inset 0 1px 2px rgba(255,255,255,0.30),
+        inset 0 -1px 2px rgba(0,0,0,0.15);
+      border: 2px solid rgba(255,255,255,0.20);
+      transform: scale(var(--headerScale));
+      transform-origin: center right;
+    }
+
+    .kippAnzahlBtns{
+      position: absolute;
+      left: 0;
+      top: calc(11 * var(--cell)); /* ÄNDERUNG: von 10 nach 11 */
+      width: var(--gridW);
+      height: var(--cell);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
       pointer-events: none;
     }
 
-    .titleLeft{
-      position: absolute;
-      top: 0;
-      font-size: clamp(100px, 14vmin, 180px); /* exakt wie Score */
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      text-align: center;
-      z-index: 20;
-      pointer-events: none;
+    .kippAnzahlBtns button{
+      pointer-events: auto;
     }
 
-    .navBtn{
-      position: absolute;
-      width: calc(56px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
-      background: none;
-      border: none;
+    .squareBtn{
+      width: calc((var(--gridW) - 7 * 10px) / 6);
+      height: calc(var(--cell) * 0.75);
+      background: var(--btn-bg);
+      border: 4px solid var(--btn-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.28);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      pointer-events: auto;
-      z-index: 100;
-      padding: 0;
+      transition: transform 0.08s ease, background 0.12s ease;
     }
-    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
-    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
 
-    .closeIcon{
-      position: relative;
-      width: calc(32px * var(--uiscale));
-      height: calc(32px * var(--uiscale));
+    .squareBtn.selected{
+      background: var(--orange);
     }
-    .closeIcon::before,
-    .closeIcon::after{
-      content: "";
+
+    .squareBtn:active{
+      transform: scale(0.96);
+    }
+
+    .anzahlText{
+      font-size: 56px;
+      font-weight: 700;
+      color: var(--btn-text);
+      line-height: 1;
+    }
+
+    /* NEUE Rotation Buttons in Zeile 10 */
+    .rotationBtns{
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: calc(32px * var(--uiscale));
-      height: calc(5px * var(--uiscale));
-      background: rgba(234,215,190,0.96);
-      border-radius: calc(2.5px * var(--uiscale));
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
-    }
-    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
-    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
-
-    .modalOverlay{
-      position: fixed;
-      top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
+      top: calc(10 * var(--cell));
+      width: var(--gridW);
+      height: var(--cell);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .rotationBtns button{
+      pointer-events: auto;
+    }
+
+    .rotBtn{
+      width: calc((var(--gridW) - 7 * 10px) / 6 * 2 + 20px); /* Doppelte Breite + 20px */
+      height: calc(var(--cell) * 0.75);
+      background: var(--btn-bg);
+      border: 4px solid var(--btn-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.28);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      cursor: pointer;
+      transition: transform 0.08s ease;
+      font-size: 48px;
+      color: var(--btn-text);
+    }
+
+    .rotBtn:active{
+      transform: scale(0.96);
+    }
+
+    .hidden{
+      display: none !important;
+    }
+
+    .schauenView,
+    .kippAnzahlView{
+      position: absolute;
+      inset:0;
+      z-index: 20;
+    }
+
+    .bigButton{
+      position: absolute;
+      left: 50%;
+      top: 70%;
+      transform: translate(-50%, -50%);
+      width: calc(var(--gridW) * 0.72);
+      height: calc(var(--cell) * 1.2);
+      background: var(--btn-bg);
+      border: 4px solid var(--btn-border);
+      border-radius: 30px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.32);
+      color: var(--btn-text);
+      font-weight: 700;
+      font-size: 38px;
+      cursor: pointer;
+      z-index: 30;
       pointer-events: auto;
     }
 
-    .modalBox{
-      background: rgba(234,215,190,0.98);
-      border: 3px solid rgba(0,0,0,0.65);
+    .bigButton:active{
+      transform: translate(-50%, -50%) scale(0.98);
+    }
+
+    /* Modals */
+    .overlay{
+      position: fixed;
+      inset:0;
+      background: rgba(0,0,0,0.60);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal{
+      background: var(--ui-panel-bg);
+      color: var(--ui-text);
       border-radius: 20px;
-      padding: 40px 48px;
-      box-shadow:
-        0 20px 40px rgba(0,0,0,0.35),
-        0 0 0 1px rgba(255,255,255,0.15) inset;
+      padding: 30px 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      max-width: 90vw;
       text-align: center;
-      max-width: 85%;
-      width: auto;
     }
 
-    .modalTitle{
-      font-size: clamp(22px, 5.5vmin, 36px);
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      color: #2a160c;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-      margin-bottom: 24px;
-      text-transform: uppercase;
-      white-space: nowrap;
+    .modal h2{
+      margin: 0 0 20px 0;
+      font-size: 32px;
     }
 
-    .modalText{
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 600;
-      color: #4a2418;
-      margin-bottom: 32px;
-      line-height: 1.5;
+    .modal p{
+      margin: 0 0 30px 0;
+      font-size: 20px;
     }
 
-    .modalBtns{
+    .modalButtons{
       display: flex;
       gap: 20px;
       justify-content: center;
     }
 
     .modalBtn{
-      padding: 16px 40px;
-      border-radius: 14px;
-      border: 2px solid rgba(0,0,0,0.65);
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 1000;
-      letter-spacing: 0.06em;
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      border: none;
       cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.18),
-        0 0 0 1px rgba(255,255,255,0.15) inset;
-      white-space: nowrap;
-    }
-    .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    .modalBtn.cancel{
-      background: #a8927a;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.25);
     }
 
-    .modalBtn.confirm{
-      background: #d64545;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    .btnCancel{
+      background: #888;
+      color: #fff;
     }
 
-    /* Endscreen nach "Beenden" */
-    .endOverlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.88);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      pointer-events: auto;
+    .btnConfirm{
+      background: var(--orange);
+      color: #fff;
     }
-    .endBox{
-      background: rgba(234,215,190,0.98);
-      border: 3px solid rgba(0,0,0,0.65);
-      border-radius: 22px;
-      padding: 40px 48px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
-      text-align: center;
-      max-width: 86%;
+
+    .endOverlay .modal h2{
+      margin-bottom: 30px;
     }
-    .endTitle{
-      font-size: clamp(22px, 5.5vmin, 36px);
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #2a160c;
-      margin-bottom: 18px;
-    }
-    .endSub{
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 600;
-      color: #4a2418;
-      margin-bottom: 28px;
-    }
-    .endBtn{
+
+    .endOverlay .modalBtn{
       padding: 16px 40px;
-      border-radius: 14px;
-      border: 2px solid rgba(0,0,0,0.65);
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      background: #4a2418;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
-      box-shadow: 0 8px 14px rgba(0,0,0,0.22);
+      font-size: 24px;
     }
-    .endBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
   </style>
 </head>
-
 <body>
-  <div class="stage" id="stage">
-    <div class="layout" id="layout">
-      <div class="bgPNG" aria-hidden="true"></div>
-      <div class="ball" aria-label="Kugel"></div>
-      <div class="colors" id="colors" aria-hidden="true"></div>
 
-      <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
+  <div class="stage">
+    <div class="layout">
+      <!-- BG PNG -->
+      <div class="bgPNG"></div>
+
+      <!-- Kugel -->
+      <div class="ball"></div>
+
+      <!-- Farb-Quadrate -->
+      <div class="colors" id="colors"></div>
+
+      <!-- Würfel-Schatten -->
+      <div class="cubeShadowLayer" id="cubeShadowLayer">
         <div class="cubeShadowClip">
           <div class="cubeShadowInner"></div>
         </div>
       </div>
 
-      <div class="zwischenKippSchattenLayer" aria-hidden="true">
-        <div id="shadowQ0" class="zwischenKippSchatten"></div>
-        <div id="shadowQ1" class="zwischenKippSchatten"></div>
-        <div id="shadowQ2" class="zwischenKippSchatten"></div>
-        <div id="shadowQ3" class="zwischenKippSchatten"></div>
+      <!-- Zwischen-Kipp Schatten -->
+      <div class="zwischenKippSchattenLayer">
+        <div class="zwischenKippSchatten" id="shadowQ0"></div>
+        <div class="zwischenKippSchatten" id="shadowQ1"></div>
+        <div class="zwischenKippSchatten" id="shadowQ2"></div>
+        <div class="zwischenKippSchatten" id="shadowQ3"></div>
       </div>
 
-      <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
-        <div class="cubeFace" aria-label="Würfelfläche"></div>
+      <!-- W-Faces -->
+      <div class="wFaceGroup" id="wFaceGroup">
+        <div class="cubeFace w0Face" id="w0Face">
+          <div class="fSlot top-left" data-faceslot="0-0"></div>
+          <div class="fSlot top-center" data-faceslot="0-1"></div>
+          <div class="fSlot top-right" data-faceslot="0-2"></div>
+          <div class="fSlot mid-left" data-faceslot="0-3"></div>
+          <div class="fSlot mid-center" data-faceslot="0-4"></div>
+          <div class="fSlot mid-right" data-faceslot="0-5"></div>
+          <div class="fSlot bot-left" data-faceslot="0-6"></div>
+          <div class="fSlot bot-center" data-faceslot="0-7"></div>
+          <div class="fSlot bot-right" data-faceslot="0-8"></div>
+        </div>
 
-        <div class="slot s-3b read-west"  data-slot="S1"><div class="num"><span></span></div></div>
-        <div class="slot s-4b read-west"  data-slot="S2"><div class="num"><span></span></div></div>
-        <div class="slot s-2c read-north" data-slot="S3"><div class="num"><span></span></div></div>
-        <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
-      </div>
+        <div class="cubeFace w1Face" id="w1Face">
+          <div class="fSlot top-left" data-faceslot="1-0"></div>
+          <div class="fSlot top-center" data-faceslot="1-1"></div>
+          <div class="fSlot top-right" data-faceslot="1-2"></div>
+          <div class="fSlot mid-left" data-faceslot="1-3"></div>
+          <div class="fSlot mid-center" data-faceslot="1-4"></div>
+          <div class="fSlot mid-right" data-faceslot="1-5"></div>
+          <div class="fSlot bot-left" data-faceslot="1-6"></div>
+          <div class="fSlot bot-center" data-faceslot="1-7"></div>
+          <div class="fSlot bot-right" data-faceslot="1-8"></div>
+        </div>
 
-      <!-- Zwischenkipp-Gruppen (fixe IDs) -->
-      <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
-
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
+        <div class="cubeFace w2Face" id="w2Face">
+          <div class="fSlot top-left" data-faceslot="2-0"></div>
+          <div class="fSlot top-center" data-faceslot="2-1"></div>
+          <div class="fSlot top-right" data-faceslot="2-2"></div>
+          <div class="fSlot mid-left" data-faceslot="2-3"></div>
+          <div class="fSlot mid-center" data-faceslot="2-4"></div>
+          <div class="fSlot mid-right" data-faceslot="2-5"></div>
+          <div class="fSlot bot-left" data-faceslot="2-6"></div>
+          <div class="fSlot bot-center" data-faceslot="2-7"></div>
+          <div class="fSlot bot-right" data-faceslot="2-8"></div>
         </div>
       </div>
 
-      <div id="kipGroup_1_2" class="kipGroup hidden" data-kip="1_2" aria-label="Kipp Gruppe 1_2">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
-
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
+      <!-- Kip-Face -->
+      <div class="kipGroup hidden" id="kipGroup">
+        <div class="cubeFace kipFace" id="kipFace">
+          <div class="fSlot top-left" data-faceslot="k-0"></div>
+          <div class="fSlot top-center" data-faceslot="k-1"></div>
+          <div class="fSlot top-right" data-faceslot="k-2"></div>
+          <div class="fSlot mid-left" data-faceslot="k-3"></div>
+          <div class="fSlot mid-center" data-faceslot="k-4"></div>
+          <div class="fSlot mid-right" data-faceslot="k-5"></div>
+          <div class="fSlot bot-left" data-faceslot="k-6"></div>
+          <div class="fSlot bot-center" data-faceslot="k-7"></div>
+          <div class="fSlot bot-right" data-faceslot="k-8"></div>
         </div>
       </div>
 
-      <div id="kipGroup_2_0" class="kipGroup hidden" data-kip="2_0" aria-label="Kipp Gruppe 2_0">
-        <div class="kipScale">
-          <div class="kipShadow" aria-hidden="true"></div>
-          <div class="kipEdgeCore" aria-hidden="true"></div>
+      <div class="grid"></div>
+      <div class="targetNumberLayer" id="targetNumberLayer"></div>
 
-          <div class="cubeFace kipFaceQ0" aria-label="Würfelfläche Q0"></div>
-          <div class="cubeFace kipFaceQ1" aria-label="Würfelfläche Q1"></div>
-
-          <div class="slot k-4d read-east"  data-slot="W2_A"><div class="num"><span></span></div></div>
-          <div class="slot k-3d read-east"  data-slot="W2_B"><div class="num"><span></span></div></div>
-          <div class="slot k-2b read-north" data-slot="W2_C"><div class="num"><span></span></div></div>
-          <div class="slot k-2c read-north" data-slot="W2_D"><div class="num"><span></span></div></div>
-
-          <div class="slot k-3e read-west"  data-slot="W1_1"><div class="num"><span></span></div></div>
-          <div class="slot k-4e read-west"  data-slot="W1_2"><div class="num"><span></span></div></div>
-          <div class="slot k-2f read-north" data-slot="W1_3"><div class="num"><span></span></div></div>
-          <div class="slot k-2g read-north" data-slot="W1_4"><div class="num"><span></span></div></div>
-        </div>
+      <!-- UI -->
+      <div class="logoRow">
+        <div class="logoText">DIGIKIPP</div>
       </div>
 
-      <!-- UI Layer -->
-      <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
-
-        <div id="schauenView" class="hidden">
-          <div class="schauenTop" id="schauenTop">
-            <button id="btnSchauen" class="btnSchauen" type="button">
-              <span class="btnText">SCHAUEN & MERKEN</span>
-            </button>
-          </div>
-
-          <button class="navBtn closeBtn" id="closeBtnSchauen" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
-
-        <div id="kippAnzahlView" class="hidden">
-          <button id="btnSchauGenau" class="btnSchauen btnSchauGenau" type="button">
-            <span class="btnText">SCHAU GENAU</span>
-          </button>
-
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
-
-          <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
-            <span class="anzahlText">T</span>
-          </button>
-
-          <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
-        </div>
+      <div class="scorePanel">
+        <div class="scoreText" id="scoreText">P00/80</div>
       </div>
 
-      <div class="grid" id="grid" aria-hidden="true"></div>
-    </div>
-  </div>
+      <!-- SCHAUEN View -->
+      <div class="schauenView" id="schauenView">
+        <button class="closeButton" id="closeBtnSchauen">✕</button>
+        <button class="bigButton" id="btnSchauen">SCHAUEN & MERKEN</button>
+      </div>
 
-  <div id="closeModal" class="modalOverlay hidden">
-    <div class="modalBox">
-      <div class="modalTitle">Spiel beenden?</div>
-      <div class="modalText">Möchtest du das Spiel wirklich beenden?<br>Der aktuelle Fortschritt geht verloren.</div>
-      <div class="modalBtns">
-        <button class="modalBtn cancel" id="modalCancel">Abbrechen</button>
-        <button class="modalBtn confirm" id="modalConfirm">Beenden</button>
+      <!-- KIPP-ANZAHL View -->
+      <div class="kippAnzahlView hidden" id="kippAnzahlView">
+        <button class="closeButton" id="closeBtnAnzahl">✕</button>
+        <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
+        
+        <!-- NEUE ROTATION BUTTONS -->
+        <div class="rotationBtns">
+          <button class="rotBtn" id="btnCW" type="button">↻</button>
+          <button class="rotBtn" id="btnCCW" type="button">↺</button>
+        </div>
+        
+        <button class="testBtn hidden" id="testTargetBtn">T</button>
       </div>
     </div>
   </div>
 
-  <div id="endOverlay" class="endOverlay hidden">
-    <div class="endBox">
-      <div class="endTitle">Spiel beendet</div>
-      <div class="endSub">Du kannst jetzt neu starten.</div>
-      <button class="endBtn" id="endRestart">Neu starten</button>
+  <!-- Close Modal -->
+  <div class="overlay hidden" id="closeModal">
+    <div class="modal">
+      <h2>Spiel beenden?</h2>
+      <p>Möchten Sie das Spiel wirklich beenden?</p>
+      <div class="modalButtons">
+        <button class="modalBtn btnCancel" id="modalCancel">Abbrechen</button>
+        <button class="modalBtn btnConfirm" id="modalConfirm">Beenden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Overlay -->
+  <div class="overlay hidden" id="endOverlay">
+    <div class="modal">
+      <h2>Spiel beendet</h2>
+      <div class="modalButtons">
+        <button class="modalBtn btnConfirm" id="endRestart">Neustart</button>
+      </div>
     </div>
   </div>
 
   <script>
-    const colorsEl = document.getElementById("colors");
+    const HEADER_ROW_OFFSET = 2;
 
-    const schauenView  = document.getElementById("schauenView");
-    const schauenTop   = document.getElementById("schauenTop");
-    const btnSchauen   = document.getElementById("btnSchauen");
+    const colors = document.getElementById("colors");
+    const wFaceGroup = document.getElementById("wFaceGroup");
+    const kipGroup = document.getElementById("kipGroup");
+    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
 
+    const schauenView = document.getElementById("schauenView");
     const kippAnzahlView = document.getElementById("kippAnzahlView");
-    const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
 
     const closeBtnSchauen = document.getElementById("closeBtnSchauen");
-    const closeBtnAnzahl  = document.getElementById("closeBtnAnzahl");
+    const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
+    const btnSchauen = document.getElementById("btnSchauen");
+    const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
+    const testTargetBtn = document.getElementById("testTargetBtn");
+    const targetNumberLayer = document.getElementById("targetNumberLayer");
+    const scoreText = document.getElementById("scoreText");
 
-    const closeModal   = document.getElementById("closeModal");
-    const modalCancel  = document.getElementById("modalCancel");
+    const closeModal = document.getElementById("closeModal");
+    const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
-
     const endOverlay = document.getElementById("endOverlay");
     const endRestart = document.getElementById("endRestart");
 
-    const testTargetBtn = document.getElementById("testTargetBtn");
-    const btnSchauGenau = document.getElementById("btnSchauGenau");
+    // NEUE ROTATION BUTTONS
+    const btnCW = document.getElementById("btnCW");
+    const btnCCW = document.getElementById("btnCCW");
 
-    const shadowQ0 = document.getElementById("shadowQ0");
-    const shadowQ1 = document.getElementById("shadowQ1");
-    const shadowQ2 = document.getElementById("shadowQ2");
-    const shadowQ3 = document.getElementById("shadowQ3");
-    const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
-
-    const cubeShadowLayer = document.getElementById("cubeShadowLayer");
-
-    let currentView = "level";
-    let selectedLevel = null;
-
-    let buttonState = "schauen";
-
-    function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-    const wFaceGroup = document.getElementById("wFaceGroup");
-
-    const kipGroups = {
-      "0_1": document.getElementById("kipGroup_0_1"),
-      "1_2": document.getElementById("kipGroup_1_2"),
-      "2_0": document.getElementById("kipGroup_2_0"),
-    };
-
-    let activeKipId = "0_1";
-    function getKipId(fromFace, toFace){ return `${fromFace}_${toFace}`; }
-
-    function setActiveKipGroup(kipId){
-      activeKipId = kipId;
-      Object.entries(kipGroups).forEach(([id, el]) => {
-        if(!el) return;
-        if(id === kipId) el.classList.remove("hidden");
-        else el.classList.add("hidden");
-      });
-      updateShadowVisibility();
-    }
-
-    const slotTargetsW = [
-      wFaceGroup.querySelector('[data-slot="S1"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S2"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S3"] .num > span'),
-      wFaceGroup.querySelector('[data-slot="S4"] .num > span'),
+    const shadowEls = [
+      document.getElementById("shadowQ0"),
+      document.getElementById("shadowQ1"),
+      document.getElementById("shadowQ2"),
+      document.getElementById("shadowQ3")
     ];
 
-    const slotElsW = [
-      wFaceGroup.querySelector('[data-slot="S1"]'),
-      wFaceGroup.querySelector('[data-slot="S2"]'),
-      wFaceGroup.querySelector('[data-slot="S3"]'),
-      wFaceGroup.querySelector('[data-slot="S4"]'),
-    ];
-
-    const kipSlotCache = {};
-    function getKipSlots(kipId){
-      if(kipSlotCache[kipId]) return kipSlotCache[kipId];
-      const g = kipGroups[kipId];
-      if(!g){
-        kipSlotCache[kipId] = { right:[null,null,null,null], left:[null,null,null,null] };
-        return kipSlotCache[kipId];
-      }
-      const right = [
-        g.querySelector('[data-slot="W1_1"] .num > span'),
-        g.querySelector('[data-slot="W1_2"] .num > span'),
-        g.querySelector('[data-slot="W1_3"] .num > span'),
-        g.querySelector('[data-slot="W1_4"] .num > span'),
-      ];
-      const left = [
-        g.querySelector('[data-slot="W2_A"] .num > span'),
-        g.querySelector('[data-slot="W2_B"] .num > span'),
-        g.querySelector('[data-slot="W2_C"] .num > span'),
-        g.querySelector('[data-slot="W2_D"] .num > span'),
-      ];
-      kipSlotCache[kipId] = { right, left };
-      return kipSlotCache[kipId];
-    }
-
-    const allColors = ["violett","blau","gruen","orange"];
-
-    const HEADER_ROW_OFFSET = 2;
-    const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-
-    function numVar(name){
-      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
-    }
-
-    function coordToXY(coord){
-      const row = parseInt(coord, 10);
-      const colLetter = coord.replace(String(row), "");
-      return { row, col: colMap[colLetter], colLetter };
-    }
-
-    // Zielzahlen-ROTATION:
-    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
-    function getTargetRotationDeg(row, col){
-      if(row === 1) return 0;
-      if(row === 8) return 180;
-      if(col === 1) return -90;
-      if(col === 8) return 90;
-      return 0;
-    }
-
-    let currentTarget = null;
-
-    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
+    const NUM_FACES = 3;
+    const SLOTS_PER_FACE = 9;
     let cardDeck = [];
-    let targetsGenerated = 0;
-    const MAX_TARGETS = 10;
+    let faceAssignments = Array.from({length: NUM_FACES}, () =>
+      Array(SLOTS_PER_FACE).fill(null)
+    );
 
-    // Zwei-Tasten-Auswahl System
+    let rotIndex = 0;
+    let faceIndex = 0;
+    let currentView = "schauen";
+    let selectedLevel = "brainy";
+    let buttonState = "schauen";
     let selectedButtons = [];
+    let currentTarget = null;
+    let targetsGenerated = 0;
+    let stopAtNextW = false;
+    let previewToken = 0;
+    let previewCancelled = false;
 
-    function getVisibleNumbers(){
-      const curr = sets[faceIndex];
-      return [
-        { slotEl: slotElsW[0], num: curr[0] },
-        { slotEl: slotElsW[1], num: curr[1] },
-        { slotEl: slotElsW[2], num: curr[2] },
-        { slotEl: slotElsW[3], num: curr[3] },
-      ];
-    }
+    const slotPositions = [
+      {name:"top-left", classList:["top-left"]},
+      {name:"top-center", classList:["top-center"]},
+      {name:"top-right", classList:["top-right"]},
+      {name:"mid-left", classList:["mid-left"]},
+      {name:"mid-center", classList:["mid-center"]},
+      {name:"mid-right", classList:["mid-right"]},
+      {name:"bot-left", classList:["bot-left"]},
+      {name:"bot-center", classList:["bot-center"]},
+      {name:"bot-right", classList:["bot-right"]}
+    ];
 
-    function initializeCardDeck(){
-      const visible = getVisibleNumbers();
-      const visibleNumbers = new Set();
-      for(const v of visible){
-        if(v.num != null) visibleNumbers.add(v.num);
-      }
+    function createCardDeck(){
       cardDeck = [];
-      for(let num = 1; num <= 12; num++){
-        if(visibleNumbers.has(num)) continue;
-        for(const color of allColors){
-          cardDeck.push({ num, color });
+      for(let n = 1; n <= 6; n++){
+        for(let c of ["blau","gruen","orange","violett"]){
+          cardDeck.push({num:n, color:c});
+        }
+      }
+      cardDeck.push({num:null, color:null});
+      cardDeck.push({num:null, color:null});
+      cardDeck.push({num:null, color:null});
+      shuffleDeck(cardDeck);
+    }
+
+    function shuffleDeck(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+    }
+
+    function reroll12_keepEmpty(){
+      createCardDeck();
+      for(let f=0; f<NUM_FACES; f++){
+        for(let s=0; s<SLOTS_PER_FACE; s++){
+          if(faceAssignments[f][s] && faceAssignments[f][s].num === null){
+            continue;
+          }
+          faceAssignments[f][s] = null;
         }
       }
     }
 
-    function generateTargetNumberColor_Brainy(){
-      if(targetsGenerated >= MAX_TARGETS) return null;
-      if(cardDeck.length === 0) initializeCardDeck();
-      if(cardDeck.length === 0) return null;
-      const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck.splice(randomIndex, 1)[0];
-      targetsGenerated++;
-      return { num: card.num, color: card.color };
-    }
-
-    const colorFieldCoords = {
-      'violett': ['3A','8D','8E','3H'],
-      'blau':    ['1F','8F','4A','5A'],
-      'gruen':   ['1C','8C','4H','5H'],
-      'orange':  ['1D','1E','6A','6H']
-    };
-
-    function clearTargetNumbers(){
-      document.querySelectorAll('.targetNumber').forEach(el => el.remove());
-    }
-
-    function placeTargetNumbers(target){
-      clearTargetNumbers();
-      const coords = colorFieldCoords[target.color];
-      if(!coords) return;
-
-      const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 126;
-
-      coords.forEach(coord => {
-        const { row, col } = coordToXY(coord);
-        const visualRow = row + HEADER_ROW_OFFSET;
-
-        const leftCell = (col - 1) * cellPx;
-        const topCell = (visualRow - 1) * cellPx;
-
-        const pad = (cellPx - sizePx) / 2;
-        const x = leftCell + pad;
-        const y = topCell + pad;
-
-        const container = document.createElement("div");
-        container.className = "targetNumber";
-        container.style.position = "absolute";
-        container.style.left = x + "px";
-        container.style.top = y + "px";
-        container.style.width = sizePx + "px";
-        container.style.height = sizePx + "px";
-        container.style.display = "flex";
-        container.style.alignItems = "center";
-        container.style.justifyContent = "center";
-        container.style.zIndex = "8";
-        container.style.pointerEvents = "none";
-
-        const numSpan = document.createElement("span");
-        numSpan.style.fontWeight = "900";
-        numSpan.style.color = "#111";
-        numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
-        numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
-        numSpan.style.lineHeight = "1";
-
-        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
-        numSpan.textContent = text;
-
-        const rot = getTargetRotationDeg(row, col);
-        numSpan.style.transform = `rotate(${rot}deg)`;
-
-        if(target.num >= 10){
-          numSpan.classList.add("twodigit");
+    function ensureAssigned(fIdx){
+      for(let s=0; s<SLOTS_PER_FACE; s++){
+        if(faceAssignments[fIdx][s] === null){
+          if(cardDeck.length === 0){
+            faceAssignments[fIdx][s] = {num:null, color:null};
+          } else {
+            faceAssignments[fIdx][s] = cardDeck.pop();
+          }
         }
-
-        container.appendChild(numSpan);
-        colorsEl.appendChild(container);
-      });
+      }
     }
 
-    function updateShadowVisibility(){
-      const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
-      const isWVisible = !wFaceGroup.classList.contains("hidden");
-
-      if(isKipVisible){
-        allShadows.forEach((s, i) => {
-          if(i === rotIndex) s.classList.add("visible");
-          else s.classList.remove("visible");
-        });
-      } else {
-        allShadows.forEach(s => s.classList.remove("visible"));
+    function renderW(){
+      ensureAssigned(faceIndex);
+      for(let f=0; f<NUM_FACES; f++){
+        const wFace = document.getElementById(`w${f}Face`);
+        if(!wFace) continue;
+        for(let s=0; s<SLOTS_PER_FACE; s++){
+          const slotEl = wFace.querySelector(`[data-faceslot="${f}-${s}"]`);
+          if(!slotEl) continue;
+          const card = faceAssignments[f][s];
+          if(!card || card.num === null){
+            slotEl.textContent = "";
+            slotEl.style.background = "var(--slot-fill)";
+          } else {
+            slotEl.textContent = String(card.num);
+            slotEl.style.background = `var(--${card.color})`;
+          }
+        }
       }
+    }
 
-      if(isWVisible) cubeShadowLayer.classList.add("visible");
-      else cubeShadowLayer.classList.remove("visible");
+    function renderKip(){
+      ensureAssigned(faceIndex);
+      const prevFIdx = (faceIndex === 0) ? (NUM_FACES - 1) : (faceIndex - 1);
+      ensureAssigned(prevFIdx);
+
+      const kipFace = document.getElementById("kipFace");
+      if(!kipFace) return;
+
+      for(let s=0; s<SLOTS_PER_FACE; s++){
+        const slotEl = kipFace.querySelector(`[data-faceslot="k-${s}"]`);
+        if(!slotEl) continue;
+
+        const kCard = faceAssignments[faceIndex][s];
+        if(!kCard || kCard.num === null){
+          slotEl.textContent = "";
+          slotEl.style.background = "var(--slot-fill)";
+        } else {
+          slotEl.textContent = String(kCard.num);
+          slotEl.style.background = `var(--${kCard.color})`;
+        }
+      }
     }
 
     function showW(){
-      Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
+      kipGroup.classList.add("hidden");
       updateShadowVisibility();
     }
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
-      updateShadowVisibility();
-    }
-
-    function mapHiddenToVisible_CW(face){
-      const [f1,f2,f3,f4] = face;
-      return [f4, f3, f2, f1];
-    }
-
-    function renderNumber(span, n){
-      if(!span) return;
-      span.classList.remove("twodigit");
-
-      if(n === null || n === undefined){
-        span.textContent = "";
-        span.style.letterSpacing = "";
-        return;
-      }
-      const text = (n === 9 || n === 6) ? `${n}.` : String(n);
-      span.textContent = text;
-
-      if(n >= 10) span.classList.add("twodigit");
-      else span.style.letterSpacing = "";
-    }
-
-    function renderKip(){
-      setRotationSnap();
-
-      const curr = sets[faceIndex];
-      const nextFaceIndex = (faceIndex + 1) % 3;
-      const next = sets[nextFaceIndex];
-
-      const kipId = getKipId(faceIndex, nextFaceIndex);
-      setActiveKipGroup(kipId);
-
-      const { right, left } = getKipSlots(kipId);
-
-      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-      const nextPreview = mapHiddenToVisible_CW(next);
-      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
-    }
-
-    function getUniqueRandomNumbers(count, min, max){
-      const pool = [];
-      for(let i=min; i<=max; i++) pool.push(i);
-      for(let i=pool.length-1; i>0; i--){
-        const j = Math.floor(Math.random() * (i+1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
-      }
-      return pool.slice(0, count);
-    }
-
-    // FIX: Kippspeed ist auf 3 fixiert, UI dazu ist gelöscht.
-    const FIXED_SPEED = 3;
-
-    function getTiming(){
-      const v = FIXED_SPEED;
-      const hold = Math.max(520, Math.round(2400 - v * 450));
-      const kip  = Math.max(160, Math.round(hold * 0.50));
-      const wfull = hold;
-      return { holdMs: hold, kipMs: kip, wMs: wfull };
-    }
-
-    const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
-    let faceIndex = 0;
-
-    function setRotationSnap(){
-      const deg = rotDeg[rotIndex];
-      wFaceGroup.style.setProperty("--rot", deg + "deg");
-      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
+      kipGroup.classList.remove("hidden");
       updateShadowVisibility();
     }
 
     function advanceFullCW(){
       rotIndex  = (rotIndex + 1) % 4;
-      faceIndex = (faceIndex + 1) % 3;
+      faceIndex = (faceIndex + 1) % NUM_FACES;
       setRotationSnap();
     }
 
-    function renderW(){
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+    function setRotationSnap(){
+      const deg = rotIndex * 90;
+      document.documentElement.style.setProperty("--rot", deg + "deg");
     }
 
-    function renderWEmpty(){
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
+    function updateShadowVisibility(){
+      const isWVisible = !wFaceGroup.classList.contains("hidden");
+      const isKipVisible = !kipGroup.classList.contains("hidden");
+
+      if(isWVisible){
+        cubeShadowLayer.classList.add("visible");
+      } else {
+        cubeShadowLayer.classList.remove("visible");
     }
 
-    let planned = [
-      [null,null,null,null],
-      [null,null,null,null],
-      [null,null,null,null],
-    ];
-    let sets = [
-      [null,null,null,null],
-      [null,null,null,null],
-      [null,null,null,null],
-    ];
-    let assigned = [false,false,false];
-
-    function ensureAssigned(idx){
-      if(assigned[idx]) return;
-      sets[idx] = planned[idx].slice();
-      assigned[idx] = true;
+      shadowEls.forEach((el,i) => {
+        if(isKipVisible && i === rotIndex){
+          el.classList.add("visible");
+        } else {
+          el.classList.remove("visible");
+        }
+      });
     }
 
-    function reroll12_keepEmpty(){
-      const twelve = getUniqueRandomNumbers(12, 1, 12);
-      planned[0] = twelve.slice(0,4);
-      planned[1] = twelve.slice(4,8);
-      planned[2] = twelve.slice(8,12);
-
-      sets = [
-        [null,null,null,null],
-        [null,null,null,null],
-        [null,null,null,null],
-      ];
-      assigned = [false,false,false];
-
-      rotIndex  = 0;
-      faceIndex = 0;
-      setRotationSnap();
+    function cancelPreview(){
+      previewCancelled = true;
+      previewToken++;
     }
 
-    let runningPreview = false;
-    let previewToken = 0;
-    let stopAtNextW = false;
-
-    async function waitOrPause(type, myToken){
-      const startTime = Date.now();
-      while(myToken === previewToken){
-        const T = getTiming();
-        const targetMs = (type === 'kip') ? T.kipMs : T.wMs;
-        const elapsed = Date.now() - startTime;
-        if(elapsed >= targetMs) break;
-        await sleep(50);
+    async function waitOrPause(phase, token){
+      const ms = 750;
+      const start = Date.now();
+      while(Date.now() - start < ms){
+        await new Promise(r => setTimeout(r, 50));
+        if(previewCancelled || token !== previewToken){
+          return false;
+        }
       }
-      return (myToken === previewToken);
+      return true;
+    }
+
+    async function runSetNumbersCycle(){
+      previewCancelled = false;
+      const myToken = ++previewToken;
+      setSchauenText("SCHAUEN & MERKEN");
+      setSchauenEnabled(false);
+
+      for(let cyc=0; cyc<4; cyc++){
+        showKip();
+        renderKip();
+        if(!await waitOrPause('kip', myToken)) return;
+
+        advanceFullCW();
+        showW();
+        renderW();
+        if(!await waitOrPause('w', myToken)) return;
+      }
+
+      buttonState = "spielen";
+      setSchauenText("SPIELEN");
+      setSchauenEnabled(true);
+    }
+
+    function setSchauenText(txt){
+      btnSchauen.textContent = txt;
     }
 
     function setSchauenEnabled(enabled){
       btnSchauen.disabled = !enabled;
     }
-    function setSchauenText(txt){
-      btnSchauen.querySelector('.btnText').textContent = txt;
+
+    // ========== TARGET NUMBERS ==========
+    function generateTargetNumberColor_Brainy(){
+      if(targetsGenerated >= 40) return null;
+      targetsGenerated++;
+
+      const nums = [1,2,3,4,5,6];
+      const cols = ["blau","gruen","orange","violett"];
+      const n = nums[Math.floor(Math.random()*nums.length)];
+      const c = cols[Math.floor(Math.random()*cols.length)];
+      return {num:n, color:c};
     }
 
-    async function runSetNumbersCycle(){
-      if(runningPreview) return;
-      runningPreview = true;
-      const myToken = ++previewToken;
+    function clearTargetNumbers(){
+      targetNumberLayer.innerHTML = "";
+    }
 
-      currentTarget = null;
+    function placeTargetNumbers(target){
       clearTargetNumbers();
+      const {num, color} = target;
 
-      buttonState = "running";
-      setSchauenEnabled(false);
-      setSchauenText("SCHAUEN & MERKEN");
+      for(let f=0; f<NUM_FACES; f++){
+        ensureAssigned(f);
+        for(let s=0; s<SLOTS_PER_FACE; s++){
+          const card = faceAssignments[f][s];
+          if(!card || card.num !== num || card.color !== color) continue;
 
-      reroll12_keepEmpty();
+          const wFace = document.getElementById(`w${f}Face`);
+          if(!wFace) continue;
+          const slotEl = wFace.querySelector(`[data-faceslot="${f}-${s}"]`);
+          if(!slotEl) continue;
 
-      showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+          const rect = slotEl.getBoundingClientRect();
+          const layoutEl = document.querySelector(".layout");
+          const layoutRect = layoutEl.getBoundingClientRect();
+          const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scale")) || 1;
 
-      ensureAssigned(0); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+          const relX = (rect.left - layoutRect.left) / scale;
+          const relY = (rect.top - layoutRect.top) / scale;
+          const relW = rect.width / scale;
+          const relH = rect.height / scale;
 
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+          const tDiv = document.createElement("div");
+          tDiv.className = "targetNumber";
+          tDiv.textContent = String(num);
+          tDiv.style.color = `var(--${color})`;
+          tDiv.style.left = (relX + relW/2) + "px";
+          tDiv.style.top = (relY + relH/2) + "px";
+          tDiv.style.transform = "translate(-50%, -50%)";
 
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(1); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(2); renderW();
-
-      buttonState = "spielen";
-      setSchauenText("STOPP & SPIELEN?");
-      setSchauenEnabled(true);
-
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW();
-      showW();
-      renderW();
-
-      const EXTRA_CYCLES = 3;
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW(); showW(); renderW();
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
+          targetNumberLayer.appendChild(tDiv);
         }
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
-
-      while(myToken === previewToken){
-        showKip(); renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW(); showW(); renderW();
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
-        }
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      runningPreview = false;
     }
 
-    function cancelPreview(){
-      previewToken++;
-      runningPreview = false;
-    }
-
-    function setScaleToFitWidth(){
-      const cols = numVar("--cols") || 8;
-      const cell = numVar("--cell") || 142;
-
-      const gridW = cols * cell;
-      const vw = window.innerWidth;
-
-      const targetW = vw * 0.94;
-      const scale = Math.min(1, targetW / gridW);
-
-      document.documentElement.style.setProperty("--scale", scale.toFixed(4));
-      document.documentElement.style.setProperty("--gridW", gridW + "px");
-
-      const uiscale = 1 / (scale || 1);
-      document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
-
-      return { cols, cell, gridW, scale };
-    }
-
-    function placeColorSquare(coord, cls, cellPx, sizePx){
-      const { row, col } = coordToXY(coord);
-      const visualRow = row + HEADER_ROW_OFFSET;
-
-      const leftCell = (col - 1) * cellPx;
-      const topCell  = (visualRow - 1) * cellPx;
-
-      const pad = (cellPx - sizePx) / 2;
-      const x = leftCell + pad;
-      const y = topCell  + pad;
-
-      const d = document.createElement("div");
-      d.className = "colorSq " + cls;
-      d.style.left = x + "px";
-      d.style.top  = y + "px";
-      colorsEl.appendChild(d);
-    }
+    // ========== COLOR SQUARES ==========
+    const colorGrid = [
+      ["orange","gruen","orange"],
+      ["violett","blau","violett"],
+      ["blau","violett","blau"],
+      ["gruen","orange","gruen"]
+    ];
 
     function rebuildColors(){
-      colorsEl.innerHTML = "";
+      colors.innerHTML = "";
+      const cellPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell")) || 142;
 
-      const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 126;
+      colorGrid.forEach((rowArr, rIdx) => {
+        const visualRow = rIdx + 1 + HEADER_ROW_OFFSET;
+        rowArr.forEach((c, cIdx) => {
+          const colIndex = (cIdx === 0) ? 1 : (cIdx === 1) ? 4 : 8;
+          const sq = document.createElement("div");
+          sq.className = `colorSq c-${c}`;
+          sq.style.left = ((colIndex - 1) * cellPx + 8) + "px";
+          sq.style.top = ((visualRow - 1) * cellPx + 8) + "px";
+          colors.appendChild(sq);
+        });
+      });
+    }
 
-      const placements = [
-        ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
-        ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
-        ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
-        ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
-      ];
-
-      for(const [coord, cls] of placements){
-        placeColorSquare(coord, cls, cellPx, sizePx);
-      }
+    // ========== SIZING & POSITIONING ==========
+    function setScaleToFitWidth(){
+      const vw = window.innerWidth;
+      const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell")) || 142;
+      const gridW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gridW")) || (8*cell);
+      let scale = vw / gridW;
+      if(scale > 1) scale = 1;
+      document.documentElement.style.setProperty("--scale", scale);
+      return { cell, scale };
     }
 
     function positionUI(){
-      const cellPx = numVar("--cell") || 142;
+      const cellPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell")) || 142;
 
-      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
-      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const midY = (row9VisualTop + row10VisualTop) / 2;
-      schauenTop.style.top = midY + "px";
-
-      // "SCHAU GENAU" Position + Größe: exakt über C–F
-      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row11Baseline = row11VisualTop + cellPx;
-
-      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
-      const rightEdgeF = 6 * cellPx;        // Spalte F endet
-      const centerCF = (leftEdgeC + rightEdgeF) / 2;
-      const widthCF = (rightEdgeF - leftEdgeC);
-
-      btnSchauGenau.style.left = centerCF + "px";
-      btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
-      btnSchauGenau.style.width = widthCF + "px";
-
-      // Header: X und P00/80 auf 75% skaliert, DIGIKIPP gleiche Höhe
-      const headerY = 1.0 * cellPx;
-
-      // 1–6 Reihe exakt auf Header-Mittelhöhe
-      kippAnzahlBtns.style.top = headerY + "px";
-
-      const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";
-      score.style.top = headerY + "px";
-      score.style.transform = `translateY(-50%) scale(${getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75})`;
-      score.style.transformOrigin = "top right";
-
-      const title = document.getElementById("titleLeft");
-      title.style.left = (3.5 * cellPx) + "px";
-      title.style.top = headerY + "px";
-      title.style.transform = "translate(-50%, -50%)"; // gleiche Höhe, Größe bleibt unverändert
-
-      positionNavButtons(cellPx);
-      positionTestButton(cellPx);
-    }
-
-    function positionNavButtons(cellPx){
       // Close links oben (Spalte A, Header) + 75% skaliert
       const closeCol = 1;
       const closeY = 1.0 * cellPx;
@@ -1506,7 +1142,8 @@
     }
 
     function positionTestButton(cellPx){
-      const row = 10;
+      // ÄNDERUNG: T Button jetzt in Position 8H (row=8, col=8)
+      const row = 8;
       const col = 8;
       const visualRow = row + HEADER_ROW_OFFSET;
 
@@ -1531,6 +1168,7 @@
 
       rebuildColors();
       positionUI();
+      positionTestButton(cell);
       updateShadowVisibility();
     }
 
@@ -1560,8 +1198,6 @@
       testTargetBtn.classList.remove("hidden");
       testTargetBtn.disabled = false;
 
-      btnSchauGenau.disabled = false;
-
       currentTarget = generateTargetNumberColor_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1569,7 +1205,6 @@
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
-      // TEXT "EINE oder ZWEI Tasten wählen" ist gelöscht -> kein Subtitle mehr.
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1585,7 +1220,6 @@
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
-      btnSchauGenau.disabled = locked;
     }
 
     let runningKipp = false;
@@ -1648,29 +1282,6 @@
       }
     }
 
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0)
-    btnSchauGenau.addEventListener("click", async () => {
-      setAnzahlButtonsLocked(true);
-
-      const savedRot = rotIndex;
-      const savedFace = faceIndex;
-
-      rotIndex = 0;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      await runKippCyclesNoHit(4);
-
-      rotIndex = savedRot;
-      faceIndex = savedFace;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      setAnzahlButtonsLocked(false);
-    });
-
     testTargetBtn.addEventListener("click", () => {
       currentTarget = generateTargetNumberColor_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
@@ -1688,6 +1299,17 @@
           stopAtNextW = true;
         }
       }
+    });
+
+    // CW/CCW Buttons (vorerst ohne Funktion)
+    btnCW.addEventListener("click", () => {
+      // TODO: CW Rotation Funktion
+      console.log("CW Button clicked");
+    });
+
+    btnCCW.addEventListener("click", () => {
+      // TODO: CCW Rotation Funktion
+      console.log("CCW Button clicked");
     });
 
     // ===== Beenden-Logik =====
