@@ -490,54 +490,6 @@
       filter: saturate(0.8);
     }
 
-    /* Direction Buttons (CW/CCW) */
-    .directionBtns{
-      display: flex;
-      gap: calc(20px * var(--uiscale));
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      pointer-events: auto;
-      z-index: 25;
-    }
-
-    .directionBtn{
-      width: calc(70px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-    }
-
-    .directionBtn:active{
-      transform: scale(0.98);
-      filter: brightness(0.98);
-    }
-
-    .directionBtn[disabled]{
-      opacity: 0.45;
-      pointer-events: none;
-      filter: saturate(0.8);
-    }
-
-    .directionIcon{
-      width: calc(28px * var(--uiscale));
-      height: calc(28px * var(--uiscale));
-      color: #7a3f2b;
-    }
-
     .anzahlText{
       font-weight: 1000;
       letter-spacing: 0.06em;
@@ -545,6 +497,119 @@
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
       font-size: calc(18px * var(--uiscale));
       line-height: 1;
+    }
+
+    .sliderRow{
+      position: absolute;
+      width: var(--gridW);
+      height: auto;
+      pointer-events: auto;
+    }
+
+    .speedIcon{
+      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      opacity: 0.98;
+      position: absolute;
+      filter:
+        brightness(0) saturate(100%)
+        drop-shadow(0 1px 0 rgba(0,0,0,0.15));
+      pointer-events: none;
+    }
+
+    .speedIcon.snail{
+      left: calc(var(--cell) - var(--cell) / 5);
+      transform: translateX(-50%);
+      top: 0;
+    }
+
+    .speedIcon.hase{
+      left: calc(7 * var(--cell) + var(--cell) / 5);
+      transform: translateX(-50%);
+      top: 0;
+    }
+
+    .sliderContainer{
+      position: absolute;
+      left: calc(1.5 * var(--cell));
+      width: calc(5 * var(--cell));
+      display: flex;
+      flex-direction: column;
+      gap: calc(6px * var(--uiscale));
+      pointer-events: auto;
+    }
+
+    .speedScale{
+      display:flex;
+      justify-content: space-between;
+      width: 100%;
+      color: #000000;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      font-size: calc(18px * var(--uiscale));
+      line-height: 1;
+      user-select:none;
+      text-shadow: none;
+      pointer-events: auto;
+    }
+    .speedScale span{
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .speedScale span:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    input[type="range"]{
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: calc(10px * var(--uiscale));
+      border-radius: 999px;
+      background: #000000;
+      outline: none;
+      border: none;
+      box-shadow: none;
+      touch-action: pan-x;
+      pointer-events: auto;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance: none;
+      appearance: none;
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--slot-fill);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb{
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--slot-fill);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+
+    .sliderLocked{
+      opacity: 0.45;
+      filter: saturate(0.8);
+    }
+    .sliderLocked input[type="range"]{
+      pointer-events: none;
+    }
+    .sliderLocked .speedScale{
+      pointer-events: none;
     }
 
     .kippAnzahlSubtitle{
@@ -1070,6 +1135,21 @@
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
         <div class="titleRight" id="titleRight">color</div>
 
+        <!-- Kippspeed - IMMER sichtbar in Zeile 13 -->
+        <div class="sliderRow" id="sliderRow">
+          <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
+
+          <div class="sliderContainer" id="sliderContainer">
+            <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
+
+            <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
+              <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
+            </div>
+          </div>
+
+          <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
+        </div>
+
         <div id="kspView" class="hidden">
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
@@ -1085,20 +1165,10 @@
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <!-- CW/CCW Direction Buttons -->
-          <div class="directionBtns" id="directionBtns">
-            <button class="directionBtn" id="cwBtn" type="button" aria-label="Im Uhrzeigersinn">
-              <svg viewBox="0 0 40 40" class="directionIcon">
-                <path d="M 20 8 A 12 12 0 1 1 12 28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 12 28 L 8 24 M 12 28 L 16 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button class="directionBtn" id="ccwBtn" type="button" aria-label="Gegen Uhrzeigersinn">
-              <svg viewBox="0 0 40 40" class="directionIcon">
-                <path d="M 20 8 A 12 12 0 1 0 28 28" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M 28 28 L 32 24 M 28 28 L 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
+          <div class="uiTitle" id="kippAnzahlTitle">KIPP-ANZAHL</div>
+
+          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
+            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
           </div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
@@ -1137,9 +1207,15 @@
     const kspView      = document.getElementById("kspView");
     const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
+    const sliderRow    = document.getElementById("sliderRow");
     const btnSchauen   = document.getElementById("btnSchauen");
+    const speedSlider  = document.getElementById("speedSlider");
+    const sliderContainer = document.getElementById("sliderContainer");
+    const speedScaleEl = document.getElementById("speedScale");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
+    const kippAnzahlTitle    = document.getElementById("kippAnzahlTitle");
+    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
@@ -1156,8 +1232,6 @@
     const modalConfirm = document.getElementById("modalConfirm");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
-    const cwBtn = document.getElementById("cwBtn");
-    const ccwBtn = document.getElementById("ccwBtn");
 
     const shadowQ0 = document.getElementById("shadowQ0");
     const shadowQ1 = document.getElementById("shadowQ1");
@@ -1188,15 +1262,7 @@
 
     let activeKipId = "0_1";
     function getKipId(fromFace, toFace){
-      // Zwischenkipp IDs sind: 0_1, 1_2, 2_0
-      // Egal ob vorwärts oder rückwärts, wir brauchen die richtige ID
-      const pair = [fromFace, toFace].sort((a,b) => a-b).join('_');
-      
-      // Spezialfall: 0 und 2 = "2_0" (nicht "0_2")
-      if((fromFace === 0 && toFace === 2) || (fromFace === 2 && toFace === 0)){
-        return "2_0";
-      }
-      return pair;
+      return `${fromFace}_${toFace}`;
     }
     function setActiveKipGroup(kipId){
       activeKipId = kipId;
@@ -1325,7 +1391,6 @@
 
     // Zwei-Tasten-Auswahl System
     let selectedButtons = [];
-    let selectedDirection = null; // 'cw' oder 'ccw'
 
     function getVisibleNumbers(){
       const curr = sets[faceIndex];
@@ -1612,12 +1677,6 @@
       updateShadowVisibility();
     }
 
-    function hideAll(){
-      wFaceGroup.classList.add("hidden");
-      Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
-      updateShadowVisibility();
-    }
-
     function mapHiddenToVisible_CW(face){
       const [f1,f2,f3,f4] = face;
       return [f4, f3, f2, f1];
@@ -1672,7 +1731,7 @@
     }
 
     function getTiming(){
-      const v = 3; // Fest auf 3 eingestellt
+      const v = Number(speedSlider.value || 2);
       const hold = Math.max(520, Math.round(2400 - v * 450));
       const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
@@ -1694,12 +1753,6 @@
     function advanceFullCW(){
       rotIndex  = (rotIndex + 1) % 4;
       faceIndex = (faceIndex + 1) % 3;
-      setRotationSnap();
-    }
-
-    function advanceFullCCW(){
-      rotIndex  = (rotIndex - 1 + 4) % 4;
-      faceIndex = (faceIndex - 1 + 3) % 3;
       setRotationSnap();
     }
 
@@ -1779,6 +1832,19 @@
     let runningPreview = false;
     let previewToken = 0;
     let stopAtNextW = false;
+
+    speedScaleEl.querySelectorAll("span").forEach(sp => {
+      sp.addEventListener("click", () => {
+        const v = Number(sp.dataset.v);
+        speedSlider.value = String(v);
+        speedSlider.dispatchEvent(new Event("input", { bubbles:true }));
+      });
+    });
+
+    speedSlider.addEventListener("input", () => {
+      const value = parseInt(speedSlider.value, 10);
+      console.log(`Speed: ${value}`);
+    });
 
     async function waitOrPause(type, myToken){
       const startTime = Date.now();
@@ -2007,7 +2073,6 @@
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionDirectionButtons(cellPx);
     }
 
     function positionNavButtons(cellPx){
@@ -2051,16 +2116,6 @@
       testTargetBtn.style.pointerEvents = "auto";
     }
 
-    function positionDirectionButtons(cellPx){
-      // Zwischen Zeile 9 und 10, waagerecht zentriert
-      const row9VisualTop = ((9 + HEADER_ROW_OFFSET) - 1) * cellPx;
-      const row10VisualTop = ((10 + HEADER_ROW_OFFSET) - 1) * cellPx;
-      const midY = (row9VisualTop + row10VisualTop) / 2;
-
-      const directionBtns = document.getElementById("directionBtns");
-      directionBtns.style.top = midY + "px";
-    }
-
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
 
@@ -2088,6 +2143,9 @@
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
+      // Kippspeed bleibt immer aktiv (kein Lock mehr)
+      // sliderContainer.classList.add("sliderLocked"); // REMOVED
+
       // Target-Counter zurücksetzen
       targetsGenerated = 0;
 
@@ -2096,7 +2154,7 @@
       clearTargetNumbers();
       currentTarget = null;
 
-      hideAll(); // Alles verstecken beim Start
+      showW();
     }
 
     function showKippAnzahlView(){
@@ -2119,6 +2177,7 @@
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
+      kippAnzahlSubtitle.innerHTML = '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -2140,11 +2199,6 @@
       testTargetBtn.disabled = locked;
     }
 
-    function setDirectionButtonsLocked(locked){
-      cwBtn.disabled = locked;
-      ccwBtn.disabled = locked;
-    }
-
     function handleAnzahlClick(anzahl){
       if(selectedLevel !== "brainy") return;
 
@@ -2154,22 +2208,50 @@
       );
       if(!clickedBtn) return;
 
-      // Toggle selection
-      const btnIndex = selectedButtons.indexOf(anzahl);
-      if(btnIndex >= 0){
-        // Deselektieren
-        selectedButtons.splice(btnIndex, 1);
-        clickedBtn.classList.remove("selected");
-      } else {
-        // Selektieren (max 2)
-        if(selectedButtons.length < 2){
-          selectedButtons.push(anzahl);
-          clickedBtn.classList.add("selected");
+      // Wenn Button bereits selektiert: Ausführen
+      if(selectedButtons.includes(anzahl)){
+        // Kipps ausführen
+        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+        
+        // Buttons sperren während Kipp-Zyklus
+        setBackLocked(true);
+        setAnzahlButtonsLocked(true);
+
+        runKippCycles(totalKipps).finally(() => {
+          // Selektion zurücksetzen
+          selectedButtons = [];
+          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+          
+          setBackLocked(false);
+          setAnzahlButtonsLocked(false);
+        });
+        return;
+      }
+
+      // Button selektieren (max 2)
+      if(selectedButtons.length < 2){
+        selectedButtons.push(anzahl);
+        clickedBtn.classList.add("selected");
+
+        // Wenn jetzt 2 Buttons selektiert: automatisch ausführen
+        if(selectedButtons.length === 2){
+          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+          
+          setBackLocked(true);
+          setAnzahlButtonsLocked(true);
+
+          runKippCycles(totalKipps).finally(() => {
+            selectedButtons = [];
+            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+            
+            setBackLocked(false);
+            setAnzahlButtonsLocked(false);
+          });
         }
       }
     }
 
-    async function runKippCyclesCW(count){
+    async function runKippCycles(count){
       if(runningPreview) return;
       runningPreview = true;
       const myToken = ++previewToken;
@@ -2205,47 +2287,6 @@
       }
     }
 
-    async function runKippCyclesCCW(count){
-      if(runningPreview) return;
-      runningPreview = true;
-      const myToken = ++previewToken;
-
-      clearHitVisuals();
-
-      for(let i = 0; i < count; i++){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCCW();
-        showW();
-        renderW();
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      runningPreview = false;
-
-      if(currentTarget){
-        const hit = checkHitAndSignal();
-        if(hit){
-          // Treffer! Neues Target aus Deck ziehen
-          clearTargetNumbers();
-          currentTarget = generateTargetNumberColor_Brainy();
-          if(currentTarget){
-            placeTargetNumbers(currentTarget);
-          } else {
-            // Deck leer oder max Targets erreicht
-            console.log("Spiel beendet - keine weiteren Targets verfügbar");
-          }
-        }
-      }
-    }
-
-    // Legacy function for compatibility
-    async function runKippCycles(count){
-      return runKippCyclesCW(count);
-    }
-
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
         // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
@@ -2273,40 +2314,6 @@
       if(currentTarget){
         placeTargetNumbers(currentTarget);
       }
-    });
-
-    cwBtn.addEventListener("click", () => {
-      if(selectedButtons.length === 0) return;
-      
-      const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-      setBackLocked(true);
-      setAnzahlButtonsLocked(true);
-      setDirectionButtonsLocked(true);
-
-      runKippCyclesCW(totalKipps).finally(() => {
-        selectedButtons = [];
-        kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-        setBackLocked(false);
-        setAnzahlButtonsLocked(false);
-        setDirectionButtonsLocked(false);
-      });
-    });
-
-    ccwBtn.addEventListener("click", () => {
-      if(selectedButtons.length === 0) return;
-      
-      const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-      setBackLocked(true);
-      setAnzahlButtonsLocked(true);
-      setDirectionButtonsLocked(true);
-
-      runKippCyclesCCW(totalKipps).finally(() => {
-        selectedButtons = [];
-        kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-        setBackLocked(false);
-        setAnzahlButtonsLocked(false);
-        setDirectionButtonsLocked(false);
-      });
     });
 
     function showCloseModal(){
