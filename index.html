@@ -325,59 +325,7 @@
       height: var(--gridH);
       z-index: 100;
       pointer-events: none;
-
-      /* ✅ ALLE UI-ELEMENTE 1 ZELLE NACH OBEN */
-      transform: translateY(calc(-1 * var(--cell)));
-      transform-origin: top left;
     }
-
-    /* Score kleiner */
-    .scoreDisplay{
-      position: absolute;
-      font-size: clamp(56px, 9vmin, 96px);
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft,
-    .titleRight{
-      position: absolute;
-      top: 0;
-      font-size: clamp(40px, 8vmin, 75px);
-      font-weight: 1000;
-      letter-spacing: 0.05em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      text-align: center;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft{ left: 0; }
-    .titleRight{
-      right: 0;
-      font-size: clamp(32px, 6.5vmin, 60px);
-      font-weight: 600;
-      text-transform: lowercase;
-    }
-
-    /* ... (ab hier: REST DEINES CSS UNVERÄNDERT) ... */
-
-    /* === AB HIER: DEIN CSS WEITER WIE VORHER === */
 
     .uiTitle{
       position:absolute;
@@ -405,22 +353,68 @@
       user-select: none;
     }
 
-    #kippAnzahlTitle{ color: rgba(234,215,190,0.96); }
-
-    /* ... alles übrige CSS bleibt wie bei dir ... */
-
-    /* (ich lasse hier NICHTS an deinem restlichen Styling an – außer den 3 Punkten oben) */
-
-    .levelBtns{ position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:71px; pointer-events:auto; z-index:10; }
-    .levelBtn{ width:284px; height:106px; display:flex; align-items:center; justify-content:center; border-radius:14px; border:2px solid rgba(0,0,0,0.65); background: rgba(234,215,190,0.96); color: rgba(0,0,0,0.92);
-      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale)); font-weight:1000; letter-spacing:0.06em;
-      box-shadow: 0 10px 18px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
-      user-select:none; white-space:nowrap; cursor:pointer; -webkit-tap-highlight-color: transparent;
+    #kippAnzahlTitle{
+      color: rgba(234,215,190,0.96);
     }
-    .levelBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
 
-    .kspBlock{ position:absolute; left:0; top:0; width:var(--gridW); z-index:10; pointer-events:auto; }
-    .kspTop{ position:absolute; left:50%; transform: translateX(-50%); display:flex; align-items:center; justify-content:center; }
+    .levelBtns{
+      position:absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      gap: 71px;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .levelBtn{
+      width: 284px;
+      height: 106px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius: 14px;
+
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      color: rgba(0,0,0,0.92);
+
+      font-size: calc(clamp(14px, 3.6vmin, 22px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+
+      user-select:none;
+      white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .levelBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    .kspBlock{
+      position:absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .kspTop{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
     .btnSchauen{
       width: calc(260px * var(--uiscale));
@@ -428,15 +422,37 @@
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex; align-items:center; justify-content:center;
-      user-select:none; -webkit-tap-highlight-color: transparent;
-      cursor:pointer; transition: all 0.2s ease; pointer-events:auto;
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      pointer-events: auto;
     }
-    .btnSchauen:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .btnSchauen[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
+    .btnSchauen:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+    .btnSchauen[disabled]{
+      opacity: 0.55;
+      pointer-events: none;
+      filter: saturate(0.8);
+    }
 
-    .btnText{ font-size: calc(16px * var(--uiscale)); font-weight:800; letter-spacing:0.05em; line-height:1.3; color:#7a3f2b; text-align:center; text-shadow: 0 1px 0 rgba(255,255,255,0.3); }
+    .btnText{
+      font-size: calc(16px * var(--uiscale));
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      line-height: 1.3;
+      color: #7a3f2b;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    }
 
     .squareBtn{
       width: calc(44px * var(--uiscale));
@@ -444,46 +460,156 @@
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex; align-items:center; justify-content:center;
-      user-select:none; -webkit-tap-highlight-color: transparent;
-      cursor:pointer; pointer-events:auto;
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      pointer-events: auto;
     }
-    .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
+    .squareBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
     .squareBtn.selected{
       background: rgba(249, 150, 30, 0.95);
       border-color: rgba(0,0,0,0.85);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.32), 0 0 0 2px rgba(255,255,255,0.25) inset, 0 0 0 4px rgba(249, 150, 30, 0.95) inset;
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.32),
+        0 0 0 2px rgba(255,255,255,0.25) inset,
+        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
       transform: scale(1.05);
     }
-    .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
-
-    .anzahlText{ font-weight:1000; letter-spacing:0.06em; color:#7a3f2b; text-shadow: 0 1px 0 rgba(255,255,255,0.35); font-size: calc(18px * var(--uiscale)); line-height:1; }
-
-    .sliderRow{ position:absolute; width:var(--gridW); height:auto; pointer-events:auto; }
-
-    .speedIcon{ width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale)); height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale)); opacity:0.98; position:absolute;
-      filter: brightness(0) saturate(100%) drop-shadow(0 1px 0 rgba(0,0,0,0.15)); pointer-events:none;
+    .squareBtn[disabled]{
+      opacity: 0.45;
+      pointer-events: none;
+      filter: saturate(0.8);
     }
-    .speedIcon.snail{ left: calc(var(--cell) - var(--cell) / 5); transform: translateX(-50%); top: 0; }
-    .speedIcon.hase{ left: calc(7 * var(--cell) + var(--cell) / 5); transform: translateX(-50%); top: 0; }
 
-    .sliderContainer{ position:absolute; left: calc(1.5 * var(--cell)); width: calc(5 * var(--cell)); display:flex; flex-direction:column; gap: calc(6px * var(--uiscale)); pointer-events:auto; }
-
-    .speedScale{ display:flex; justify-content:space-between; width:100%; color:#000; font-weight:1000; letter-spacing:0.08em; font-size: calc(18px * var(--uiscale)); line-height:1; user-select:none; text-shadow:none; pointer-events:auto; }
-    .speedScale span{ cursor:pointer; -webkit-tap-highlight-color: transparent; padding:6px 8px; border-radius:10px; }
-    .speedScale span:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    input[type="range"]{ -webkit-appearance:none; appearance:none; width:100%; height: calc(10px * var(--uiscale)); border-radius:999px; background:#000; outline:none; border:none; box-shadow:none; touch-action: pan-x; pointer-events:auto; }
-    input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width: calc(22px * var(--uiscale)); height: calc(22px * var(--uiscale)); border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill); border: 2px solid rgba(0,0,0,0.35);
-      box-shadow: 0 8px 14px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor:pointer;
+    .anzahlText{
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      font-size: calc(18px * var(--uiscale));
+      line-height: 1;
     }
-    input[type="range"]::-moz-range-thumb{ width: calc(22px * var(--uiscale)); height: calc(22px * var(--uiscale)); border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill); border: 2px solid rgba(0,0,0,0.35);
-      box-shadow: 0 8px 14px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor:pointer;
+
+    .sliderRow{
+      position: absolute;
+      width: var(--gridW);
+      height: auto;
+      pointer-events: auto;
+    }
+
+    .speedIcon{
+      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
+      opacity: 0.98;
+      position: absolute;
+      filter:
+        brightness(0) saturate(100%)
+        drop-shadow(0 1px 0 rgba(0,0,0,0.15));
+      pointer-events: none;
+    }
+
+    .speedIcon.snail{
+      left: calc(var(--cell) - var(--cell) / 5);
+      transform: translateX(-50%);
+      top: 0;
+    }
+
+    .speedIcon.hase{
+      left: calc(7 * var(--cell) + var(--cell) / 5);
+      transform: translateX(-50%);
+      top: 0;
+    }
+
+    .sliderContainer{
+      position: absolute;
+      left: calc(1.5 * var(--cell));
+      width: calc(5 * var(--cell));
+      display: flex;
+      flex-direction: column;
+      gap: calc(6px * var(--uiscale));
+      pointer-events: auto;
+    }
+
+    .speedScale{
+      display:flex;
+      justify-content: space-between;
+      width: 100%;
+      color: #000000;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      font-size: calc(18px * var(--uiscale));
+      line-height: 1;
+      user-select:none;
+      text-shadow: none;
+      pointer-events: auto;
+    }
+    .speedScale span{
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      padding: 6px 8px;
+      border-radius: 10px;
+    }
+    .speedScale span:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    input[type="range"]{
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: calc(10px * var(--uiscale));
+      border-radius: 999px;
+      background: #000000;
+      outline: none;
+      border: none;
+      box-shadow: none;
+      touch-action: pan-x;
+      pointer-events: auto;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance: none;
+      appearance: none;
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--slot-fill);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb{
+      width: calc(22px * var(--uiscale));
+      height: calc(22px * var(--uiscale));
+      border-radius: calc(6px * var(--uiscale));
+      background: var(--slot-fill);
+      border: 2px solid rgba(0,0,0,0.35);
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      cursor: pointer;
+    }
+
+    .sliderLocked{
+      opacity: 0.45;
+      filter: saturate(0.8);
+    }
+    .sliderLocked input[type="range"]{
+      pointer-events: none;
+    }
+    .sliderLocked .speedScale{
+      pointer-events: none;
     }
 
     .kippAnzahlSubtitle{
@@ -523,7 +649,9 @@
       justify-content: center;
     }
 
-    .kippAnzahlBtns.compact{ gap: calc(12px * var(--uiscale)); }
+    .kippAnzahlBtns.compact{
+      gap: calc(12px * var(--uiscale));
+    }
 
     .slot{
       position: absolute;
@@ -543,10 +671,22 @@
         4px 4px 7px -2px rgba(0,0,0,0.30);
     }
 
-    .slot .num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; user-select:none; z-index:9; }
+    .slot .num{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      z-index: 9;
+    }
+
     .slot .num > span{
-      display:inline-flex; align-items:center; justify-content:center;
-      font-weight:900; color:#111;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
       font-size: calc(var(--cell) * 0.70);
       letter-spacing: -0.02em;
       text-shadow: 0 2px 0 rgba(255,255,255,0.35);
@@ -555,8 +695,17 @@
       position: relative;
       line-height: 1;
     }
-    .slot .num > span.twodigit{ letter-spacing: -0.16em !important; transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em); }
-    .targetNumber > span.twodigit{ letter-spacing: -0.16em; transform: translateX(-0.18em) rotate(var(--tn-rot, 0deg)); transform-origin: 50% 50%; }
+
+    .slot .num > span.twodigit{
+      letter-spacing: -0.16em !important;
+      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
+    }
+
+    .targetNumber > span.twodigit{
+      letter-spacing: -0.16em;
+      transform: translateX(-0.18em) rotate(var(--tn-rot, 0deg));
+      transform-origin: 50% 50%;
+    }
 
     .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
     .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
@@ -569,21 +718,27 @@
     .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
 
     .kipScale{
-      position:absolute; left:0; top:0;
-      width: var(--gridW); height: var(--gridH);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--gridW);
+      height: var(--gridH);
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
-      transform: translate(var(--pivot-x), var(--pivot-y)) scaleX(0.6666667) translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        scaleX(0.6666667)
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
 
-    .kipShadow{ display:none; }
+    .kipShadow{ display: none; }
 
     .kipEdgeCore{
-      position:absolute;
+      position: absolute;
       left: calc(4 * var(--cell));
       top: calc((1 + 2) * var(--cell));
-      width:10px;
+      width: 10px;
       height: calc(3 * var(--cell));
       transform: translateX(-50%);
       background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
@@ -591,8 +746,19 @@
       opacity: 0.95;
     }
 
-    .kipFaceQ0{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); width: calc(3 * var(--cell)); height: calc(3 * var(--cell)); }
-    .kipFaceQ1{ left: calc(4 * var(--cell)); top: calc((1 + 2) * var(--cell)); width: calc(3 * var(--cell)); height: calc(3 * var(--cell)); }
+    .kipFaceQ0{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+
+    .kipFaceQ1{
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
 
     .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
     .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
@@ -606,40 +772,130 @@
 
     .hidden{ display:none !important; }
 
+    .kippBilanzBtn{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 300px;
+      height: calc(44px * var(--uiscale));
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgb(198, 168, 128);
+      color: rgba(0,0,0,0.92);
+      font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 20;
+    }
+    .kippBilanzBtn:active{
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    .scoreDisplay{
+      position: absolute;
+      right: 0;
+      top: 0;
+      font-size: clamp(100px, 14vmin, 180px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .titleLeft,
+    .titleRight{
+      position: absolute;
+      top: 0;
+      font-size: clamp(40px, 8vmin, 75px);
+      font-weight: 1000;
+      letter-spacing: 0.05em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      text-align: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .titleLeft{
+      left: 0;
+    }
+
+    .titleRight{
+      right: 0;
+      font-size: clamp(32px, 6.5vmin, 60px);
+      font-weight: 600;
+      text-transform: lowercase;
+    }
+
     .navBtn{
-      position:absolute;
+      position: absolute;
       width: calc(56px * var(--uiscale));
       height: calc(56px * var(--uiscale));
-      background:none;
-      border:none;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      user-select:none;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
       -webkit-tap-highlight-color: transparent;
-      pointer-events:auto;
-      z-index:100;
-      padding:0;
+      pointer-events: auto;
+      z-index: 100;
+      padding: 0;
     }
-    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
-    .navBtn[disabled]{ opacity: 0.35; pointer-events:none; filter: saturate(0.8); }
+    .navBtn:active{
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    .navBtn[disabled]{
+      opacity: 0.35;
+      pointer-events: none;
+      filter: saturate(0.8);
+    }
 
     .backIcon{
-      width: 0; height: 0;
+      width: 0;
+      height: 0;
       border-top: calc(18px * var(--uiscale)) solid transparent;
       border-bottom: calc(18px * var(--uiscale)) solid transparent;
       border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
     }
 
-    .closeIcon{ position: relative; width: calc(32px * var(--uiscale)); height: calc(32px * var(--uiscale)); }
+    .closeIcon{
+      position: relative;
+      width: calc(32px * var(--uiscale));
+      height: calc(32px * var(--uiscale));
+    }
     .closeIcon::before,
     .closeIcon::after{
-      content:"";
-      position:absolute;
-      top:50%;
-      left:50%;
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
       width: calc(32px * var(--uiscale));
       height: calc(5px * var(--uiscale));
       background: rgba(234,215,190,0.96);
@@ -651,25 +907,31 @@
 
     .modalOverlay{
       position: fixed;
-      top:0; left:0;
-      width:100vw; height:100vh;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0, 0, 0, 0.75);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:1000;
-      pointer-events:auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      pointer-events: auto;
     }
+
     .modalBox{
       background: rgba(234,215,190,0.98);
       border: 3px solid rgba(0,0,0,0.65);
       border-radius: 20px;
       padding: 40px 48px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.15) inset;
       text-align: center;
       max-width: 85%;
       width: auto;
     }
+
     .modalTitle{
       font-size: clamp(22px, 5.5vmin, 36px);
       font-weight: 1000;
@@ -680,6 +942,7 @@
       text-transform: uppercase;
       white-space: nowrap;
     }
+
     .modalText{
       font-size: clamp(16px, 4vmin, 22px);
       font-weight: 600;
@@ -687,7 +950,13 @@
       margin-bottom: 32px;
       line-height: 1.5;
     }
-    .modalBtns{ display:flex; gap:20px; justify-content:center; }
+
+    .modalBtns{
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
     .modalBtn{
       padding: 16px 40px;
       border-radius: 14px;
@@ -698,12 +967,24 @@
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 8px 14px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.15) inset;
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.18),
+        0 0 0 1px rgba(255,255,255,0.15) inset;
       white-space: nowrap;
     }
     .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .modalBtn.cancel{ background: #a8927a; color: rgba(255,255,255,0.95); text-shadow: 0 1px 0 rgba(0,0,0,0.35); }
-    .modalBtn.confirm{ background: #d64545; color: rgba(255,255,255,0.95); text-shadow: 0 1px 0 rgba(0,0,0,0.45); }
+
+    .modalBtn.cancel{
+      background: #a8927a;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+    }
+
+    .modalBtn.confirm{
+      background: #d64545;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+    }
 
     /* Animation Target */
     .targetNumber span{
@@ -711,8 +992,14 @@
       will-change: transform, filter;
     }
     @keyframes targetBreath{
-      0%, 100% { transform: rotate(var(--target-rot, 0deg)) scale(1); filter: brightness(1); }
-      50% { transform: rotate(var(--target-rot, 0deg)) scale(1.06); filter: brightness(1.12); }
+      0%, 100% {
+        transform: rotate(var(--target-rot, 0deg)) scale(1);
+        filter: brightness(1);
+      }
+      50% {
+        transform: rotate(var(--target-rot, 0deg)) scale(1.06);
+        filter: brightness(1.12);
+      }
     }
 
     .targetHitPulse span{ animation: targetHit 0.42s ease-in-out 2 !important; }
@@ -775,6 +1062,7 @@
 
       <!-- ======================================================
            3x Zwischenkipp-Gruppen: 0_1 / 1_2 / 2_0
+           (Fixe IDs wie von dir gewünscht)
            ====================================================== -->
 
       <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
@@ -839,9 +1127,11 @@
 
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <!-- ✅ KIPP BILANZ ENTFERNT -->
+        <!-- Header Elemente -->
+        <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-
+        
+        <!-- Titel Links und Rechts -->
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
         <div class="titleRight" id="titleRight">color</div>
 
@@ -932,6 +1222,7 @@
     const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
+    const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
     const scoreDisplay  = document.getElementById("scoreDisplay");
     const titleLeft  = document.getElementById("titleLeft");
     const titleRight  = document.getElementById("titleRight");
@@ -1000,7 +1291,7 @@
       wFaceGroup.querySelector('[data-slot="S4"]'),
     ];
 
-    // Cache pro kipGroup
+    // Cache pro kipGroup (damit wir sauber in der aktiven Gruppe rendern)
     const kipSlotCache = {};
     function getKipSlots(kipId){
       if(kipSlotCache[kipId]) return kipSlotCache[kipId];
@@ -1092,9 +1383,13 @@
     }
 
     let currentTarget = null;
+    
+    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
     let cardDeck = [];
     let targetsGenerated = 0;
     const MAX_TARGETS = 10;
+
+    // Zwei-Tasten-Auswahl System
     let selectedButtons = [];
 
     function getVisibleNumbers(){
@@ -1124,6 +1419,10 @@
       return false;
     }
 
+    // ============================================================
+    // PATHFINDING ALGORITHMUS FÜR BRAINY
+    // ============================================================
+
     const slotCoordsByRot = [
       ["3B", "4B", "2C", "2D"],
       ["2D", "3D", "3B", "4B"],
@@ -1132,7 +1431,10 @@
     ];
 
     function simulateKipp(face, rot){
-      return { face: (face + 1) % 3, rot: (rot + 1) % 4 };
+      return {
+        face: (face + 1) % 3,
+        rot: (rot + 1) % 4
+      };
     }
 
     function calculateMinKipps(targetNum, targetColor){
@@ -1147,6 +1449,7 @@
           break;
         }
       }
+
       if(numFaceIndex === -1) return null;
 
       const validKipps = [1, 2, 4, 5, 6];
@@ -1170,32 +1473,52 @@
           return kipps;
         }
       }
+
       return null;
     }
 
     function generateTargetNumberColor_Brainy(){
-      if(targetsGenerated >= MAX_TARGETS) return null;
-      if(cardDeck.length === 0) initializeCardDeck();
-      if(cardDeck.length === 0) return null;
+      // Wenn max Targets erreicht, stopp
+      if(targetsGenerated >= MAX_TARGETS){
+        return null;
+      }
 
+      // Wenn Deck leer: neu mischen mit aktuell unsichtbaren Zahlen
+      if(cardDeck.length === 0){
+        initializeCardDeck();
+      }
+
+      // Wenn immer noch leer (alle Zahlen sichtbar?), stopp
+      if(cardDeck.length === 0){
+        return null;
+      }
+
+      // Zufällige Karte aus Deck ziehen UND ENTFERNEN
       const randomIndex = Math.floor(Math.random() * cardDeck.length);
       const card = cardDeck.splice(randomIndex, 1)[0];
-
+      
       targetsGenerated++;
       return { num: card.num, color: card.color };
     }
 
     function initializeCardDeck(){
+      // Die 4 aktuell sichtbaren ZAHLEN ermitteln (egal welche Farbe!)
       const visible = getVisibleNumbers();
       const visibleNumbers = new Set();
-
+      
       for(const v of visible){
-        if(v.num != null) visibleNumbers.add(v.num);
+        if(v.num != null){
+          visibleNumbers.add(v.num);
+        }
       }
 
+      // Alle 48 Kombinationen erstellen, aber NUR mit unsichtbaren Zahlen
       cardDeck = [];
       for(let num = 1; num <= 12; num++){
+        // Wenn diese Zahl sichtbar ist, überspringen!
         if(visibleNumbers.has(num)) continue;
+        
+        // Sonst: alle 4 Farben dieser Zahl ins Deck
         for(const color of allColors){
           cardDeck.push({ num, color });
         }
@@ -1315,6 +1638,7 @@
         if(c && c === currentTarget.color){
           clearHitVisuals();
           applyHitVisual(slotEl, currentTarget.color);
+          console.log("TREFFER:", {target: currentTarget, slot: i+1, coord});
           return true;
         }
       }
@@ -1349,6 +1673,7 @@
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
+      // aktive kipGroup wird sichtbar (setActiveKipGroup kümmert sich darum)
       updateShadowVisibility();
     }
 
@@ -1370,8 +1695,11 @@
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
 
-      if(n >= 10) span.classList.add("twodigit");
-      else span.style.letterSpacing = "";
+      if(n >= 10){
+        span.classList.add("twodigit");
+      } else {
+        span.style.letterSpacing = "";
+      }
     }
 
     function renderKip(){
@@ -1381,6 +1709,7 @@
       const nextFaceIndex = (faceIndex + 1) % 3;
       const next = sets[nextFaceIndex];
 
+      // >>> HIER der Kern: passende Zwischenkipp-ID wählen
       const kipId = getKipId(faceIndex, nextFaceIndex);
       setActiveKipGroup(kipId);
 
@@ -1512,22 +1841,33 @@
       });
     });
 
-    speedSlider.addEventListener("input", () => {});
+    speedSlider.addEventListener("input", () => {
+      const value = parseInt(speedSlider.value, 10);
+      console.log(`Speed: ${value}`);
+    });
 
     async function waitOrPause(type, myToken){
       const startTime = Date.now();
+
       while(myToken === previewToken){
         const T = getTiming();
         const targetMs = (type === 'kip') ? T.kipMs : T.wMs;
         const elapsed = Date.now() - startTime;
+
         if(elapsed >= targetMs) break;
         await sleep(50);
       }
+
       return (myToken === previewToken);
     }
 
-    function setSchauenEnabled(enabled){ btnSchauen.disabled = !enabled; }
-    function setSchauenText(txt){ btnSchauen.querySelector('.btnText').textContent = txt; }
+    function setSchauenEnabled(enabled){
+      btnSchauen.disabled = !enabled;
+    }
+
+    function setSchauenText(txt){
+      btnSchauen.querySelector('.btnText').textContent = txt;
+    }
 
     async function runSetNumbersCycle(){
       if(runningPreview) return;
@@ -1538,6 +1878,7 @@
       clearTargetNumbers();
       clearHitVisuals();
 
+      buttonState = "running";
       setSchauenEnabled(false);
       setSchauenText("SCHAUEN & MERKEN");
 
@@ -1566,6 +1907,9 @@
 
       ensureAssigned(2); renderW();
 
+      // Zahlen sind gesetzt, aber Zielzahl kommt erst beim Klick auf "STOPP & SPIELEN?"
+
+      buttonState = "spielen";
       setSchauenText("STOPP & SPIELEN?");
       setSchauenEnabled(true);
 
@@ -1690,7 +2034,8 @@
       const midY = (row9VisualTop + row10VisualTop) / 2;
 
       kspTop.style.top = midY + "px";
-
+      
+      // Kippspeed-Bereich in Zeile 13
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row13Center = row13VisualTop + cellPx / 2;
       sliderRow.style.top = row13Center + "px";
@@ -1702,23 +2047,29 @@
       kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
-      // ✅ Zeile 1 Center (für Titel & Score)
+      // Header Elemente positionieren
+      const headerY = 1.0 * cellPx; // Zwischen Zeile 0.1 und 0.2
+      
+      // Kipp Bilanz Button: linksbündig in der HALBEN Spalte B
+      kippBilanzBtn.style.left = (cellPx + cellPx / 2) + "px";
+      kippBilanzBtn.style.top = headerY + "px";
+      kippBilanzBtn.style.transform = "translateY(-50%)";
+      
+      // Score Display: rechts, gleiche Y-Position
+      scoreDisplay.style.right = "70px";
+      scoreDisplay.style.top = headerY + "px";
+      scoreDisplay.style.transform = "translateY(-50%)";
+      
+      // Titel Links: Zeile 1, zentriert über Spalten A+B
       const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
-
-      // Titel Links: Spalte B Mitte (wie zuvor)
       titleLeft.style.left = cellPx + "px";
       titleLeft.style.top = row1Y + "px";
       titleLeft.style.transform = "translate(-50%, -50%)";
-
-      // Titel Rechts: Spalte G+H Mitte (wie zuvor)
+      
+      // Titel Rechts: Zeile 1, zentriert über Spalten G+H
       titleRight.style.left = (7 * cellPx) + "px";
       titleRight.style.top = row1Y + "px";
       titleRight.style.transform = "translate(-50%, -50%)";
-
-      // ✅ Score: exakt in "1GH" (Mitte zwischen G & H)
-      scoreDisplay.style.left = (7 * cellPx) + "px";
-      scoreDisplay.style.top = row1Y + "px";
-      scoreDisplay.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
@@ -1785,12 +2136,20 @@
       kspView.classList.remove("hidden");
       kippAnzahlView.classList.add("hidden");
 
+      // Automatically set to Brainy level (no level selection)
       selectedLevel = "brainy";
 
+      buttonState = "schauen";
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
+      // Kippspeed bleibt immer aktiv (kein Lock mehr)
+      // sliderContainer.classList.add("sliderLocked"); // REMOVED
+
+      // Target-Counter zurücksetzen
       targetsGenerated = 0;
+
+      // KEIN Target beim Start - erst nachdem Zahlen gesetzt sind!
       clearHitVisuals();
       clearTargetNumbers();
       currentTarget = null;
@@ -1807,9 +2166,12 @@
       testTargetBtn.classList.remove("hidden");
       testTargetBtn.disabled = false;
 
+      // Erstes Kippziel generieren
       clearHitVisuals();
       currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget) placeTargetNumbers(currentTarget);
+      if(currentTarget){
+        placeTargetNumbers(currentTarget);
+      }
     }
 
     function buildKippAnzahlButtons(){
@@ -1828,7 +2190,10 @@
       });
     }
 
-    function setBackLocked(locked){ backBtnAnzahl.disabled = locked; }
+    function setBackLocked(locked){
+      backBtnAnzahl.disabled = locked;
+    }
+
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
@@ -1837,37 +2202,48 @@
     function handleAnzahlClick(anzahl){
       if(selectedLevel !== "brainy") return;
 
+      // Button finden
       const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button")).find(
         b => parseInt(b.dataset.anzahl) === anzahl
       );
       if(!clickedBtn) return;
 
+      // Wenn Button bereits selektiert: Ausführen
       if(selectedButtons.includes(anzahl)){
+        // Kipps ausführen
         const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+        
+        // Buttons sperren während Kipp-Zyklus
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
         runKippCycles(totalKipps).finally(() => {
+          // Selektion zurücksetzen
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+          
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
         return;
       }
 
+      // Button selektieren (max 2)
       if(selectedButtons.length < 2){
         selectedButtons.push(anzahl);
         clickedBtn.classList.add("selected");
 
+        // Wenn jetzt 2 Buttons selektiert: automatisch ausführen
         if(selectedButtons.length === 2){
           const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+          
           setBackLocked(true);
           setAnzahlButtonsLocked(true);
 
           runKippCycles(totalKipps).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+            
             setBackLocked(false);
             setAnzahlButtonsLocked(false);
           });
@@ -1898,18 +2274,27 @@
       if(currentTarget){
         const hit = checkHitAndSignal();
         if(hit){
+          // Treffer! Neues Target aus Deck ziehen
           clearTargetNumbers();
           currentTarget = generateTargetNumberColor_Brainy();
-          if(currentTarget) placeTargetNumbers(currentTarget);
+          if(currentTarget){
+            placeTargetNumbers(currentTarget);
+          } else {
+            // Deck leer oder max Targets erreicht
+            console.log("Spiel beendet - keine weiteren Targets verfügbar");
+          }
         }
       }
     }
 
     btnSchauen.addEventListener("click", async () => {
-      if(btnSchauen.querySelector('.btnText').textContent.includes("SCHAUEN")){
+      if(buttonState === "schauen"){
+        // Slider bleibt immer aktiv (kein Lock/Unlock mehr)
         await runSetNumbersCycle();
-      } else {
+
+      } else if(buttonState === "spielen"){
         const isWVisible = !wFaceGroup.classList.contains("hidden");
+
         if(isWVisible){
           cancelPreview();
           showKippAnzahlView();
@@ -1919,19 +2304,26 @@
       }
     });
 
-    backBtnAnzahl.addEventListener("click", () => { showKspView(); });
+    backBtnAnzahl.addEventListener("click", () => {
+      showKspView();
+    });
 
     testTargetBtn.addEventListener("click", () => {
       clearHitVisuals();
       currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget) placeTargetNumbers(currentTarget);
+      if(currentTarget){
+        placeTargetNumbers(currentTarget);
+      }
     });
 
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
     }
-    function hideCloseModal(){ closeModal.classList.add("hidden"); }
+
+    function hideCloseModal(){
+      closeModal.classList.add("hidden");
+    }
 
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
@@ -1940,17 +2332,23 @@
 
     modalConfirm.addEventListener("click", () => {
       hideCloseModal();
-      showKspView();
+      showKspView(); // Restart with Brainy
     });
 
     closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal) hideCloseModal();
+      if(e.target === closeModal){
+        hideCloseModal();
+      }
+    });
+
+    kippBilanzBtn.addEventListener("click", () => {
+      console.log("KIPP BILANZ wurde geklickt");
     });
 
     window.addEventListener("load", () => {
       rebuild();
       resetToW1Q0_Empty();
-      showKspView();
+      showKspView(); // Start directly with Brainy level
       updateShadowVisibility();
     });
     window.addEventListener("resize", rebuild);
