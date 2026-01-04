@@ -1612,6 +1612,12 @@
       updateShadowVisibility();
     }
 
+    function hideAll(){
+      wFaceGroup.classList.add("hidden");
+      Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
+      updateShadowVisibility();
+    }
+
     function mapHiddenToVisible_CW(face){
       const [f1,f2,f3,f4] = face;
       return [f4, f3, f2, f1];
@@ -2082,9 +2088,6 @@
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
-      // Kippspeed bleibt immer aktiv (kein Lock mehr)
-      // sliderContainer.classList.add("sliderLocked"); // REMOVED
-
       // Target-Counter zurücksetzen
       targetsGenerated = 0;
 
@@ -2093,7 +2096,7 @@
       clearTargetNumbers();
       currentTarget = null;
 
-      showW();
+      hideAll(); // Alles verstecken beim Start
     }
 
     function showKippAnzahlView(){
