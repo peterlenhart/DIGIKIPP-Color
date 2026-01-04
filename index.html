@@ -1515,10 +1515,8 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
-      // Header: X und P00/80 zwischen Zeile 01 und 02 - DIGIKIPP vertikal zentriert
-      const row01Top = 1.0 * cellPx;
-      const row02Top = 2.0 * cellPx;
-      const headerY = (row01Top + row02Top) / 2;  // Mitte zwischen Zeile 01 und 02
+      // Header: X, DIGIKIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
+      const headerY = 1.0 * cellPx;  // Grenze zwischen Zeile 01 und 02
 
       const score = document.getElementById("scoreDisplay");
       score.style.right = "70px";
@@ -1529,7 +1527,7 @@
       const title = document.getElementById("titleLeft");
       title.style.left = (3.5 * cellPx) + "px";
       title.style.top = headerY + "px";
-      title.style.transform = "translate(-50%, -50%)"; // vertikal zentriert
+      title.style.transform = "translate(-50%, -50%)";
 
       // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
