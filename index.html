@@ -367,8 +367,7 @@
 
     /* ===== "SCHAU GENAU" Button (pulsierend) ===== */
     .btnSchauGenau{
-      /* Breite wird im JS exakt auf Spalten C–F gesetzt */
-      height: calc(56px * var(--uiscale));
+      height: calc(56px * var(--uiscale)); /* Höhe bleibt */
       border-radius: calc(18px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.75);
       background: rgba(0,0,0,0.30);
@@ -389,8 +388,13 @@
         0 2px 0 rgba(0,0,0,0.85),
         0 6px 18px rgba(0,0,0,0.70);
       animation: schauPulse 1.05s ease-in-out infinite;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      left: 50%;
+      top: 0;
+      width: calc(320px * var(--uiscale)); /* wird in positionUI() exakt auf C–F überschrieben */
     }
-    .btnSchauGenau:active{ transform: scale(0.98); filter: brightness(0.98); }
+    .btnSchauGenau:active{ transform: translate(-50%, -50%) scale(0.98); filter: brightness(0.98); }
     .btnSchauGenau[disabled]{
       opacity: 0.45;
       pointer-events: none;
@@ -539,6 +543,31 @@
       cursor: pointer;
     }
 
+    .kippAnzahlSubtitle{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+
+      color: rgba(255,255,255,0.96);
+
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 18px rgba(0,0,0,0.70);
+
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+
+      white-space: nowrap;
+      user-select: none;
+    }
+
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
@@ -666,6 +695,8 @@
 
     .hidden{ display:none !important; }
 
+    /* KIPP BILANZ Button ist in deiner Version ohnehin „entfernen“ – wir lassen ihn im Code NICHT mehr drin. */
+
     .scoreDisplay{
       position: absolute;
       right: 0;
@@ -687,9 +718,9 @@
     .titleLeft{
       position: absolute;
       top: 0;
-      font-size: clamp(40px, 8vmin, 75px);
+      font-size: clamp(100px, 14vmin, 180px); /* exakt wie Score */
       font-weight: 1000;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
@@ -719,21 +750,7 @@
       padding: 0;
     }
     .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
-    .navBtn[disabled]{
-      opacity: 0.18;        /* klar sichtbar, aber inaktiv */
-      pointer-events: none; /* wirklich tot */
-      filter: saturate(0.6);
-      transform: none;
-    }
-
-    .backIcon{
-      width: 0;
-      height: 0;
-      border-top: calc(18px * var(--uiscale)) solid transparent;
-      border-bottom: calc(18px * var(--uiscale)) solid transparent;
-      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
-    }
+    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
 
     .closeIcon{
       position: relative;
@@ -835,6 +852,57 @@
       color: rgba(255,255,255,0.95);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
+
+    /* Endscreen nach "Beenden" */
+    .endOverlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      pointer-events: auto;
+    }
+    .endBox{
+      background: rgba(234,215,190,0.98);
+      border: 3px solid rgba(0,0,0,0.65);
+      border-radius: 22px;
+      padding: 40px 48px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+      text-align: center;
+      max-width: 86%;
+    }
+    .endTitle{
+      font-size: clamp(22px, 5.5vmin, 36px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #2a160c;
+      margin-bottom: 18px;
+    }
+    .endSub{
+      font-size: clamp(16px, 4vmin, 22px);
+      font-weight: 600;
+      color: #4a2418;
+      margin-bottom: 28px;
+    }
+    .endBtn{
+      padding: 16px 40px;
+      border-radius: 14px;
+      border: 2px solid rgba(0,0,0,0.65);
+      font-size: clamp(16px, 4vmin, 22px);
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      background: #4a2418;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.22);
+    }
+    .endBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
   </style>
 </head>
 
@@ -931,7 +999,7 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
+        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
         <!-- Kippspeed -->
         <div class="sliderRow" id="sliderRow">
@@ -962,15 +1030,17 @@
         <div id="kippAnzahlView" class="hidden">
           <button id="btnSchauGenau" class="btnSchauGenau" type="button">SCHAU GENAU</button>
 
+          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
+            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
+          </div>
+
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
           </button>
 
-          <button class="navBtn backBtn" id="backBtnAnzahl" aria-label="Zurück">
-            <div class="backIcon"></div>
-          </button>
+          <!-- WICHTIG: Back-Button ist komplett entfernt (kein Ghost, kein Disable) -->
 
           <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
             <div class="closeIcon"></div>
@@ -993,6 +1063,14 @@
     </div>
   </div>
 
+  <div id="endOverlay" class="endOverlay hidden">
+    <div class="endBox">
+      <div class="endTitle">Spiel beendet</div>
+      <div class="endSub">Du kannst jetzt neu starten.</div>
+      <button class="endBtn" id="endRestart">Neu starten</button>
+    </div>
+  </div>
+
   <script>
     const colorsEl = document.getElementById("colors");
     const kspView      = document.getElementById("kspView");
@@ -1003,15 +1081,18 @@
     const speedScaleEl = document.getElementById("speedScale");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
+    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
     const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
-    const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
+
+    const endOverlay = document.getElementById("endOverlay");
+    const endRestart = document.getElementById("endRestart");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
@@ -1103,7 +1184,17 @@
     function coordToXY(coord){
       const row = parseInt(coord, 10);
       const colLetter = coord.replace(String(row), "");
-      return { row, col: colMap[colLetter] };
+      return { row, col: colMap[colLetter], colLetter };
+    }
+
+    // ===== Zielzahlen-ROTATION nach deiner Regel:
+    // Spalte A: -90, Spalte H: +90, Zeile 8: 180, Zeile 1: 0
+    function getTargetRotationDeg(row, col){
+      if(row === 1) return 0;
+      if(row === 8) return 180;
+      if(col === 1) return -90;
+      if(col === 8) return 90;
+      return 0;
     }
 
     let currentTarget = null;
@@ -1204,25 +1295,13 @@
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
+        // Rotation korrekt setzen
+        const rot = getTargetRotationDeg(row, col);
+        numSpan.style.transform = `rotate(${rot}deg)`;
+
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
         }
-
-        /* ===== FIX: Zielzahlen-Rotation exakt nach deiner Regel =====
-           Spalte A: -90°
-           Spalte H: +90°
-           Zeile  8: 180°
-           Zeile  1: 0°
-        */
-        let rot = 0;
-        if(col === 1) rot = -90;
-        if(col === 8) rot =  90;
-        if(row === 8) rot = 180;
-        if(row === 1) rot =   0;
-
-        numSpan.style.display = "inline-block";
-        numSpan.style.transform = `rotate(${rot}deg)`;
-        numSpan.style.transformOrigin = "50% 50%";
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
@@ -1558,28 +1637,34 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
+      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
-
       kspTop.style.top = midY + "px";
 
+      // Kippspeed: bereits „hochgerückt“ (so wie du wolltest) – bleibt
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row13Center = row13VisualTop + cellPx / 2;
       sliderRow.style.top = row13Center + "px";
 
+      // "SCHAU GENAU" Position + Größe: exakt über C–F
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      // "SCHAU GENAU" Position (wie bisher), Breite jetzt exakt C–F (4 Spalten)
-      btnSchauGenau.style.left = "50%";
-      btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
-      btnSchauGenau.style.position = "absolute";
-      btnSchauGenau.style.transform = "translate(-50%, -50%)";
-      btnSchauGenau.style.width = (4 * cellPx) + "px";   // C–F
+      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
+      const rightEdgeF = 6 * cellPx;        // Spalte F endet
+      const centerCF = (leftEdgeC + rightEdgeF) / 2;
+      const widthCF = (rightEdgeF - leftEdgeC);
 
+      btnSchauGenau.style.left = centerCF + "px";
+      btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
+      btnSchauGenau.style.width = widthCF + "px";
+
+      kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
+      // Header (Score rechts, Title links) – Positionen bleiben wie du bestätigt hast
       const headerY = 1.0 * cellPx;
 
       document.getElementById("scoreDisplay").style.right = "70px";
@@ -1587,7 +1672,7 @@
       document.getElementById("scoreDisplay").style.transform = "translateY(-50%)";
 
       const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
-      document.getElementById("titleLeft").style.left = cellPx + "px";
+      document.getElementById("titleLeft").style.left = (3.5 * cellPx) + "px"; // ungefähr dort wo früher der Button war
       document.getElementById("titleLeft").style.top = row1Y + "px";
       document.getElementById("titleLeft").style.transform = "translate(-50%, -50%)";
 
@@ -1596,20 +1681,9 @@
     }
 
     function positionNavButtons(cellPx){
-      const backCol = 8;
-      const backRow = 8;
-      const backVisualRow = backRow + HEADER_ROW_OFFSET;
-
-      const backLeft = (backCol - 1) * cellPx + cellPx / 2;
-      const backTop = (backVisualRow - 1) * cellPx + cellPx / 2;
-
-      backBtnAnzahl.style.left = backLeft + "px";
-      backBtnAnzahl.style.top = backTop + "px";
-      backBtnAnzahl.style.transform = "translate(-50%, -50%)";
-
+      // Close links oben (Spalte A, Header)
       const closeCol = 1;
       const closeY = 1.0 * cellPx;
-
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = closeY;
 
@@ -1677,9 +1751,6 @@
 
       btnSchauGenau.disabled = false;
 
-      // Zurück-Button dauerhaft inaktiv (bis du ihn wieder willst)
-      backBtnAnzahl.disabled = true;
-
       currentTarget = generateTargetNumberColor_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1687,6 +1758,8 @@
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
+      kippAnzahlSubtitle.innerHTML =
+        '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1699,17 +1772,10 @@
       });
     }
 
-    function setBackLocked(locked){
-      // Zurück bleibt dauerhaft aus, unabhängig vom Lock
-      backBtnAnzahl.disabled = true;
-    }
-
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
-      // back bleibt disabled
-      backBtnAnzahl.disabled = true;
     }
 
     let runningKipp = false;
@@ -1744,13 +1810,11 @@
       if(selectedButtons.includes(anzahl)){
         const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
 
-        setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
         runKippCyclesNoHit(totalKipps).finally(() => {
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-          setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
         return;
@@ -1763,13 +1827,11 @@
         if(selectedButtons.length === 2){
           const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
 
-          setBackLocked(true);
           setAnzahlButtonsLocked(true);
 
           runKippCyclesNoHit(totalKipps).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-            setBackLocked(false);
             setAnzahlButtonsLocked(false);
           });
         }
@@ -1778,7 +1840,6 @@
 
     // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0)
     btnSchauGenau.addEventListener("click", async () => {
-      setBackLocked(true);
       setAnzahlButtonsLocked(true);
 
       const savedRot = rotIndex;
@@ -1797,7 +1858,6 @@
       showW();
       renderW();
 
-      setBackLocked(false);
       setAnzahlButtonsLocked(false);
     });
 
@@ -1820,6 +1880,7 @@
       }
     });
 
+    // ===== Beenden-Logik: NICHT mehr auf irgendeine Ansicht zurückspringen =====
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
@@ -1828,17 +1889,30 @@
       closeModal.classList.add("hidden");
     }
 
+    function endGame(){
+      cancelPreview();
+      hideCloseModal();
+
+      // Alles Spielinterne „stilllegen“
+      kspView.classList.add("hidden");
+      kippAnzahlView.classList.add("hidden");
+
+      // Overlay zeigen
+      endOverlay.classList.remove("hidden");
+    }
+
     closeBtnKsp.addEventListener("click", showCloseModal);
     closeBtnAnzahl.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
-    modalConfirm.addEventListener("click", () => {
-      hideCloseModal();
-      showKspView();
-    });
+    modalConfirm.addEventListener("click", endGame);
 
     closeModal.addEventListener("click", (e) => {
       if(e.target === closeModal) hideCloseModal();
+    });
+
+    endRestart.addEventListener("click", () => {
+      location.reload();
     });
 
     // ===== Startlogik (wie vorher) =====
