@@ -414,7 +414,8 @@
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
+      top: 0; /* wird in positionUI() gesetzt */
+      transform: translate(-50%, -50%);
       display: flex;
       flex-wrap: nowrap;
       gap: calc(24px * var(--uiscale));
@@ -839,7 +840,7 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div id="schauenView" class="hidden">
           <div class="schauenTop" id="schauenTop">
@@ -1466,8 +1467,11 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
-      // Header: X und P00/80 auf 75% skaliert, DIGI-KIPP gleiche Höhe
+      // Header: X und P00/80 auf 75% skaliert, DIGIKIPP gleiche Höhe
       const headerY = 1.0 * cellPx;
+
+      // 1–6 Reihe exakt auf Header-Mittelhöhe
+      kippAnzahlBtns.style.top = headerY + "px";
 
       const score = document.getElementById("scoreDisplay");
       score.style.right = "70px";
