@@ -459,9 +459,24 @@
       font-size: calc(24px * var(--uiscale));
       font-weight: 1000;
       color: #7a3f2b;
+      padding: 0;
     }
     .rotBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .rotBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
+
+    /* ICONS in Rotationsbuttons: +10px Größe, +2px Strichstärke */
+    .rotIcon{
+      width: calc(34px * var(--uiscale));   /* 24 + 10 = 34 */
+      height: calc(34px * var(--uiscale));
+      display:block;
+    }
+    .rotIcon path{
+      stroke: #7a3f2b;
+      stroke-width: calc(4px * var(--uiscale)); /* dicker (vorher effektiv ~2) */
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
     .slot{
       position: absolute;
@@ -877,8 +892,11 @@
 
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
+        <!-- P00/80 bleibt Text gleich; Position kommt in Zeile 13 (oben anstehend) via positionUI() -->
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
+
+        <!-- TITEL: ohne Bindestrich, GROSS -->
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div id="schauenView" class="hidden">
           <div class="schauenTop" id="schauenTop">
@@ -901,8 +919,20 @@
 
           <!-- Rotation Buttons in Zeile 10 -->
           <div class="rotationBtns" id="rotationBtns">
-            <button class="rotBtn" id="btnCW" type="button" aria-label="Clockwise Rotation">↻</button>
-            <button class="rotBtn" id="btnCCW" type="button" aria-label="Counter-Clockwise Rotation">↺</button>
+            <!-- Icons als SVG: +10px Größe, +2px Strich -->
+            <button class="rotBtn" id="btnCW" type="button" aria-label="Clockwise Rotation">
+              <svg class="rotIcon" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M36 16a14 14 0 1 0 4 10"/>
+                <path d="M36 16v10h10"/>
+              </svg>
+            </button>
+
+            <button class="rotBtn" id="btnCCW" type="button" aria-label="Counter-Clockwise Rotation">
+              <svg class="rotIcon" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M12 16a14 14 0 1 1-4 10"/>
+                <path d="M12 16v10H2"/>
+              </svg>
+            </button>
           </div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
@@ -1515,19 +1545,28 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
-      // Header: X, DIGIKIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
-      const headerY = 1.0 * cellPx;  // Grenze zwischen Zeile 01 und 02
-
-      const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";
-      score.style.top = headerY + "px";
-      score.style.transform = `translateY(-50%) scale(${getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75})`;
-      score.style.transformOrigin = "top right";
-
+      // ===== TITEL: waagrecht mittig zentriert (ohne Bindestrich) =====
       const title = document.getElementById("titleLeft");
-      title.style.left = (3.5 * cellPx) + "px";
+      title.textContent = "DIGIKIPP";
+      title.style.left = (4 * cellPx) + "px";          // exakt Mitte der 8 Spalten
+      // Titely bleibt auf Header-Grenze wie bisher
+      const headerY = 1.0 * cellPx;                    // Grenze zwischen Zeile 01 und 02
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
+
+      // ===== SCORE: P00/80 in Zeile 13, oben anstehend =====
+      const score = document.getElementById("scoreDisplay");
+      score.textContent = "P00/80";
+
+      const row13 = 13;
+      const visualRow13 = row13 + HEADER_ROW_OFFSET;
+      const row13Top = (visualRow13 - 1) * cellPx;
+
+      score.style.right = "70px";
+      score.style.top = row13Top + "px";               // oben anstehend
+      const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
+      score.style.transform = `scale(${s})`;           // KEIN translateY(-50%)
+      score.style.transformOrigin = "top right";
 
       // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
@@ -1536,7 +1575,7 @@
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionRotationButtons(cellPx);  // Neue Funktion für CW/CCW Buttons
+      positionRotationButtons(cellPx);  // CW/CCW Buttons
     }
 
     function positionNavButtons(cellPx){
@@ -1573,12 +1612,12 @@
     }
 
     function positionRotationButtons(cellPx){
-      // CW/CCW Buttons in Zeile 10 zentrieren
+      // CW/CCW Buttons in Zeile 10 zentrieren, aber 20px höher
       const row = 10;
       const visualRow = row + HEADER_ROW_OFFSET;
       const centerY = (visualRow - 1) * cellPx + cellPx / 2;
-      
-      rotationBtns.style.top = centerY + "px";
+
+      rotationBtns.style.top = (centerY - 20) + "px";  // +20px nach oben
       rotationBtns.style.transform = "translate(-50%, -50%)";
     }
 
@@ -1630,7 +1669,6 @@
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
-      // TEXT "EINE oder ZWEI Tasten wählen" ist gelöscht -> kein Subtitle mehr.
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1747,6 +1785,8 @@
       console.log("CCW Button geklickt - Funktion noch nicht implementiert");
       // TODO: Counter-Clockwise Rotation implementieren
     });
+
+    let currentTarget = null;
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
