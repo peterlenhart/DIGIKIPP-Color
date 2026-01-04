@@ -54,6 +54,13 @@
       --clipLeft:   calc((2 - 1) * var(--cell)); /* ab Spalte B (=2) */
       --clipRight:  calc((8 - 7) * var(--cell)); /* rechts bleibt 1 Spalte (H) */
       --clipBottom: calc(var(--gridH) - (7 * var(--cell))); /* unten ab Zeile 8 */
+
+      /* Header Skalierung */
+      --scoreScale: 0.75;
+      --closeScale: 0.75;
+
+      /* UI Shift (für Kipp-Anzahl-Bereich) */
+      --anzahlShiftY: 85px;
     }
 
     html, body{
@@ -181,6 +188,7 @@
 
     .cubeShadowLayer.visible{ opacity: 1; }
 
+    /* CLIP-WRAPPER: Schatten-Gefängnis 2B–7G */
     .cubeShadowClip{
       position:absolute;
       inset:0;
@@ -188,6 +196,7 @@
       clip-path: inset(var(--clipTop) var(--clipRight) var(--clipBottom) var(--clipLeft));
     }
 
+    /* Schatten selbst: folgt der Würfelfläche (gleiche Position wie cubeFace) */
     .cubeShadowInner{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -238,7 +247,6 @@
       z-index: 3;
       pointer-events: none;
     }
-
     .zwischenKippSchatten{
       position: absolute;
       left: calc(1 * var(--cell));
@@ -251,9 +259,7 @@
       opacity: 0;
       transition: opacity 0.1s ease;
     }
-
     .zwischenKippSchatten.visible{ opacity: 1; }
-
     #shadowQ0{ background-image: url("SchattenZwischenKipp_Q0.png"); }
     #shadowQ1{ background-image: url("SchattenZwischenKipp_Q1.png"); }
     #shadowQ2{ background-image: url("SchattenZwischenKipp_Q2.png"); }
@@ -316,24 +322,212 @@
       pointer-events: none;
     }
 
-    .kspBlock{
-      position:absolute;
+    .hidden{ display:none !important; }
+
+    /* ======= SLOTS (wie gehabt) ======= */
+    .slot{
+      position: absolute;
+      width: var(--cell);
+      height: var(--cell);
+      box-sizing: border-box;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      border: var(--slot-border-w) solid var(--slot-border);
+      border-radius: 0;
+      z-index: 7;
+      box-shadow:
+        2px 2px 0 rgba(255,255,255,0.25) inset,
+        -2px -2px 0 rgba(0,0,0,0.15) inset,
+        0 6px 12px rgba(0,0,0,0.35),
+        4px 4px 7px -2px rgba(0,0,0,0.30);
+    }
+    .slot .num{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      z-index: 9;
+    }
+    .slot .num > span{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.70);
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+      transform: rotate(var(--num-rot, 0deg));
+      transform-origin: 50% 50%;
+      position: relative;
+      line-height: 1;
+    }
+    .slot .num > span.twodigit{
+      letter-spacing: -0.16em !important;
+      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
+    }
+
+    .targetNumber > span.twodigit{
+      letter-spacing: -0.16em;
+      transform: translateX(-0.18em) rotate(var(--tn-rot, 0deg));
+      transform-origin: 50% 50%;
+    }
+
+    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
+    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
+    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
+    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
+
+    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    .kipScale{
+      position: absolute;
       left: 0;
       top: 0;
       width: var(--gridW);
-      z-index: 10;
-      pointer-events: auto;
+      height: var(--gridH);
+      --pivot-x: calc(4 * var(--cell));
+      --pivot-y: calc((4 + 2) * var(--cell));
+      transform:
+        translate(var(--pivot-x), var(--pivot-y))
+        scaleX(0.6666667)
+        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
+      transform-origin: 0 0;
     }
+    .kipShadow{ display: none; }
 
-    .kspTop{
+    .kipEdgeCore{
       position: absolute;
-      left: 50%;
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: 10px;
+      height: calc(3 * var(--cell));
       transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
+      z-index: 1;
+      opacity: 0.95;
     }
 
+    .kipFaceQ0{
+      left: calc(1 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+    .kipFaceQ1{
+      left: calc(4 * var(--cell));
+      top: calc((1 + 2) * var(--cell));
+      width: calc(3 * var(--cell));
+      height: calc(3 * var(--cell));
+    }
+
+    .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .k-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    .k-3e{ left: calc(4 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
+    .k-4e{ left: calc(4 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
+    .k-2f{ left: calc(5 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+    .k-2g{ left: calc(6 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
+
+    /* ======= Header / Nav ======= */
+    .scoreDisplay{
+      position: absolute;
+      right: 0;
+      top: 0;
+      font-size: clamp(100px, 14vmin, 180px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 20;
+      pointer-events: none;
+      transform-origin: 100% 50%;
+    }
+
+    /* DIGIKIPP im selben Stil/Größe wie ScoreDisplay */
+    .headerDigikipp{
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: clamp(100px, 14vmin, 180px);
+      font-weight: 1000;
+      letter-spacing: 0.02em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 20;
+      pointer-events: none;
+      transform-origin: 0% 50%;
+    }
+
+    .navBtn{
+      position: absolute;
+      width: calc(56px * var(--uiscale));
+      height: calc(56px * var(--uiscale));
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      z-index: 100;
+      padding: 0;
+    }
+    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
+    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
+
+    .backIcon{
+      width: 0;
+      height: 0;
+      border-top: calc(18px * var(--uiscale)) solid transparent;
+      border-bottom: calc(18px * var(--uiscale)) solid transparent;
+      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+    }
+
+    .closeIcon{
+      position: relative;
+      width: calc(32px * var(--uiscale));
+      height: calc(32px * var(--uiscale));
+      transform: scale(var(--closeScale));
+      transform-origin: 50% 50%;
+    }
+    .closeIcon::before,
+    .closeIcon::after{
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(32px * var(--uiscale));
+      height: calc(5px * var(--uiscale));
+      background: rgba(234,215,190,0.96);
+      border-radius: calc(2.5px * var(--uiscale));
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+    }
+    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
+    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+    /* ======= Buttons (wie gehabt) ======= */
     .btnSchauen{
       width: calc(260px * var(--uiscale));
       height: calc(44px * var(--uiscale));
@@ -363,43 +557,6 @@
       color: #7a3f2b;
       text-align: center;
       text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    /* ===== NEU: "SCHAU GENAU" Button (pulsierend) ===== */
-    .btnSchauGenau{
-      width: calc(320px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
-      border-radius: calc(18px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.75);
-      background: rgba(0,0,0,0.30);
-      color: rgba(255,255,255,0.96);
-      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      pointer-events: auto;
-      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 18px rgba(0,0,0,0.70);
-      animation: schauPulse 1.05s ease-in-out infinite;
-    }
-    .btnSchauGenau:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .btnSchauGenau[disabled]{
-      opacity: 0.45;
-      pointer-events: none;
-      filter: saturate(0.8);
-      animation: none;
-    }
-    @keyframes schauPulse{
-      0%,100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
-      50%     { transform: translate(-50%, -50%) scale(1.06); filter: brightness(1.18); }
     }
 
     .squareBtn{
@@ -440,130 +597,7 @@
       line-height: 1;
     }
 
-    .sliderRow{
-      position: absolute;
-      width: var(--gridW);
-      height: auto;
-      pointer-events: auto;
-    }
-
-    .speedIcon{
-      width: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
-      height: calc(clamp(44px, 10vmin, 62px) * var(--uiscale));
-      opacity: 0.98;
-      position: absolute;
-      filter:
-        brightness(0) saturate(100%)
-        drop-shadow(0 1px 0 rgba(0,0,0,0.15));
-      pointer-events: none;
-    }
-
-    .speedIcon.snail{
-      left: calc(var(--cell) - var(--cell) / 5);
-      transform: translateX(-50%);
-      top: 0;
-    }
-
-    .speedIcon.hase{
-      left: calc(7 * var(--cell) + var(--cell) / 5);
-      transform: translateX(-50%);
-      top: 0;
-    }
-
-    .sliderContainer{
-      position: absolute;
-      left: calc(1.5 * var(--cell));
-      width: calc(5 * var(--cell));
-      display: flex;
-      flex-direction: column;
-      gap: calc(6px * var(--uiscale));
-      pointer-events: auto;
-    }
-
-    .speedScale{
-      display:flex;
-      justify-content: space-between;
-      width: 100%;
-      color: #000000;
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      font-size: calc(18px * var(--uiscale));
-      line-height: 1;
-      user-select:none;
-      text-shadow: none;
-      pointer-events: auto;
-    }
-    .speedScale span{
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      padding: 6px 8px;
-      border-radius: 10px;
-    }
-    .speedScale span:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    input[type="range"]{
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: calc(10px * var(--uiscale));
-      border-radius: 999px;
-      background: #000000;
-      outline: none;
-      border: none;
-      box-shadow: none;
-      touch-action: pan-x;
-      pointer-events: auto;
-    }
-    input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance: none;
-      appearance: none;
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill);
-      border: 2px solid rgba(0,0,0,0.35);
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor: pointer;
-    }
-    input[type="range"]::-moz-range-thumb{
-      width: calc(22px * var(--uiscale));
-      height: calc(22px * var(--uiscale));
-      border-radius: calc(6px * var(--uiscale));
-      background: var(--slot-fill);
-      border: 2px solid rgba(0,0,0,0.35);
-      box-shadow:
-        0 8px 14px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      cursor: pointer;
-    }
-
-    .kippAnzahlSubtitle{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-
-      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.14em;
-
-      color: rgba(255,255,255,0.96);
-
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 18px rgba(0,0,0,0.70);
-
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.28);
-      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
-
-      white-space: nowrap;
-      user-select: none;
-    }
-
+    /* ======= Kipp-Anzahl UI ======= */
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
@@ -575,243 +609,80 @@
       z-index: 10;
       justify-content: center;
     }
-
     .kippAnzahlBtns.compact{ gap: calc(12px * var(--uiscale)); }
 
-    .slot{
+    /* SCHAU GENAU Button (ersetzt Titel) */
+    .schauGenauBtn{
       position: absolute;
-      width: var(--cell);
-      height: var(--cell);
-      box-sizing: border-box;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border: var(--slot-border-w) solid var(--slot-border);
-      border-radius: 0;
-      z-index: 7;
-      box-shadow:
-        2px 2px 0 rgba(255,255,255,0.25) inset,
-        -2px -2px 0 rgba(0,0,0,0.15) inset,
-        0 6px 12px rgba(0,0,0,0.35),
-        4px 4px 7px -2px rgba(0,0,0,0.30);
-    }
-
-    .slot .num{
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      z-index: 9;
-    }
-
-    .slot .num > span{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      color: #111;
-      font-size: calc(var(--cell) * 0.70);
-      letter-spacing: -0.02em;
-      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
-      transform: rotate(var(--num-rot, 0deg));
-      transform-origin: 50% 50%;
-      position: relative;
-      line-height: 1;
-    }
-
-    .slot .num > span.twodigit{
-      letter-spacing: -0.16em !important;
-      transform: rotate(var(--num-rot, 0deg)) translateX(-0.10em);
-    }
-
-    .read-south { --num-rot: calc(var(--rotSign) * 0deg); }
-    .read-west  { --num-rot: calc(var(--rotSign) * 90deg); }
-    .read-east  { --num-rot: calc(var(--rotSign) * -90deg); }
-    .read-north { --num-rot: calc(var(--rotSign) * 180deg); }
-
-    .s-3b{ left: calc(1 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .s-4b{ left: calc(1 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .s-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .s-2d{ left: calc(3 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .kipScale{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: var(--gridW);
-      height: var(--gridH);
-      --pivot-x: calc(4 * var(--cell));
-      --pivot-y: calc((4 + 2) * var(--cell));
-      transform:
-        translate(var(--pivot-x), var(--pivot-y))
-        scaleX(0.6666667)
-        translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
-      transform-origin: 0 0;
-    }
-
-    .kipShadow{ display: none; }
-
-    .kipEdgeCore{
-      position: absolute;
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: 10px;
-      height: calc(3 * var(--cell));
-      transform: translateX(-50%);
-      background: linear-gradient(90deg, rgba(0,0,0,0.00), rgba(0,0,0,0.28), rgba(0,0,0,0.00));
-      z-index: 1;
-      opacity: 0.95;
-    }
-
-    .kipFaceQ0{
-      left: calc(1 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .kipFaceQ1{
-      left: calc(4 * var(--cell));
-      top: calc((1 + 2) * var(--cell));
-      width: calc(3 * var(--cell));
-      height: calc(3 * var(--cell));
-    }
-
-    .k-4d{ left: calc(3 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-3d{ left: calc(3 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-2b{ left: calc(1 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2c{ left: calc(2 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .k-3e{ left: calc(4 * var(--cell)); top: calc((2 + 2) * var(--cell)); }
-    .k-4e{ left: calc(4 * var(--cell)); top: calc((3 + 2) * var(--cell)); }
-    .k-2f{ left: calc(5 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-    .k-2g{ left: calc(6 * var(--cell)); top: calc((1 + 2) * var(--cell)); }
-
-    .hidden{ display:none !important; }
-
-    .kippBilanzBtn{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 300px;
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgb(198, 168, 128);
-      color: rgba(0,0,0,0.92);
-      font-size: calc(clamp(12px, 3vmin, 18px) * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      cursor: pointer;
-      pointer-events: auto;
-      -webkit-tap-highlight-color: transparent;
-      z-index: 20;
-    }
-    .kippBilanzBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    .scoreDisplay{
-      position: absolute;
-      right: 0;
-      top: 0;
-      font-size: clamp(100px, 14vmin, 180px);
-      font-weight: 1000;
-      letter-spacing: 0.02em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft,
-    .titleRight{
-      position: absolute;
-      top: 0;
-      font-size: clamp(40px, 8vmin, 75px);
-      font-weight: 1000;
-      letter-spacing: 0.05em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      text-align: center;
-      z-index: 20;
-      pointer-events: none;
-    }
-
-    .titleLeft{ left: 0; }
-
-    .titleRight{
-      right: 0;
-      font-size: clamp(32px, 6.5vmin, 60px);
-      font-weight: 600;
-      text-transform: lowercase;
-    }
-
-    .navBtn{
-      position: absolute;
-      width: calc(56px * var(--uiscale));
-      height: calc(56px * var(--uiscale));
-      background: none;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      pointer-events: auto;
-      z-index: 100;
-      padding: 0;
-    }
-    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
-    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
-
-    .backIcon{
-      width: 0;
-      height: 0;
-      border-top: calc(18px * var(--uiscale)) solid transparent;
-      border-bottom: calc(18px * var(--uiscale)) solid transparent;
-      border-right: calc(28px * var(--uiscale)) solid rgba(234,215,190,0.96);
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
-    }
-
-    .closeIcon{
-      position: relative;
-      width: calc(32px * var(--uiscale));
-      height: calc(32px * var(--uiscale));
-    }
-    .closeIcon::before,
-    .closeIcon::after{
-      content: "";
-      position: absolute;
-      top: 50%;
       left: 50%;
-      width: calc(32px * var(--uiscale));
-      height: calc(5px * var(--uiscale));
+      transform: translateX(-50%);
+      z-index: 10;
+      width: calc(320px * var(--uiscale));
+      height: calc(58px * var(--uiscale));
+      border-radius: calc(16px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.70);
       background: rgba(234,215,190,0.96);
-      border-radius: calc(2.5px * var(--uiscale));
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+      box-shadow:
+        0 12px 22px rgba(0,0,0,0.24),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: auto;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      will-change: transform, filter;
+      animation: schauPulse 1.1s ease-in-out infinite;
     }
-    .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
-    .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
+    .schauGenauBtn:active{ transform: translateX(-50%) scale(0.98); filter: brightness(0.98); }
+    .schauGenauBtn[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); animation: none; }
 
+    .schauGenauBtn span{
+      font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #7a3f2b;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      white-space: nowrap;
+    }
+
+    @keyframes schauPulse{
+      0%,100%{ transform: translateX(-50%) scale(1); filter: brightness(1); }
+      50%    { transform: translateX(-50%) scale(1.04); filter: brightness(1.07); }
+    }
+
+    /* Animation Target (wie gehabt) */
+    .targetNumber span{
+      animation: targetBreath 1.05s ease-in-out infinite;
+      will-change: transform, filter;
+    }
+    @keyframes targetBreath{
+      0%, 100% { transform: rotate(var(--target-rot, 0deg)) scale(1); filter: brightness(1); }
+      50%      { transform: rotate(var(--target-rot, 0deg)) scale(1.06); filter: brightness(1.12); }
+    }
+
+    .targetHitPulse span{ animation: targetHit 0.42s ease-in-out 2 !important; }
+    @keyframes targetHit{
+      0%   { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
+      50%  { transform: rotate(var(--target-rot, 0deg)) scale(1.18); filter: brightness(1.28); }
+      100% { transform: rotate(var(--target-rot, 0deg)) scale(1.00); filter: brightness(1.05); }
+    }
+
+    .slot.hit-gruen{ background: var(--gruen) !important; }
+    .slot.hit-orange{ background: var(--orange) !important; }
+    .slot.hit-blau{ background: var(--blau) !important; }
+    .slot.hit-violett{ background: var(--violett) !important; }
+
+    .slot.slotHitPulse .num > span{ animation: slotHit 0.32s ease-in-out 3; }
+    @keyframes slotHit{
+      0%   { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
+      50%  { transform: rotate(var(--num-rot,0deg)) scale(1.18); filter: brightness(1.18); }
+      100% { transform: rotate(var(--num-rot,0deg)) scale(1.00); filter: brightness(1); }
+    }
+
+    /* MODAL (wie gehabt) */
     .modalOverlay{
       position: fixed;
       top: 0;
@@ -825,7 +696,6 @@
       z-index: 1000;
       pointer-events: auto;
     }
-
     .modalBox{
       background: rgba(234,215,190,0.98);
       border: 3px solid rgba(0,0,0,0.65);
@@ -838,7 +708,6 @@
       max-width: 85%;
       width: auto;
     }
-
     .modalTitle{
       font-size: clamp(22px, 5.5vmin, 36px);
       font-weight: 1000;
@@ -849,7 +718,6 @@
       text-transform: uppercase;
       white-space: nowrap;
     }
-
     .modalText{
       font-size: clamp(16px, 4vmin, 22px);
       font-weight: 600;
@@ -857,13 +725,7 @@
       margin-bottom: 32px;
       line-height: 1.5;
     }
-
-    .modalBtns{
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-
+    .modalBtns{ display: flex; gap: 20px; justify-content: center; }
     .modalBtn{
       padding: 16px 40px;
       border-radius: 14px;
@@ -880,34 +742,31 @@
       white-space: nowrap;
     }
     .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-
-    .modalBtn.cancel{
-      background: #a8927a;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
-    }
-
-    .modalBtn.confirm{
-      background: #d64545;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
-    }
+    .modalBtn.cancel{ background: #a8927a; color: rgba(255,255,255,0.95); text-shadow: 0 1px 0 rgba(0,0,0,0.35); }
+    .modalBtn.confirm{ background: #d64545; color: rgba(255,255,255,0.95); text-shadow: 0 1px 0 rgba(0,0,0,0.45); }
   </style>
 </head>
 
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
+      <!-- Z-INDEX 0: Box Hintergrund -->
       <div class="bgPNG" aria-hidden="true"></div>
+
+      <!-- Z-INDEX 1: Kugel -->
       <div class="ball" aria-label="Kugel"></div>
+
+      <!-- Z-INDEX 1: Farbfelder -->
       <div class="colors" id="colors" aria-hidden="true"></div>
 
+      <!-- Z-INDEX 2: Würfel-Schatten -->
       <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
         <div class="cubeShadowClip">
           <div class="cubeShadowInner"></div>
         </div>
       </div>
 
+      <!-- Z-INDEX 3: Zwischenkipp-Schatten PNGs -->
       <div class="zwischenKippSchattenLayer" aria-hidden="true">
         <div id="shadowQ0" class="zwischenKippSchatten"></div>
         <div id="shadowQ1" class="zwischenKippSchatten"></div>
@@ -915,6 +774,7 @@
         <div id="shadowQ3" class="zwischenKippSchatten"></div>
       </div>
 
+      <!-- Z-INDEX 4: Würfel Groups -->
       <div id="wFaceGroup" class="wFaceGroup" aria-label="Würfel">
         <div class="cubeFace" aria-label="Würfelfläche"></div>
 
@@ -924,7 +784,7 @@
         <div class="slot s-2d read-north" data-slot="S4"><div class="num"><span></span></div></div>
       </div>
 
-      <!-- Zwischenkipp-Gruppen (fixe IDs) -->
+      <!-- Zwischenkipp-Gruppen -->
       <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
         <div class="kipScale">
           <div class="kipShadow" aria-hidden="true"></div>
@@ -987,25 +847,16 @@
 
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <button class="kippBilanzBtn" id="kippBilanzBtn" type="button">KIPP BILANZ</button>
+        <!-- Header: Links DIGIKIPP groß, rechts Score -->
+        <div class="headerDigikipp" id="headerDigikipp">DIGIKIPP</div>
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
 
-        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
-        <div class="titleRight" id="titleRight">color</div>
-
-        <!-- Kippspeed: immer sichtbar -->
-        <div class="sliderRow" id="sliderRow">
-          <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
-          <div class="sliderContainer" id="sliderContainer">
-            <input id="speedSlider" type="range" min="1" max="4" value="2" step="1" aria-label="Speed Slider">
-            <div class="speedScale" id="speedScale" aria-label="Kippspeed Stufen">
-              <span data-v="1">1</span><span data-v="2">2</span><span data-v="3">3</span><span data-v="4">4</span>
-            </div>
-          </div>
-          <img class="speedIcon hase" src="kippspeed_hase_tight.png" alt="schnell">
-        </div>
-
+        <!-- Views -->
         <div id="kspView" class="hidden">
+          <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
+            <div class="closeIcon"></div>
+          </button>
+
           <div class="kspBlock" id="kspBlock">
             <div class="kspTop" id="kspTop">
               <button id="btnSchauen" class="btnSchauen" type="button">
@@ -1013,19 +864,16 @@
               </button>
             </div>
           </div>
-
-          <button class="navBtn closeBtn" id="closeBtnKsp" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <!-- NEU: statt Überschrift "KIPP-ANZAHL" jetzt der pulsierende Button -->
-          <button id="btnSchauGenau" class="btnSchauGenau" type="button">SCHAU GENAU</button>
+          <!-- SCHAU GENAU Button (ersetzt Titel) -->
+          <button id="btnSchauGenau" class="schauGenauBtn" type="button" aria-label="Schau genau">
+            <span>SCHAU GENAU</span>
+          </button>
 
-          <div class="kippAnzahlSubtitle" id="kippAnzahlSubtitle">
-            <span style="color: rgba(255,255,255,0.96);">EINE</span> <span style="color: rgba(234,215,190,0.96);">Taste wählen</span>
-          </div>
+          <!-- Subtitle entfernt -->
+          <div class="hidden" id="kippAnzahlSubtitle"></div>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
@@ -1061,29 +909,25 @@
   <script>
     const colorsEl = document.getElementById("colors");
     const kspView      = document.getElementById("kspView");
+    const kspBlock     = document.getElementById("kspBlock");
     const kspTop       = document.getElementById("kspTop");
-    const sliderRow    = document.getElementById("sliderRow");
     const btnSchauen   = document.getElementById("btnSchauen");
-    const speedSlider  = document.getElementById("speedSlider");
-    const speedScaleEl = document.getElementById("speedScale");
 
     const kippAnzahlView     = document.getElementById("kippAnzahlView");
-    const kippAnzahlSubtitle = document.getElementById("kippAnzahlSubtitle");
     const kippAnzahlBtns     = document.getElementById("kippAnzahlBtns");
 
     const closeBtnKsp    = document.getElementById("closeBtnKsp");
     const closeBtnAnzahl = document.getElementById("closeBtnAnzahl");
     const backBtnAnzahl  = document.getElementById("backBtnAnzahl");
 
-    const kippBilanzBtn  = document.getElementById("kippBilanzBtn");
+    const scoreDisplay  = document.getElementById("scoreDisplay");
+    const headerDigikipp = document.getElementById("headerDigikipp");
 
     const closeModal = document.getElementById("closeModal");
     const modalCancel = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
-
-    // NEU:
     const btnSchauGenau = document.getElementById("btnSchauGenau");
 
     const shadowQ0 = document.getElementById("shadowQ0");
@@ -1103,6 +947,10 @@
 
     const wFaceGroup = document.getElementById("wFaceGroup");
 
+    // ============================
+    // FIXE Zwischenkipp-Gruppen:
+    // 0_1 / 1_2 / 2_0
+    // ============================
     const kipGroups = {
       "0_1": document.getElementById("kipGroup_0_1"),
       "1_2": document.getElementById("kipGroup_1_2"),
@@ -1110,8 +958,9 @@
     };
 
     let activeKipId = "0_1";
-    function getKipId(fromFace, toFace){ return `${fromFace}_${toFace}`; }
-
+    function getKipId(fromFace, toFace){
+      return `${fromFace}_${toFace}`;
+    }
     function setActiveKipGroup(kipId){
       activeKipId = kipId;
       Object.entries(kipGroups).forEach(([id, el]) => {
@@ -1120,6 +969,9 @@
         else el.classList.add("hidden");
       });
       updateShadowVisibility();
+    }
+    function getActiveKipGroup(){
+      return kipGroups[activeKipId];
     }
 
     const slotTargetsW = [
@@ -1136,6 +988,7 @@
       wFaceGroup.querySelector('[data-slot="S4"]'),
     ];
 
+    // Cache pro kipGroup
     const kipSlotCache = {};
     function getKipSlots(kipId){
       if(kipSlotCache[kipId]) return kipSlotCache[kipId];
@@ -1225,7 +1078,7 @@
 
     let currentTarget = null;
 
-    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
+    // Kartendeck-System
     let cardDeck = [];
     let targetsGenerated = 0;
     const MAX_TARGETS = 10;
@@ -1243,12 +1096,39 @@
       ];
     }
 
+    // PATHFINDING ALGORITHMUS FÜR BRAINY
+    const slotCoordsByRot = [
+      ["3B", "4B", "2C", "2D"],
+      ["2D", "3D", "3B", "4B"],
+      ["4F", "3F", "5D", "4D"],
+      ["5D", "4D", "4F", "3F"],
+    ];
+
+    function simulateKipp(face, rot){
+      return {
+        face: (face + 1) % 3,
+        rot: (rot + 1) % 4
+      };
+    }
+
+    function generateTargetNumberColor_Brainy(){
+      if(targetsGenerated >= MAX_TARGETS) return null;
+      if(cardDeck.length === 0) initializeCardDeck();
+      if(cardDeck.length === 0) return null;
+
+      const randomIndex = Math.floor(Math.random() * cardDeck.length);
+      const card = cardDeck.splice(randomIndex, 1)[0];
+      targetsGenerated++;
+      return { num: card.num, color: card.color };
+    }
+
     function initializeCardDeck(){
       const visible = getVisibleNumbers();
       const visibleNumbers = new Set();
       for(const v of visible){
         if(v.num != null) visibleNumbers.add(v.num);
       }
+
       cardDeck = [];
       for(let num = 1; num <= 12; num++){
         if(visibleNumbers.has(num)) continue;
@@ -1258,14 +1138,13 @@
       }
     }
 
-    function generateTargetNumberColor_Brainy(){
-      if(targetsGenerated >= MAX_TARGETS) return null;
-      if(cardDeck.length === 0) initializeCardDeck();
-      if(cardDeck.length === 0) return null;
-      const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck.splice(randomIndex, 1)[0];
-      targetsGenerated++;
-      return { num: card.num, color: card.color };
+    function rotationForCoord(coord){
+      const { row, col } = coordToXY(coord);
+      if(col === 1) return -90;
+      if(col === 8) return 90;
+      if(row === 1) return 0;
+      if(row === 8) return 180;
+      return 0;
     }
 
     const colorFieldCoords = {
@@ -1318,16 +1197,63 @@
         numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
         numSpan.style.lineHeight = "1";
 
+        const rot = rotationForCoord(coord);
         const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
+        numSpan.style.setProperty("--target-rot", rot + "deg");
+
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
+          numSpan.style.setProperty("--tn-rot", rot + "deg");
         }
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
       });
+    }
+
+    function clearHitVisuals(){
+      slotElsW.forEach(el => {
+        el.classList.remove("hit-gruen","hit-orange","hit-blau","hit-violett","slotHitPulse");
+      });
+      document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
+    }
+
+    function applyHitVisual(slotEl, targetColor){
+      const cls = "hit-" + targetColor;
+      slotEl.classList.add(cls);
+
+      slotEl.classList.add("slotHitPulse");
+      setTimeout(() => slotEl.classList.remove("slotHitPulse"), 1100);
+
+      document.querySelectorAll(".targetNumber").forEach(el => el.classList.add("targetHitPulse"));
+      setTimeout(() => {
+        document.querySelectorAll(".targetNumber").forEach(el => el.classList.remove("targetHitPulse"));
+      }, 1100);
+    }
+
+    function checkHitAndSignal(){
+      if(!currentTarget) return false;
+
+      const curr = sets[faceIndex];
+      for(let i=0;i<4;i++){
+        const n = curr[i];
+        if(n == null) continue;
+        if(n !== currentTarget.num) continue;
+
+        const slotEl = slotElsW[i];
+        const coord = getSlotCoord(slotEl);
+        if(!coord) continue;
+
+        const c = innerFieldColor[coord];
+        if(c && c === currentTarget.color){
+          clearHitVisuals();
+          applyHitVisual(slotEl, currentTarget.color);
+          return true;
+        }
+      }
+      return false;
     }
 
     function updateShadowVisibility(){
@@ -1366,7 +1292,6 @@
     function renderNumber(span, n){
       if(!span) return;
       span.classList.remove("twodigit");
-
       if(n === null || n === undefined){
         span.textContent = "";
         span.style.letterSpacing = "";
@@ -1374,7 +1299,6 @@
       }
       const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
-
       if(n >= 10) span.classList.add("twodigit");
       else span.style.letterSpacing = "";
     }
@@ -1407,7 +1331,8 @@
     }
 
     function getTiming(){
-      const v = Number(speedSlider.value || 2);
+      // Speed ist weiterhin intern 2 (fix), da Speed-UI entfernt ist.
+      const v = 2;
       const hold = Math.max(520, Math.round(2400 - v * 450));
       const kip = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
@@ -1432,15 +1357,33 @@
       setRotationSnap();
     }
 
-    function renderW(){
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+    function getAllKipSpans(){
+      const spans = [];
+      Object.keys(kipGroups).forEach(id => {
+        const { right, left } = getKipSlots(id);
+        spans.push(...right, ...left);
+      });
+      return spans;
+    }
+
+    function clearAllNumbers(){
+      [...slotTargetsW, ...getAllKipSpans()].forEach(s => {
+        if(s) s.textContent = "";
+      });
     }
 
     function renderWEmpty(){
       setRotationSnap();
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
+    }
+
+    function resetToW1Q0_Empty(){
+      rotIndex = 0;
+      faceIndex = 0;
+      setRotationSnap();
+      clearAllNumbers();
+      showW();
+      renderWEmpty();
     }
 
     let planned = [
@@ -1461,6 +1404,12 @@
       assigned[idx] = true;
     }
 
+    function renderW(){
+      setRotationSnap();
+      const curr = sets[faceIndex];
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+    }
+
     function reroll12_keepEmpty(){
       const twelve = getUniqueRandomNumbers(12, 1, 12);
       planned[0] = twelve.slice(0,4);
@@ -1476,22 +1425,14 @@
 
       rotIndex  = 0;
       faceIndex = 0;
+
+      clearAllNumbers();
       setRotationSnap();
     }
 
     let runningPreview = false;
     let previewToken = 0;
     let stopAtNextW = false;
-
-    speedScaleEl.querySelectorAll("span").forEach(sp => {
-      sp.addEventListener("click", () => {
-        const v = Number(sp.dataset.v);
-        speedSlider.value = String(v);
-        speedSlider.dispatchEvent(new Event("input", { bubbles:true }));
-      });
-    });
-
-    speedSlider.addEventListener("input", () => {});
 
     async function waitOrPause(type, myToken){
       const startTime = Date.now();
@@ -1508,6 +1449,7 @@
     function setSchauenEnabled(enabled){
       btnSchauen.disabled = !enabled;
     }
+
     function setSchauenText(txt){
       btnSchauen.querySelector('.btnText').textContent = txt;
     }
@@ -1519,6 +1461,7 @@
 
       currentTarget = null;
       clearTargetNumbers();
+      clearHitVisuals();
 
       buttonState = "running";
       setSchauenEnabled(false);
@@ -1566,30 +1509,40 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKip();
+        showKip();
+        renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFullCW(); showW(); renderW();
+        advanceFullCW();
+        showW();
+        renderW();
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
           showKippAnzahlView();
           return;
         }
+
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
       while(myToken === previewToken){
-        showKip(); renderKip();
+        showKip();
+        renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFullCW(); showW(); renderW();
+        advanceFullCW();
+        showW();
+        renderW();
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
           showKippAnzahlView();
           return;
         }
+
         if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
       }
 
@@ -1659,46 +1612,36 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
+      // Header Y
+      const headerY = 1.0 * cellPx;
+
+      // Links DIGIKIPP (ersetzt ehemaligen KIPP-BILANZ Button)
+      headerDigikipp.style.left = (cellPx + cellPx / 2) + "px";
+      headerDigikipp.style.top = headerY + "px";
+      headerDigikipp.style.transform = "translateY(-50%) scale(var(--scoreScale))";
+
+      // Score rechts, 75%
+      scoreDisplay.style.right = "70px";
+      scoreDisplay.style.top = headerY + "px";
+      scoreDisplay.style.transform = "translateY(-50%) scale(var(--scoreScale))";
+
+      // Views: KSP Button Position bleibt mittig wie gehabt
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
-
       kspTop.style.top = midY + "px";
 
-      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row13Center = row13VisualTop + cellPx / 2;
-      sliderRow.style.top = row13Center + "px";
-
+      // Kipp-Anzahl Bereich: alles 85px höher
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      // Button "SCHAU GENAU" sitzt an der früheren KIPP-ANZAHL Position
-      btnSchauGenau.style.left = "50%";
-      btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";   // gleiche Höhe wie früher Titel
-      btnSchauGenau.style.position = "absolute";
-      btnSchauGenau.style.transform = "translate(-50%, -50%)";
+      const shift = numVar("--anzahlShiftY") || 85;
 
-      kippAnzahlSubtitle.style.top = (row11Baseline - 40 - 230) + "px";
-      kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
+      // SCHAU GENAU Button an Stelle des alten Titels
+      btnSchauGenau.style.top = (row11Baseline - 85 - 230 - shift) + "px";
 
-      const headerY = 1.0 * cellPx;
-
-      document.getElementById("kippBilanzBtn").style.left = (cellPx + cellPx / 2) + "px";
-      document.getElementById("kippBilanzBtn").style.top = headerY + "px";
-      document.getElementById("kippBilanzBtn").style.transform = "translateY(-50%)";
-
-      document.getElementById("scoreDisplay").style.right = "70px";
-      document.getElementById("scoreDisplay").style.top = headerY + "px";
-      document.getElementById("scoreDisplay").style.transform = "translateY(-50%)";
-
-      const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
-      document.getElementById("titleLeft").style.left = cellPx + "px";
-      document.getElementById("titleLeft").style.top = row1Y + "px";
-      document.getElementById("titleLeft").style.transform = "translate(-50%, -50%)";
-
-      document.getElementById("titleRight").style.left = (7 * cellPx) + "px";
-      document.getElementById("titleRight").style.top = row1Y + "px";
-      document.getElementById("titleRight").style.transform = "translate(-50%, -50%)";
+      // Buttons Reihe
+      kippAnzahlBtns.style.top = (row11Baseline - 142 - shift) + "px";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
@@ -1747,9 +1690,11 @@
 
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
+
       const vh = window.innerHeight;
       const effectiveLayoutHeight = vh / scale;
       const rows = Math.ceil(effectiveLayoutHeight / cell) + 1;
+
       const gridH = rows * cell;
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
@@ -1764,11 +1709,13 @@
       kippAnzahlView.classList.add("hidden");
 
       selectedLevel = "brainy";
+
       buttonState = "schauen";
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
       targetsGenerated = 0;
+      clearHitVisuals();
       clearTargetNumbers();
       currentTarget = null;
 
@@ -1784,19 +1731,16 @@
       testTargetBtn.classList.remove("hidden");
       testTargetBtn.disabled = false;
 
-      // Button ist aktiv & pulsiert
-      btnSchauGenau.disabled = false;
-
-      // Erstes Ziel
+      clearHitVisuals();
       currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget) placeTargetNumbers(currentTarget);
+      if(currentTarget){
+        placeTargetNumbers(currentTarget);
+      }
     }
 
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
-      kippAnzahlSubtitle.innerHTML =
-        '<span style="color: rgba(255,255,255,0.96);">EINE oder ZWEI</span> <span style="color: rgba(234,215,190,0.96);">Tasten wählen</span>';
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1809,41 +1753,22 @@
       });
     }
 
-    function setBackLocked(locked){ backBtnAnzahl.disabled = locked; }
+    function setBackLocked(locked){
+      backBtnAnzahl.disabled = locked;
+    }
 
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
-      btnSchauGenau.disabled = locked; // NEU: auch "Schau genau" sperren
-    }
-
-    let runningKipp = false;
-
-    async function runKippCyclesNoHit(count){
-      if(runningKipp) return;
-      runningKipp = true;
-
-      const myToken = ++previewToken;
-
-      for(let i = 0; i < count; i++){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
-
-        advanceFullCW();
-        showW();
-        renderW();
-        if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
-      }
-
-      runningKipp = false;
+      btnSchauGenau.disabled = locked;
     }
 
     function handleAnzahlClick(anzahl){
       if(selectedLevel !== "brainy") return;
 
-      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button"))
-        .find(b => parseInt(b.dataset.anzahl) === anzahl);
+      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button")).find(
+        b => parseInt(b.dataset.anzahl) === anzahl
+      );
       if(!clickedBtn) return;
 
       if(selectedButtons.includes(anzahl)){
@@ -1852,9 +1777,10 @@
         setBackLocked(true);
         setAnzahlButtonsLocked(true);
 
-        runKippCyclesNoHit(totalKipps).finally(() => {
+        runKippCycles(totalKipps, { suppressHit:false }).finally(() => {
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+
           setBackLocked(false);
           setAnzahlButtonsLocked(false);
         });
@@ -1871,9 +1797,10 @@
           setBackLocked(true);
           setAnzahlButtonsLocked(true);
 
-          runKippCyclesNoHit(totalKipps).finally(() => {
+          runKippCycles(totalKipps, { suppressHit:false }).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+
             setBackLocked(false);
             setAnzahlButtonsLocked(false);
           });
@@ -1881,42 +1808,51 @@
       }
     }
 
-    // ===== NEU: "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0) =====
-    btnSchauGenau.addEventListener("click", async () => {
-      // UI sperren
+    async function runKippCycles(count, opts = { suppressHit:false }){
+      if(runningPreview) return;
+      runningPreview = true;
+      const myToken = ++previewToken;
+
+      clearHitVisuals();
+
+      for(let i = 0; i < count; i++){
+        showKip();
+        renderKip();
+        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
+
+        advanceFullCW();
+        showW();
+        renderW();
+        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
+      }
+
+      runningPreview = false;
+
+      if(opts && opts.suppressHit) return;
+
+      if(currentTarget){
+        const hit = checkHitAndSignal();
+        if(hit){
+          clearTargetNumbers();
+          currentTarget = generateTargetNumberColor_Brainy();
+          if(currentTarget){
+            placeTargetNumbers(currentTarget);
+          }
+        }
+      }
+    }
+
+    // SCHAU GENAU: 4x kippen (Q1,Q2,Q3,Q0) – ohne Trefferlogik
+    btnSchauGenau.addEventListener("click", () => {
+      if(runningPreview) return;
+
       setBackLocked(true);
       setAnzahlButtonsLocked(true);
 
-      // Zustand merken und nach Demo wiederherstellen (damit Spiel nicht "weiterläuft")
-      const savedRot = rotIndex;
-      const savedFace = faceIndex;
-
-      // Die Demo soll genau 4 Schritte zeigen:
-      // Start ist Q0 (rotIndex 0). Dann 4x CW => Q1,Q2,Q3,Q0.
-      // Falls du NICHT auf Q0 bist, springen wir vorher hart auf Q0,
-      // damit die Sequenz optisch immer passt.
-      rotIndex = 0;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      await runKippCyclesNoHit(4);
-
-      // Zurücksetzen auf vorherigen Zustand (damit nichts "verrutscht")
-      rotIndex = savedRot;
-      faceIndex = savedFace;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      // UI wieder frei
-      setBackLocked(false);
-      setAnzahlButtonsLocked(false);
-    });
-
-    testTargetBtn.addEventListener("click", () => {
-      currentTarget = generateTargetNumberColor_Brainy();
-      if(currentTarget) placeTargetNumbers(currentTarget);
+      runKippCycles(4, { suppressHit:true }).finally(() => {
+        setBackLocked(false);
+        setAnzahlButtonsLocked(false);
+      });
     });
 
     btnSchauen.addEventListener("click", async () => {
@@ -1937,10 +1873,19 @@
       showKspView();
     });
 
+    testTargetBtn.addEventListener("click", () => {
+      clearHitVisuals();
+      currentTarget = generateTargetNumberColor_Brainy();
+      if(currentTarget){
+        placeTargetNumbers(currentTarget);
+      }
+    });
+
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
     }
+
     function hideCloseModal(){
       closeModal.classList.add("hidden");
     }
@@ -1949,59 +1894,24 @@
     closeBtnAnzahl.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
+
     modalConfirm.addEventListener("click", () => {
       hideCloseModal();
       showKspView();
     });
 
     closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal) hideCloseModal();
-    });
-
-    kippBilanzBtn.addEventListener("click", () => {});
-
-    // ===== Startlogik (wie vorher) =====
-    function fastInitAndEnterKippAnzahl(){
-      cancelPreview();
-      stopAtNextW = false;
-
-      selectedLevel = "brainy";
-      targetsGenerated = 0;
-      cardDeck = [];
-
-      clearTargetNumbers();
-      currentTarget = null;
-
-      reroll12_keepEmpty();
-      ensureAssigned(0);
-      ensureAssigned(1);
-      ensureAssigned(2);
-
-      rotIndex = 0;
-      faceIndex = 0;
-      setRotationSnap();
-
-      for(let i=0;i<4;i++){
-        rotIndex  = (rotIndex + 1) % 4;
-        faceIndex = (faceIndex + 1) % 3;
+      if(e.target === closeModal){
+        hideCloseModal();
       }
-
-      rotIndex = 0;
-      faceIndex = 1;
-      setRotationSnap();
-
-      showW();
-      renderW();
-
-      showKippAnzahlView();
-    }
+    });
 
     window.addEventListener("load", () => {
       rebuild();
-      fastInitAndEnterKippAnzahl();
+      resetToW1Q0_Empty();
+      showKspView();
       updateShadowVisibility();
     });
-
     window.addEventListener("resize", rebuild);
 
     document.addEventListener("touchmove", (e) => {
