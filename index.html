@@ -45,10 +45,6 @@
       --rotSign: 1;
       --rot: 0deg;
 
-      /* Header scaling Vorgabe */
-      --scoreScale: 0.75;
-      --closeScale: 0.75;
-
       /* ===========
          CLIP: Schatten darf NUR im Innenraum 2B–7G sichtbar sein
          Zeile 1 = Farbfeldzeile
@@ -159,6 +155,8 @@
 
     /* =========================================
        Z-INDEX: 2 - Würfel-Schatten (vollflächig)
+       - dreht MIT dem Würfel (Pivot im Zentrum)
+       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
        ========================================= */
     .cubeShadowLayer{
       position: absolute;
@@ -367,14 +365,14 @@
       text-shadow: 0 1px 0 rgba(255,255,255,0.3);
     }
 
-    /* ===== "SCHAU GENAU" als echter Button im Stil der anderen Buttons ===== */
+    /* ===== "SCHAU GENAU" Button (pulsierend) ===== */
     .btnSchauGenau{
-      width: calc(320px * var(--uiscale));
+      /* Breite wird im JS exakt auf Spalten C–F gesetzt */
       height: calc(56px * var(--uiscale));
       border-radius: calc(18px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      color: #7a3f2b;
+      border: 2px solid rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.30);
+      color: rgba(255,255,255,0.96);
       font-size: calc(clamp(18px, 4.8vmin, 30px) * var(--uiscale));
       font-weight: 1000;
       letter-spacing: 0.14em;
@@ -386,13 +384,13 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.25);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 18px rgba(0,0,0,0.70);
       animation: schauPulse 1.05s ease-in-out infinite;
     }
-    .btnSchauGenau:active{ transform: translate(-50%, -50%) scale(0.98); filter: brightness(0.98); }
+    .btnSchauGenau:active{ transform: scale(0.98); filter: brightness(0.98); }
     .btnSchauGenau[disabled]{
       opacity: 0.45;
       pointer-events: none;
@@ -401,7 +399,7 @@
     }
     @keyframes schauPulse{
       0%,100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
-      50%     { transform: translate(-50%, -50%) scale(1.06); filter: brightness(1.10); }
+      50%     { transform: translate(-50%, -50%) scale(1.06); filter: brightness(1.18); }
     }
 
     .squareBtn{
@@ -668,7 +666,6 @@
 
     .hidden{ display:none !important; }
 
-    /* Header: P00/80 (wird skaliert) */
     .scoreDisplay{
       position: absolute;
       right: 0;
@@ -685,17 +682,14 @@
       line-height: 1;
       z-index: 20;
       pointer-events: none;
-      transform-origin: 100% 50%;
     }
 
-    /* Header: DIGI-KIPP (groß, NICHT skaliert) */
-    .titleMain{
+    .titleLeft{
       position: absolute;
-      left: 0;
       top: 0;
-      font-size: clamp(100px, 14vmin, 180px);
+      font-size: clamp(40px, 8vmin, 75px);
       font-weight: 1000;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.05em;
       color: rgba(234,215,190,0.96);
       text-shadow:
         0 3px 0 rgba(0,0,0,0.85),
@@ -703,6 +697,7 @@
       user-select: none;
       white-space: nowrap;
       line-height: 1;
+      text-align: center;
       z-index: 20;
       pointer-events: none;
     }
@@ -723,8 +718,13 @@
       z-index: 100;
       padding: 0;
     }
-    .navBtn:active{ opacity: 0.8; }
-    .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
+    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
+    .navBtn[disabled]{
+      opacity: 0.18;        /* klar sichtbar, aber inaktiv */
+      pointer-events: none; /* wirklich tot */
+      filter: saturate(0.6);
+      transform: none;
+    }
 
     .backIcon{
       width: 0;
@@ -930,12 +930,10 @@
 
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <!-- NEU: statt KIPP BILANZ -->
-        <div class="titleMain" id="titleMain">DIGI-KIPP</div>
-
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
-        <!-- Kippspeed: immer sichtbar -->
+        <!-- Kippspeed -->
         <div class="sliderRow" id="sliderRow">
           <img class="speedIcon snail" src="kippspeed_snail_tight.png" alt="langsam">
           <div class="sliderContainer" id="sliderContainer">
@@ -962,10 +960,8 @@
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <!-- SCHAU GENAU Button (Stil wie andere Buttons) -->
           <button id="btnSchauGenau" class="btnSchauGenau" type="button">SCHAU GENAU</button>
 
-          <!-- Subtitle komplett entfernt -->
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
@@ -1018,8 +1014,6 @@
     const modalConfirm = document.getElementById("modalConfirm");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
-
-    // SCHAU GENAU
     const btnSchauGenau = document.getElementById("btnSchauGenau");
 
     const shadowQ0 = document.getElementById("shadowQ0");
@@ -1110,31 +1104,6 @@
       const row = parseInt(coord, 10);
       const colLetter = coord.replace(String(row), "");
       return { row, col: colMap[colLetter] };
-    }
-
-    function pixelToCoordFromLayout(xPx, yPx){
-      const cellPx = numVar("--cell") || 142;
-      const col = Math.floor(xPx / cellPx) + 1;
-      const rowVisual = Math.floor(yPx / cellPx) + 1;
-      const row = rowVisual - HEADER_ROW_OFFSET;
-      if(col < 1 || col > 8) return null;
-      if(row < 1) return null;
-      const letter = colMapInv[col];
-      return `${row}${letter}`;
-    }
-
-    function getSlotCoord(slotEl){
-      const layout = document.getElementById("layout");
-      const rLayout = layout.getBoundingClientRect();
-      const r = slotEl.getBoundingClientRect();
-      const cx = r.left + r.width/2;
-      const cy = r.top  + r.height/2;
-
-      const scale = numVar("--scale") || 1;
-      const x = (cx - rLayout.left) / scale;
-      const y = (cy - rLayout.top) / scale;
-
-      return pixelToCoordFromLayout(x, y);
     }
 
     let currentTarget = null;
@@ -1238,6 +1207,22 @@
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
         }
+
+        /* ===== FIX: Zielzahlen-Rotation exakt nach deiner Regel =====
+           Spalte A: -90°
+           Spalte H: +90°
+           Zeile  8: 180°
+           Zeile  1: 0°
+        */
+        let rot = 0;
+        if(col === 1) rot = -90;
+        if(col === 8) rot =  90;
+        if(row === 8) rot = 180;
+        if(row === 1) rot =   0;
+
+        numSpan.style.display = "inline-block";
+        numSpan.style.transform = `rotate(${rot}deg)`;
+        numSpan.style.transformOrigin = "50% 50%";
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
@@ -1579,35 +1564,32 @@
 
       kspTop.style.top = midY + "px";
 
-      // ===== Kippspeed: 85px nach oben =====
       const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row13Center = row13VisualTop + cellPx / 2;
-      sliderRow.style.top = (row13Center - 85) + "px";
+      sliderRow.style.top = row13Center + "px";
 
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      // SCHAU GENAU Position bleibt wie in deinem Code-Layout
+      // "SCHAU GENAU" Position (wie bisher), Breite jetzt exakt C–F (4 Spalten)
       btnSchauGenau.style.left = "50%";
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.position = "absolute";
       btnSchauGenau.style.transform = "translate(-50%, -50%)";
+      btnSchauGenau.style.width = (4 * cellPx) + "px";   // C–F
 
       kippAnzahlBtns.style.top = (row11Baseline - 142) + "px";
 
       const headerY = 1.0 * cellPx;
 
-      // ===== Header: DIGI-KIPP groß (unskaliert) anstelle KIPP BILANZ =====
-      const titleMain = document.getElementById("titleMain");
-      titleMain.style.left = (cellPx + cellPx / 2) + "px";
-      titleMain.style.top = headerY + "px";
-      titleMain.style.transform = "translateY(-50%)";
+      document.getElementById("scoreDisplay").style.right = "70px";
+      document.getElementById("scoreDisplay").style.top = headerY + "px";
+      document.getElementById("scoreDisplay").style.transform = "translateY(-50%)";
 
-      // ===== Header: P00/80 skaliert 75% =====
-      const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";
-      score.style.top = headerY + "px";
-      score.style.transform = "translateY(-50%) scale(var(--scoreScale))";
+      const row1Y = (1 + HEADER_ROW_OFFSET - 1) * cellPx + cellPx / 2;
+      document.getElementById("titleLeft").style.left = cellPx + "px";
+      document.getElementById("titleLeft").style.top = row1Y + "px";
+      document.getElementById("titleLeft").style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
@@ -1631,11 +1613,10 @@
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
       const closeTop = closeY;
 
-      // Close Buttons: 75% skalieren
       [closeBtnKsp, closeBtnAnzahl].forEach(btn => {
         btn.style.left = closeLeft + "px";
         btn.style.top = closeTop + "px";
-        btn.style.transform = "translate(-50%, -50%) scale(var(--closeScale))";
+        btn.style.transform = "translate(-50%, -50%)";
       });
     }
 
@@ -1696,6 +1677,9 @@
 
       btnSchauGenau.disabled = false;
 
+      // Zurück-Button dauerhaft inaktiv (bis du ihn wieder willst)
+      backBtnAnzahl.disabled = true;
+
       currentTarget = generateTargetNumberColor_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1715,12 +1699,17 @@
       });
     }
 
-    function setBackLocked(locked){ backBtnAnzahl.disabled = locked; }
+    function setBackLocked(locked){
+      // Zurück bleibt dauerhaft aus, unabhängig vom Lock
+      backBtnAnzahl.disabled = true;
+    }
 
     function setAnzahlButtonsLocked(locked){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
+      // back bleibt disabled
+      backBtnAnzahl.disabled = true;
     }
 
     let runningKipp = false;
@@ -1829,10 +1818,6 @@
           stopAtNextW = true;
         }
       }
-    });
-
-    backBtnAnzahl.addEventListener("click", () => {
-      showKspView();
     });
 
     function showCloseModal(){
