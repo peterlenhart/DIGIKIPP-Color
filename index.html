@@ -482,6 +482,7 @@
         -2px -2px 0 rgba(0,0,0,0.15) inset,
         0 6px 12px rgba(0,0,0,0.35),
         4px 4px 7px -2px rgba(0,0,0,0.30);
+      transition: filter 0.18s ease, transform 0.18s ease;
     }
 
     .slot .num{
@@ -785,6 +786,22 @@
       box-shadow: 0 8px 14px rgba(0,0,0,0.22);
     }
     .endBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
+
+    /* =========================
+       HIT / PULSE VISUALS
+       ========================= */
+    @keyframes kippPulse{
+      0%   { transform: scale(1); filter: brightness(1); }
+      50%  { transform: scale(1.18); filter: brightness(1.15); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+    .pulseNow{
+      animation: kippPulse 520ms ease-in-out 0s 2;
+    }
+    .slot.hitNow{
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35)) brightness(1.02);
+      transform: scale(1.01);
+    }
   </style>
 </head>
 
@@ -881,7 +898,6 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <!-- (2) DIGI-KIPP -> DIGIKIPP -->
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div id="schauenView" class="hidden">
@@ -903,7 +919,6 @@
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
-          <!-- Rotation Buttons in Zeile 10 -->
           <div class="rotationBtns" id="rotationBtns">
             <button class="rotBtn" id="btnCW" type="button" aria-label="Clockwise Rotation">↻</button>
             <button class="rotBtn" id="btnCCW" type="button" aria-label="Counter-Clockwise Rotation">↺</button>
@@ -1047,6 +1062,7 @@
 
     const HEADER_ROW_OFFSET = 2;
     const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
+    const revColMap = {1:"A",2:"B",3:"C",4:"D",5:"E",6:"F",7:"G",8:"H"};
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -1056,6 +1072,10 @@
       const row = parseInt(coord, 10);
       const colLetter = coord.replace(String(row), "");
       return { row, col: colMap[colLetter], colLetter };
+    }
+
+    function xyToCoord(row, col){
+      return `${row}${revColMap[col] || "A"}`;
     }
 
     // Zielzahlen-ROTATION:
@@ -1070,10 +1090,13 @@
 
     let currentTarget = null;
 
-    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
-    let cardDeck = [];
+    // =========================
+    // Brainy Target System (wie vereinbart)
+    // =========================
     let targetsGenerated = 0;
     const MAX_TARGETS = 10;
+    let usedNumbers = new Set();
+    let firstTargetDone = false;
 
     // Zwei-Tasten-Auswahl System
     let selectedButtons = [];
@@ -1086,31 +1109,6 @@
         { slotEl: slotElsW[2], num: curr[2] },
         { slotEl: slotElsW[3], num: curr[3] },
       ];
-    }
-
-    function initializeCardDeck(){
-      const visible = getVisibleNumbers();
-      const visibleNumbers = new Set();
-      for(const v of visible){
-        if(v.num != null) visibleNumbers.add(v.num);
-      }
-      cardDeck = [];
-      for(let num = 1; num <= 12; num++){
-        if(visibleNumbers.has(num)) continue;
-        for(const color of allColors){
-          cardDeck.push({ num, color });
-        }
-      }
-    }
-
-    function generateTargetNumberColor_Brainy(){
-      if(targetsGenerated >= MAX_TARGETS) return null;
-      if(cardDeck.length === 0) initializeCardDeck();
-      if(cardDeck.length === 0) return null;
-      const randomIndex = Math.floor(Math.random() * cardDeck.length);
-      const card = cardDeck.splice(randomIndex, 1)[0];
-      targetsGenerated++;
-      return { num: card.num, color: card.color };
     }
 
     const colorFieldCoords = {
@@ -1170,12 +1168,186 @@
         numSpan.style.transform = `rotate(${rot}deg)`;
 
         if(target.num >= 10){
-          numSpan.classList.add("twodigit");
+          numSpan.style.letterSpacing = "-0.16em";
+          numSpan.style.transform = `rotate(${rot}deg) translateX(-0.10em)`;
         }
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
       });
+    }
+
+    // =========================
+    // Trefferlogik: ZF==ZS über Rand-Nachbarschaft
+    // =========================
+
+    function colorToCssValue(color){
+      const styles = getComputedStyle(document.documentElement);
+      if(color === "violett") return styles.getPropertyValue("--violett").trim();
+      if(color === "blau")    return styles.getPropertyValue("--blau").trim();
+      if(color === "gruen")   return styles.getPropertyValue("--gruen").trim();
+      if(color === "orange")  return styles.getPropertyValue("--orange").trim();
+      return "#ead7be";
+    }
+
+    function parseBaseCoordFromSlotEl(slotEl){
+      // erwartet Klasse wie "s-3b"
+      const cls = Array.from(slotEl.classList).find(c => c.startsWith("s-"));
+      if(!cls) return null;
+      const raw = cls.slice(2); // "3b"
+      const row = parseInt(raw, 10);
+      const colLetter = raw.replace(String(row), "").toUpperCase();
+      const col = colMap[colLetter];
+      if(!row || !col) return null;
+      return { row, col };
+    }
+
+    function rotateCoordCW(row, col, times){
+      // 8x8, 1-indexed, Standardrotation um Zentrum: (r,c) -> (c, 9-r)
+      let r = row, c = col;
+      const t = ((times % 4) + 4) % 4;
+      for(let i=0;i<t;i++){
+        const nr = c;
+        const nc = 9 - r;
+        r = nr; c = nc;
+      }
+      return { row: r, col: c };
+    }
+
+    function isAdjacentBorder(slotRow, slotCol, targetRow, targetCol){
+      // Nur A<->B, G<->H, 1<->2, 7<->8
+      // Also: target ist Rand, slot ist direkt innen.
+      // Horizontal:
+      if(targetCol === 1 && slotCol === 2 && targetRow === slotRow) return true; // A-B
+      if(targetCol === 8 && slotCol === 7 && targetRow === slotRow) return true; // H-G
+      // Vertikal:
+      if(targetRow === 1 && slotRow === 2 && targetCol === slotCol) return true; // 1-2
+      if(targetRow === 8 && slotRow === 7 && targetCol === slotCol) return true; // 8-7
+      return false;
+    }
+
+    function getCurrentSlotCoordsAndNums(){
+      const vis = getVisibleNumbers();
+      return vis.map(v => {
+        const base = parseBaseCoordFromSlotEl(v.slotEl);
+        const rc = base ? rotateCoordCW(base.row, base.col, rotIndex) : null;
+        return { slotEl: v.slotEl, num: v.num, row: rc?.row, col: rc?.col };
+      });
+    }
+
+    function isGiftedHit(num, color){
+      // "geschenkter Treffer" = in aktueller Lage wäre es schon ein Treffer
+      const targets = colorFieldCoords[color] || [];
+      const slotList = getCurrentSlotCoordsAndNums();
+      for(const s of slotList){
+        if(s.num !== num) continue;
+        if(!s.row || !s.col) continue;
+        for(const t of targets){
+          const { row: tr, col: tc } = coordToXY(t);
+          if(isAdjacentBorder(s.row, s.col, tr, tc)) return true;
+        }
+      }
+      return false;
+    }
+
+    function checkHitNow(){
+      if(!currentTarget) return null;
+      const targets = colorFieldCoords[currentTarget.color] || [];
+      const slotList = getCurrentSlotCoordsAndNums();
+
+      for(const s of slotList){
+        if(s.num !== currentTarget.num) continue;
+        if(!s.row || !s.col) continue;
+
+        for(const t of targets){
+          const { row: tr, col: tc } = coordToXY(t);
+          if(isAdjacentBorder(s.row, s.col, tr, tc)){
+            return { slotEl: s.slotEl };
+          }
+        }
+      }
+      return null;
+    }
+
+    function clearPulses(){
+      document.querySelectorAll(".pulseNow").forEach(el => el.classList.remove("pulseNow"));
+      slotElsW.forEach(el => el.classList.remove("hitNow"));
+    }
+
+    function resetSlotFills(){
+      slotElsW.forEach(el => el.style.removeProperty("--slot-fill"));
+    }
+
+    function pulseHitVisual(slotEl, color){
+      clearPulses();
+
+      // Slot einfärben
+      slotEl.style.setProperty("--slot-fill", colorToCssValue(color));
+      slotEl.classList.add("hitNow");
+
+      // Slot-Zahl pulsieren
+      const slotSpan = slotEl.querySelector(".num > span");
+      if(slotSpan) slotSpan.classList.add("pulseNow");
+
+      // Zielzahlen pulsieren (alle 4)
+      document.querySelectorAll(".targetNumber span").forEach(s => s.classList.add("pulseNow"));
+
+      // Puls wieder entfernen (Farbe bleibt als Trefferindikator)
+      setTimeout(() => {
+        clearPulses();
+      }, 1200);
+    }
+
+    function randomPick(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateNextTarget_Brainy(){
+      if(targetsGenerated >= MAX_TARGETS) return null;
+
+      // Kandidaten-Zahlen
+      let candidateNums = [];
+
+      if(!firstTargetDone){
+        // 1. Ziehung: eine der 4 sichtbaren Zahlen
+        const vis = getVisibleNumbers().map(v => v.num).filter(n => n != null);
+        const uniqueVis = Array.from(new Set(vis));
+        candidateNums = uniqueVis.filter(n => !usedNumbers.has(n));
+        if(candidateNums.length === 0) return null;
+      } else {
+        // weitere Ziehung: jede Zahl 1–12 außer bereits verwendete
+        for(let n=1; n<=12; n++){
+          if(!usedNumbers.has(n)) candidateNums.push(n);
+        }
+        if(candidateNums.length === 0) return null;
+      }
+
+      // Farbe fix random, aber "geschenkten Treffer" verhindern:
+      // Regel: Farbe darf bleiben, Zahl wird gewechselt.
+      // Wenn für diese Farbe keine Zahl möglich -> neue Farbe probieren.
+      let colorTry = 0;
+      while(colorTry < 16){
+        const color = randomPick(allColors);
+
+        const okNums = candidateNums.filter(n => !isGiftedHit(n, color));
+        if(okNums.length > 0){
+          const num = randomPick(okNums);
+          usedNumbers.add(num);
+          targetsGenerated++;
+          firstTargetDone = true;
+          return { num, color };
+        }
+
+        colorTry++;
+      }
+
+      // Notfall: wenn wirklich alles "gifted" wäre, dann nimm irgendeine Kombination (sollte praktisch nie passieren)
+      const fallbackColor = randomPick(allColors);
+      const num = randomPick(candidateNums);
+      usedNumbers.add(num);
+      targetsGenerated++;
+      firstTargetDone = true;
+      return { num, color: fallbackColor };
     }
 
     function updateShadowVisibility(){
@@ -1360,6 +1532,11 @@
 
       currentTarget = null;
       clearTargetNumbers();
+      usedNumbers = new Set();
+      firstTargetDone = false;
+      targetsGenerated = 0;
+      resetSlotFills();
+      clearPulses();
 
       buttonState = "running";
       setSchauenEnabled(false);
@@ -1500,18 +1677,16 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
       schauenTop.style.top = midY + "px";
 
-      // "SCHAU GENAU" Position + Größe: exakt über C–F
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
-      const rightEdgeF = 6 * cellPx;        // Spalte F endet
+      const leftEdgeC = (3 - 1) * cellPx;
+      const rightEdgeF = 6 * cellPx;
       const centerCF = (leftEdgeC + rightEdgeF) / 2;
       const widthCF = (rightEdgeF - leftEdgeC);
 
@@ -1519,12 +1694,11 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
-      // Header: X, DIGIKIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
-      const headerY = 1.0 * cellPx;  // Grenze zwischen Zeile 01 und 02
+      const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";          // (1) waagrechte Position unverändert
-      score.style.top = headerY + "px";    // (1) vertikal exakt wie X (gleicher headerY)
+      score.style.right = "70px";
+      score.style.top = headerY + "px";
       const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
       score.style.transform = `translateY(-50%) scale(${s})`;
       score.style.transformOrigin = "top right";
@@ -1534,18 +1708,16 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
       kippAnzahlBtns.style.top = row11CenterY + "px";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionRotationButtons(cellPx);  // CW/CCW Buttons
+      positionRotationButtons(cellPx);
     }
 
     function positionNavButtons(cellPx){
-      // Close links oben (Spalte A, Header) + 75% skaliert
       const closeCol = 1;
       const closeY = 1.0 * cellPx;
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
@@ -1562,8 +1734,8 @@
     }
 
     function positionTestButton(cellPx){
-      const row = 8;  // Zeile 8
-      const col = 8;  // Spalte H
+      const row = 8;
+      const col = 8;
       const visualRow = row + HEADER_ROW_OFFSET;
 
       const left = (col - 1) * cellPx + cellPx/2;
@@ -1578,12 +1750,9 @@
     }
 
     function positionRotationButtons(cellPx){
-      // CW/CCW Buttons in Zeile 10 zentrieren
       const row = 10;
       const visualRow = row + HEADER_ROW_OFFSET;
       let centerY = (visualRow - 1) * cellPx + cellPx / 2;
-
-      // (3) 40px Richtung Norden
       centerY -= 40;
 
       rotationBtns.style.top = centerY + "px";
@@ -1614,8 +1783,12 @@
       setSchauenEnabled(true);
 
       targetsGenerated = 0;
+      usedNumbers = new Set();
+      firstTargetDone = false;
       clearTargetNumbers();
       currentTarget = null;
+      resetSlotFills();
+      clearPulses();
 
       showW();
     }
@@ -1631,14 +1804,20 @@
 
       btnSchauGenau.disabled = false;
 
-      currentTarget = generateTargetNumberColor_Brainy();
+      // Target System reset
+      targetsGenerated = 0;
+      usedNumbers = new Set();
+      firstTargetDone = false;
+      resetSlotFills();
+      clearPulses();
+
+      currentTarget = generateNextTarget_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
 
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
-      // TEXT "EINE oder ZWEI Tasten wählen" ist gelöscht -> kein Subtitle mehr.
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1659,7 +1838,24 @@
 
     let runningKipp = false;
 
-    async function runKippCyclesNoHit(count){
+    async function handleHitIfAny(){
+      const hit = checkHitNow();
+      if(!hit) return false;
+
+      // Feedback
+      pulseHitVisual(hit.slotEl, currentTarget.color);
+
+      // nächstes Ziel
+      currentTarget = generateNextTarget_Brainy();
+      if(currentTarget) placeTargetNumbers(currentTarget);
+      else {
+        // Ende (keine Targets mehr) -> Zielzahlen weg (optional)
+        // clearTargetNumbers();
+      }
+      return true;
+    }
+
+    async function runKippCyclesWithHits(count){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1673,6 +1869,10 @@
         advanceFullCW();
         showW();
         renderW();
+
+        // Treffercheck immer auf W-Phase
+        await handleHitIfAny();
+
         if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
       }
 
@@ -1691,7 +1891,7 @@
 
         setAnzahlButtonsLocked(true);
 
-        runKippCyclesNoHit(totalKipps).finally(() => {
+        runKippCyclesWithHits(totalKipps).finally(() => {
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
           setAnzahlButtonsLocked(false);
@@ -1708,7 +1908,7 @@
 
           setAnzahlButtonsLocked(true);
 
-          runKippCyclesNoHit(totalKipps).finally(() => {
+          runKippCyclesWithHits(totalKipps).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
             setAnzahlButtonsLocked(false);
@@ -1729,7 +1929,7 @@
       showW();
       renderW();
 
-      await runKippCyclesNoHit(4);
+      await runKippCyclesWithHits(4);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
@@ -1740,20 +1940,19 @@
       setAnzahlButtonsLocked(false);
     });
 
+    // Test Target: erzeugt neues Target (mit derselben Brainy-Logik)
     testTargetBtn.addEventListener("click", () => {
-      currentTarget = generateTargetNumberColor_Brainy();
+      currentTarget = generateNextTarget_Brainy();
       if(currentTarget) placeTargetNumbers(currentTarget);
     });
 
     // CW/CCW Rotation Buttons (vorerst ohne Funktion)
     btnCW.addEventListener("click", () => {
       console.log("CW Button geklickt - Funktion noch nicht implementiert");
-      // TODO: Clockwise Rotation implementieren
     });
 
     btnCCW.addEventListener("click", () => {
       console.log("CCW Button geklickt - Funktion noch nicht implementiert");
-      // TODO: Counter-Clockwise Rotation implementieren
     });
 
     btnSchauen.addEventListener("click", async () => {
@@ -1809,11 +2008,16 @@
       stopAtNextW = false;
 
       selectedLevel = "brainy";
-      targetsGenerated = 0;
-      cardDeck = [];
 
       clearTargetNumbers();
       currentTarget = null;
+
+      // Target System reset
+      targetsGenerated = 0;
+      usedNumbers = new Set();
+      firstTargetDone = false;
+      resetSlotFills();
+      clearPulses();
 
       reroll12_keepEmpty();
       ensureAssigned(0);
