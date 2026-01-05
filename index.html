@@ -1160,7 +1160,7 @@
         slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
       }
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
-      const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
+      const targetSpan = document.querySelector(\`.targetNumber[data-coord="\${targetCoord}"] .targetNumSpan\`);
       if(targetSpan) targetSpan.classList.add("kippPulse");
 
       setTimeout(() => {
@@ -1203,7 +1203,7 @@
         if(!zfCoord) continue;
         const col = COLOR_BY_ZF_COORD[zfCoord];
         if(!col) continue;
-        forbidden.add(`${si.num}|${col}`);
+        forbidden.add(\`\${si.num}|\${col}\`);
       }
       return forbidden;
     }
@@ -1251,7 +1251,7 @@
           [nums[i], nums[j]] = [nums[j], nums[i]];
         }
         for(const n of nums){
-          if(!forbidden.has(`${n}|${col}`)) return n;
+          if(!forbidden.has(\`\${n}|\${col}\`)) return n;
         }
         return null;
       }
@@ -1272,7 +1272,7 @@
       if(chosenNum == null){
         for(const col of colorTryOrder){
           for(const n of numberCandidates){
-            if(!forbidden.has(`${n}|${col}`)){
+            if(!forbidden.has(\`\${n}|\${col}\`)){
               chosenNum = n;
               chosenColor = col;
               break;
@@ -1336,11 +1336,11 @@
         numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
         numSpan.style.lineHeight = "1";
 
-        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
+        const text = (target.num === 9 || target.num === 6) ? \`\${target.num}.\` : String(target.num);
         numSpan.textContent = text;
 
         const rot = getTargetRotationDeg(row, col);
-        numSpan.style.transform = `rotate(${rot}deg)`;
+        numSpan.style.transform = \`rotate(\${rot}deg)\`;
 
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
@@ -1351,13 +1351,20 @@
       });
     }
 
+    /* =========================================================
+       ✅ FIX: Für CCW-Zwischenkipp wird die Darstellung 270° gedreht
+       -> dafür nutzen wir temporär einen Rotations-Override nur während KIP sichtbar ist
+       ========================================================= */
+    let shadowRotOverride = null;
+
     function updateShadowVisibility(){
       const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
       if(isKipVisible){
+        const idx = (shadowRotOverride !== null) ? shadowRotOverride : rotIndex;
         allShadows.forEach((s, i) => {
-          if(i === rotIndex) s.classList.add("visible");
+          if(i === idx) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1371,6 +1378,7 @@
     function showW(){
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
+      shadowRotOverride = null; // wichtig: zurück auf normal
       updateShadowVisibility();
     }
 
@@ -1406,7 +1414,7 @@
         span.style.letterSpacing = "";
         return;
       }
-      const text = (n === 9 || n === 6) ? `${n}.` : String(n);
+      const text = (n === 9 || n === 6) ? \`\${n}.\` : String(n);
       span.textContent = text;
 
       if(n >= 10) span.classList.add("twodigit");
@@ -1462,16 +1470,21 @@
       updateShadowVisibility();
     }
 
+    // ✅ Neu: Rotation setzen mit beliebigem Index (für CCW-Zwischenkipp-Preview)
+    function setRotationSnapWithIndex(rotIdx){
+      const deg = rotDeg[rotIdx];
+      wFaceGroup.style.setProperty("--rot", deg + "deg");
+      Object.values(kipGroups).forEach(g => g && g.style.setProperty("--rot", deg + "deg"));
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
+      updateShadowVisibility();
+    }
+
     function advanceFullCW(){
       rotIndex  = (rotIndex + 1) % 4;
       faceIndex = (faceIndex + 1) % 3;
       setRotationSnap();
     }
 
-    /* =========================================================
-       ✅ NEU: CCW-Logik + CCW-Render für Zwischenkipp (nutzt
-       bestehende kipGroups rückwärts, ohne neue DOM-Gruppen)
-       ========================================================= */
     function advanceFullCCW(){
       rotIndex  = (rotIndex + 3) % 4;   // -1 mod 4
       faceIndex = (faceIndex + 2) % 3; // -1 mod 3
@@ -1479,15 +1492,21 @@
     }
 
     function mapHiddenToVisible_CCW(face){
-      // Robust: gleiche Abbildung wie CW (bricht nix am Layout).
-      // Falls du CCW-Preview exakt spiegelrichtig willst, sag Bescheid:
-      // dann passe ich diese Mappingfunktion gezielt an.
       const [f1,f2,f3,f4] = face;
       return [f4, f3, f2, f1];
     }
 
     function renderKipDir(dir /* "CW" | "CCW" */){
-      setRotationSnap();
+      // ✅ CCW-Zwischenkipp muss 270° gedreht angezeigt werden:
+      // also Preview-Rotation = (rotIndex + 3) % 4
+      if(dir === "CCW"){
+        const previewRot = (rotIndex + 3) % 4;
+        shadowRotOverride = previewRot;
+        setRotationSnapWithIndex(previewRot);
+      } else {
+        shadowRotOverride = null;
+        setRotationSnap();
+      }
 
       const curr = sets[faceIndex];
 
@@ -1497,10 +1516,6 @@
 
       const next = sets[nextFaceIndex];
 
-      // Für CCW nutzen wir die vorhandene "umgekehrte" Gruppe:
-      // CCW 1->0 => kipId "0_1"
-      // CCW 2->1 => kipId "1_2"
-      // CCW 0->2 => kipId "2_0"
       const kipId = (dir === "CW")
         ? getKipId(faceIndex, nextFaceIndex)
         : getKipId(nextFaceIndex, faceIndex);
@@ -1509,10 +1524,8 @@
 
       const { right, left } = getKipSlots(kipId);
 
-      // rechts: aktuelles Face
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
 
-      // links: Preview des nächsten Faces
       const nextPreview = (dir === "CW")
         ? mapHiddenToVisible_CW(next)
         : mapHiddenToVisible_CCW(next);
@@ -1530,6 +1543,9 @@
       renderKipDir(dir);
       if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
+      // ✅ nach der Zwischenkipp-Phase wieder "normal" auf echten rotIndex zurück
+      shadowRotOverride = null;
+
       if(dir === "CW") advanceFullCW();
       else advanceFullCCW();
 
@@ -1540,7 +1556,6 @@
 
       runningKipp = false;
     }
-    /* ========================================================= */
 
     function renderW(){
       setRotationSnap();
@@ -2000,7 +2015,7 @@
       checkHitAndAnimate();
     });
 
-    /* ✅ FIX: CW/CCW Buttons funktionieren jetzt wirklich */
+    /* ✅ FIX: CW/CCW Buttons */
     btnCW.addEventListener("click", async () => {
       if(runningPreview) return;
       await doOneStep("CW");
