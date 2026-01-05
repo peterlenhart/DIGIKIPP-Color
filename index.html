@@ -1463,28 +1463,63 @@
       updateShadowVisibility();
     }
 
+    // ====== FIX: CCW braucht korrektes toFace + kanonische kipGroup (nur 3 Gruppen) ======
+
+    // Welche Face-Index ist "to" abhängig von Richtung?
+    function getNextFaceIndex(dir){
+      return (dir === "CW")
+        ? ((faceIndex + 1) % 3)
+        : ((faceIndex + 2) % 3); // -1 mod 3
+    }
+
+    // Mappt (a,b) auf eine der 3 existierenden Gruppen: 0_1, 1_2, 2_0
+    // WICHTIG: Das ist KEIN Tauschen von Flächen, nur Auswahl der vorhandenen DOM-Gruppe.
+    function getCanonicalKipId(a, b){
+      if((a === 0 && b === 1) || (a === 1 && b === 0)) return "0_1";
+      if((a === 1 && b === 2) || (a === 2 && b === 1)) return "1_2";
+      // verbleibt nur 0 & 2
+      return "2_0";
+    }
+
+    // In jeder kipGroup_X_Y ist die Zuordnung fix:
+    // right = Face X, left = Face Y
+    const KIP_GROUP_RIGHT_FACE = { "0_1": 0, "1_2": 1, "2_0": 2 };
+    const KIP_GROUP_LEFT_FACE  = { "0_1": 1, "1_2": 2, "2_0": 0 };
+
     function renderKipDir(dir){
-      // DAS ist die “eine Zeile”: CCW -> Bild vor Anzeige -90° drehen
+      // CCW: Bild vor Anzeige -90° drehen (wie bei dir)
       kipExtraRotDeg = (dir === "CCW") ? -90 : 0;
 
       setRotationSnap();
 
-      const curr = sets[faceIndex];
+      // 1) current + toFace korrekt bestimmen
+      const fromFace = faceIndex;
+      const toFace   = getNextFaceIndex(dir);
 
-      // Zwischenkipp-ID/Vorschau bleibt wie bisher (deine Logik),
-      // nur die Darstellung wird im CCW-Fall gedreht.
-      const incomingIndex = getNextFaceIndex_CW();
-      const incoming = sets[incomingIndex];
+      // HINWEIS: sets[] wird NICHT verändert – wir lesen nur aus
+      const curr     = sets[fromFace];
+      const incoming = sets[toFace];
 
-      const kipId = getKipId(faceIndex, incomingIndex);
+      // 2) richtige der 3 Zwischenkippgruppen wählen (ohne irgendein Tauschen!)
+      const kipId = getCanonicalKipId(fromFace, toFace);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
+      // 3) Entscheiden, welche Hälfte in dieser Gruppe "fromFace" ist.
+      //    NICHT tauschen, nur korrekt befüllen:
+      const rightFace = KIP_GROUP_RIGHT_FACE[kipId];
+      const leftFace  = KIP_GROUP_LEFT_FACE[kipId];
 
+      const currSlots     = (fromFace === rightFace) ? right : left;
+      const incomingSlots = (toFace   === rightFace) ? right : left;
+
+      // current in die richtige feste Face-Hälfte
+      for(let i=0;i<4;i++) renderNumber(currSlots[i], curr[i]);
+
+      // incoming-preview in die richtige feste Face-Hälfte
       const nextPreview = mapHiddenToVisible_CW(incoming);
-      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
+      for(let i=0;i<4;i++) renderNumber(incomingSlots[i], nextPreview[i]);
     }
 
     function renderW(){
