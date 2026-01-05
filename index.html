@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DigiKipp – Schauen & Merken</title>
+
   <style>
     :root{
       --cols: 8;
@@ -460,15 +461,6 @@
     }
     .rotBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .rotBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
-    .rotBtn.selected{
-      background: rgba(249, 150, 30, 0.95);
-      border-color: rgba(0,0,0,0.85);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.32),
-        0 0 0 2px rgba(255,255,255,0.25) inset,
-        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-      transform: scale(1.05);
-    }
 
     .slot{
       position: absolute;
@@ -800,6 +792,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
@@ -975,7 +968,7 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
-
+    
     const rotationBtns = document.getElementById("rotationBtns");
     const btnCW = document.getElementById("btnCW");
     const btnCCW = document.getElementById("btnCCW");
@@ -1083,6 +1076,7 @@
 
     // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
 
+    // ZF Mapping (Koordinate -> ZF1..ZF4) (Info, für dich/Debug, nicht zwingend)
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1090,6 +1084,11 @@
       "8D": 1, "8C": 2, "6A": 3, "5A": 4,
     };
 
+    // ZS Mapping: pro rotIndex (0..3) die Koordinaten von ZS1..ZS4
+    // rotIndex 0: 4B,3B,2C,2D
+    // rotIndex 1: 2E,2F,3G,4G
+    // rotIndex 2: 5G,6G,7F,7E
+    // rotIndex 3: 7D,7C,6B,5B
     const ZS_COORDS_BY_ROT_ZSINDEX = [
       ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
       ["2E","2F","3G","4G"], // rot 1
@@ -1097,8 +1096,11 @@
       ["7D","7C","6B","5B"], // rot 3
     ];
 
+    // DOM Slot Reihenfolge: S1,S2,S3,S4 entspricht in rotIndex 0 den Koords 3B,4B,2C,2D
+    // Daraus folgt: S2 ist ZS1, S1 ist ZS2, S3 ist ZS3, S4 ist ZS4 (konstant über Rotation)
     const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
 
+    // Farbfeld-Koordinaten (wie bisher) = Rendering bleibt exakt gleich
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
       'blau':    ['1F','8F','4A','5A'],
@@ -1106,6 +1108,7 @@
       'orange':  ['1D','1E','6A','6H']
     };
 
+    // Reverse map: Koordinate -> Farbe (für Ausschlusskriterium)
     const COLOR_BY_ZF_COORD = (() => {
       const m = {};
       for(const [c, arr] of Object.entries(colorFieldCoords)){
@@ -1115,13 +1118,16 @@
     })();
 
     function isBorderAdjacent(zfCoord, zsCoord){
+      // nur A<->B, H<->G, 1<->2, 8<->7, gleiche Zeile/Spalte
       const a = coordToXY(zfCoord);
       const b = coordToXY(zsCoord);
 
+      // gleiche Zeile, Spalten A/B
       if(a.row === b.row){
         if((a.colLetter === "A" && b.colLetter === "B") || (a.colLetter === "B" && b.colLetter === "A")) return true;
         if((a.colLetter === "H" && b.colLetter === "G") || (a.colLetter === "G" && b.colLetter === "H")) return true;
       }
+      // gleiche Spalte, Zeilen 1/2 oder 8/7
       if(a.colLetter === b.colLetter){
         if((a.row === 1 && b.row === 2) || (a.row === 2 && b.row === 1)) return true;
         if((a.row === 8 && b.row === 7) || (a.row === 7 && b.row === 8)) return true;
@@ -1130,21 +1136,27 @@
     }
 
     function getAdjacentZFCoordForZS(zsCoord){
+      // liefert die ZF-Koordinate, die über Rand benachbart ist (genau 1)
       const p = coordToXY(zsCoord);
+      // Spalte B -> A
       if(p.colLetter === "B") return `${p.row}A`;
+      // Spalte G -> H
       if(p.colLetter === "G") return `${p.row}H`;
+      // Zeile 2 -> 1
       if(p.row === 2) return `1${p.colLetter}`;
+      // Zeile 7 -> 8
       if(p.row === 7) return `8${p.colLetter}`;
       return null;
     }
 
     function getVisibleSlotInfos(){
+      // liefert pro DOM-Slot: { slotEl, spanEl, num, zsIndex, zsCoord }
       const curr = sets[faceIndex];
       const rot = rotIndex;
-      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot];
+      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot]; // [ZS1..ZS4]
       const out = [];
       for(let i=0;i<4;i++){
-        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i];
+        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i]; // 1..4
         const zsCoord = zsCoords[zsIndex - 1];
         out.push({
           slotEl: slotElsW[i],
@@ -1158,6 +1170,7 @@
     }
 
     function clearHitVisuals(){
+      // Slotfarbe zurück auf Beige + Puls-Klassen weg
       for(const el of slotElsW){
         el.style.removeProperty("--slot-fill");
         const s = el.querySelector(".num > span");
@@ -1167,13 +1180,16 @@
     }
 
     function applyHitVisual(slotInfo, targetCoord){
+      // Slotfarbe auf Zielfarbe
       if(currentTarget && currentTarget.color){
         slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
       }
+      // Pulsieren: Slotzahl + Zielzahl (an genau diesem ZF)
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
       const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
       if(targetSpan) targetSpan.classList.add("kippPulse");
 
+      // Nach kurzer Zeit Puls wieder weg (Farbe darf gern bleiben, wenn du willst – hier bleibt sie kurz sichtbar)
       setTimeout(() => {
         if(slotInfo.spanEl) slotInfo.spanEl.classList.remove("kippPulse");
         if(targetSpan) targetSpan.classList.remove("kippPulse");
@@ -1188,6 +1204,7 @@
 
       const visibleSlots = getVisibleSlotInfos();
 
+      // Jede der 4 Zielzahlen sitzt auf einem ZF-Koordinatenfeld
       for(const te of targetElems){
         const zfCoord = te.dataset.coord;
         if(!zfCoord) continue;
@@ -1205,6 +1222,7 @@
     }
 
     function getForbiddenPairsForCurrentState(){
+      // Liefert Set von "num|color" für alle sichtbaren Zahlen, die aktuell bereits an einer Zielfarbe "liegen"
       const forbidden = new Set();
       const visibleSlots = getVisibleSlotInfos();
 
@@ -1239,6 +1257,7 @@
       const forbidden = getForbiddenPairsForCurrentState();
       const visibleNums = getVisibleSlotInfos().map(s => s.num).filter(n => n != null);
 
+      // Kandidatenzahlen: Ziehung 1 nur aus sichtbar, danach aus 1..12 ohne Wiederholung
       let numberCandidates;
       if(drawsCount === 0){
         numberCandidates = Array.from(new Set(visibleNums)).filter(n => !usedNumbers.has(n));
@@ -1250,7 +1269,11 @@
       }
       if(numberCandidates.length === 0) return null;
 
+      // Wir ziehen zuerst eine Zielfarbe random (wie du wolltest),
+      // und suchen dazu eine Zahl, die nicht forbidden ist.
+      // Wenn nichts passt, wählen wir eine andere Farbe (ein paar Versuche), dann Fallback-Suche.
       const colorTryOrder = allColors.slice();
+      // leichte Randomisierung
       for(let i=colorTryOrder.length-1;i>0;i--){
         const j = Math.floor(Math.random()*(i+1));
         [colorTryOrder[i], colorTryOrder[j]] = [colorTryOrder[j], colorTryOrder[i]];
@@ -1281,6 +1304,7 @@
         }
       }
 
+      // Fallback: suche irgendein erlaubtes Paar (Farbe+Zahl)
       if(chosenNum == null){
         for(const col of colorTryOrder){
           for(const n of numberCandidates){
@@ -1328,8 +1352,8 @@
 
         const container = document.createElement("div");
         container.className = "targetNumber";
-        container.dataset.coord = coord;
-        container.dataset.zf = String(ZF_INDEX_BY_COORD[coord] || "");
+        container.dataset.coord = coord;     // NEU: Koordinate speichern (für Treffercheck)
+        container.dataset.zf = String(ZF_INDEX_BY_COORD[coord] || ""); // optional
 
         container.style.position = "absolute";
         container.style.left = x + "px";
@@ -1343,7 +1367,7 @@
         container.style.pointerEvents = "none";
 
         const numSpan = document.createElement("span");
-        numSpan.className = "targetNumSpan";
+        numSpan.className = "targetNumSpan"; // NEU: für Puls-Zugriff
         numSpan.style.fontWeight = "900";
         numSpan.style.color = "#111";
         numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
@@ -1414,70 +1438,21 @@
       else span.style.letterSpacing = "";
     }
 
-    // =========================
-    //   CW / CCW Logik (FIX)
-    //   - exakt Zyklus wie vereinbart:
-    //   CW:  W0 -> kip0_1 -> W1 -> kip1_2 -> W2 -> kip2_0 -> W0 ...
-    //   CCW: W0 -> kip2_0 -> W2 -> kip1_2 -> W1 -> kip0_1 -> W0 ...
-    // =========================
-
-    // (FIX) explizite Kip-ID Zuordnung pro Ausgangslage
-    const KIP_ID_BY_FACE_CW  = { 0:"0_1", 1:"1_2", 2:"2_0" };
-    const KIP_ID_BY_FACE_CCW = { 0:"2_0", 1:"0_1", 2:"1_2" };
-
-    function getNextFaceIndex(dir){
-      return (dir === "CW")
-        ? ((faceIndex + 1) % 3)
-        : ((faceIndex + 2) % 3); // -1 mod 3
-    }
-
-    // (FIX) KipId direkt aus Mapping – damit CCW ab Face 0 garantiert mit 2_0 startet
-    function getKipIdForDir(dir){
-      return (dir === "CW")
-        ? KIP_ID_BY_FACE_CW[faceIndex]
-        : KIP_ID_BY_FACE_CCW[faceIndex];
-    }
-
-    function advanceFull(dir){
-      if(dir === "CW"){
-        rotIndex  = (rotIndex + 1) % 4;
-        faceIndex = (faceIndex + 1) % 3;
-      } else {
-        rotIndex  = (rotIndex + 3) % 4;  // -1 mod 4
-        faceIndex = (faceIndex + 2) % 3; // -1 mod 3
-      }
-      setRotationSnap();
-    }
-
-    function renderKipDir(dir){
+    function renderKip(){
       setRotationSnap();
 
       const curr = sets[faceIndex];
-      const incomingIndex = getNextFaceIndex(dir);
-      const incoming = sets[incomingIndex];
+      const nextFaceIndex = (faceIndex + 1) % 3;
+      const next = sets[nextFaceIndex];
 
-      const kipId = getKipIdForDir(dir);
+      const kipId = getKipId(faceIndex, nextFaceIndex);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      // rechts: aktuelle Ausgangslage (wie bisher)
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-
-      // links: Vorschau der nächsten Lage (wie bisher gemappt)
-      const nextPreview = mapHiddenToVisible_CW(incoming);
+      const nextPreview = mapHiddenToVisible_CW(next);
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
-    }
-
-    function renderW(){
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-    }
-
-    function renderWEmpty(){
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1511,6 +1486,23 @@
       Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
       cubeShadowLayer.style.setProperty("--rot", deg + "deg");
       updateShadowVisibility();
+    }
+
+    function advanceFullCW(){
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+    }
+
+    function renderW(){
+      setRotationSnap();
+      const curr = sets[faceIndex];
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+    }
+
+    function renderWEmpty(){
+      setRotationSnap();
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
     }
 
     let planned = [
@@ -1572,7 +1564,6 @@
       btnSchauen.querySelector('.btnText').textContent = txt;
     }
 
-    // Preview läuft (wie gehabt) in CW
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
@@ -1594,19 +1585,19 @@
       ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
@@ -1617,10 +1608,10 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW");
+      advanceFullCW();
       showW();
       renderW();
 
@@ -1628,10 +1619,10 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        advanceFullCW(); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1642,10 +1633,10 @@
       }
 
       while(myToken === previewToken){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        advanceFullCW(); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1721,16 +1712,18 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
+      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
       schauenTop.style.top = midY + "px";
 
+      // "SCHAU GENAU" Position + Größe: exakt über C–F
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      const leftEdgeC = (3 - 1) * cellPx;
-      const rightEdgeF = 6 * cellPx;
+      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
+      const rightEdgeF = 6 * cellPx;        // Spalte F endet
       const centerCF = (leftEdgeC + rightEdgeF) / 2;
       const widthCF = (rightEdgeF - leftEdgeC);
 
@@ -1738,6 +1731,7 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
+      // Header: X, DIGI-KIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
       const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
@@ -1751,6 +1745,7 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
+      // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
       kippAnzahlBtns.style.top = row11CenterY + "px";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
@@ -1844,11 +1839,6 @@
 
       clearHitVisuals();
 
-      // Pending-Auswahl zurücksetzen (NEU)
-      pendingCount = null;
-      pendingDir = null;
-      refreshPendingUI();
-
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1863,7 +1853,7 @@
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleCountPick(num));
+        btn.addEventListener("click", () => handleAnzahlClick(num));
         kippAnzahlBtns.appendChild(btn);
       });
     }
@@ -1872,16 +1862,11 @@
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
-      btnCW.disabled = locked;
-      btnCCW.disabled = locked;
     }
 
     let runningKipp = false;
 
-    // ================
-    // Run kip cycles in chosen direction (NEU)
-    // ================
-    async function runKippCycles(count, dir){
+    async function runKippCyclesNoHit(count){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1889,13 +1874,14 @@
 
       for(let i = 0; i < count; i++){
         showKip();
-        renderKipDir(dir);
+        renderKip();
         if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
-        advanceFull(dir);
+        advanceFullCW();
         showW();
         renderW();
 
+        // NEU: nach jeder neuen Ausgangslage prüfen, ob Treffer da ist
         checkHitAndAnimate();
 
         if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
@@ -1904,7 +1890,46 @@
       runningKipp = false;
     }
 
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0) (bleibt CW wie gehabt)
+    // Zwei-Tasten-Auswahl System
+    let selectedButtons = [];
+
+    function handleAnzahlClick(anzahl){
+      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button"))
+        .find(b => parseInt(b.dataset.anzahl) === anzahl);
+      if(!clickedBtn) return;
+
+      if(selectedButtons.includes(anzahl)){
+        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+
+        setAnzahlButtonsLocked(true);
+
+        runKippCyclesNoHit(totalKipps).finally(() => {
+          selectedButtons = [];
+          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+          setAnzahlButtonsLocked(false);
+        });
+        return;
+      }
+
+      if(selectedButtons.length < 2){
+        selectedButtons.push(anzahl);
+        clickedBtn.classList.add("selected");
+
+        if(selectedButtons.length === 2){
+          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+
+          setAnzahlButtonsLocked(true);
+
+          runKippCyclesNoHit(totalKipps).finally(() => {
+            selectedButtons = [];
+            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+            setAnzahlButtonsLocked(false);
+          });
+        }
+      }
+    }
+
+    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
@@ -1916,7 +1941,7 @@
       showW();
       renderW();
 
-      await runKippCycles(4, "CW");
+      await runKippCyclesNoHit(4);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
@@ -1931,7 +1956,17 @@
       clearHitVisuals();
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
+      // optional sofort checken:
       checkHitAndAnimate();
+    });
+
+    // CW/CCW Rotation Buttons (vorerst ohne Funktion)
+    btnCW.addEventListener("click", () => {
+      console.log("CW Button geklickt - Funktion noch nicht implementiert");
+    });
+
+    btnCCW.addEventListener("click", () => {
+      console.log("CCW Button geklickt - Funktion noch nicht implementiert");
     });
 
     btnSchauen.addEventListener("click", async () => {
@@ -1998,9 +2033,17 @@
       ensureAssigned(1);
       ensureAssigned(2);
 
-      // (FIX) Ausgangslage ist Face 0, Rotation 0
       rotIndex = 0;
       faceIndex = 0;
+      setRotationSnap();
+
+      for(let i=0;i<4;i++){
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+      }
+
+      rotIndex = 0;
+      faceIndex = 1;
       setRotationSnap();
 
       showW();
@@ -2009,63 +2052,6 @@
       showKippAnzahlView();
     }
 
-    // ==========================
-    //  NEU: Auswahl-Logik
-    //  Zahl (1..6) + Richtung (CW/CCW) -> startet
-    //  Reihenfolge egal
-    // ==========================
-    let pendingCount = null; // 1..6
-    let pendingDir = null;   // "CW" | "CCW"
-
-    function refreshPendingUI(){
-      // Zahlbuttons highlight
-      kippAnzahlBtns.querySelectorAll("button").forEach(b => {
-        const n = parseInt(b.dataset.anzahl, 10);
-        b.classList.toggle("selected", pendingCount === n);
-      });
-
-      // Rotationsbuttons highlight
-      btnCW.classList.toggle("selected", pendingDir === "CW");
-      btnCCW.classList.toggle("selected", pendingDir === "CCW");
-    }
-
-    function tryStartPending(){
-      if(!pendingCount || !pendingDir) return;
-
-      const count = pendingCount;
-      const dir = pendingDir;
-
-      // lock + run
-      setAnzahlButtonsLocked(true);
-
-      runKippCycles(count, dir).finally(() => {
-        // nach Ablauf: Auswahl zurücksetzen
-        pendingCount = null;
-        pendingDir = null;
-        refreshPendingUI();
-        setAnzahlButtonsLocked(false);
-      });
-    }
-
-    function handleCountPick(n){
-      pendingCount = n;
-      refreshPendingUI();
-      tryStartPending();
-    }
-
-    btnCW.addEventListener("click", () => {
-      pendingDir = "CW";
-      refreshPendingUI();
-      tryStartPending();
-    });
-
-    btnCCW.addEventListener("click", () => {
-      pendingDir = "CCW";
-      refreshPendingUI();
-      tryStartPending();
-    });
-
-    // ===== Initialisierung =====
     window.addEventListener("load", () => {
       rebuild();
       fastInitAndEnterKippAnzahl();
