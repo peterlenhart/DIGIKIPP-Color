@@ -1390,7 +1390,6 @@
     }
 
     function showW(){
-      // Beim Zurück zur Würfelansicht: Zwischenkipp-Extra-Rotation weg
       kipExtraRotDeg = 0;
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
@@ -1420,47 +1419,64 @@
       else span.style.letterSpacing = "";
     }
 
-    function advanceFull(dir){
-      if(dir === "CW"){
-        rotIndex  = (rotIndex + 1) % 4;
-        faceIndex = (faceIndex + 1) % 3;
-      } else {
-        rotIndex  = (rotIndex + 3) % 4;  // -1 mod 4
-        faceIndex = (faceIndex + 2) % 3; // -1 mod 3
-      }
-      setRotationSnap();
-    }
-
     const rotDeg = [0, 90, 180, 270];
     let rotIndex  = 0;
     let faceIndex = 0;
 
+    // =========================
+    //  NEU: 12er Timeline (Rotation+Face) + Spulen
+    // =========================
+    let timeline = null; // Array[12] of {rot, face}
+    let tPos = 0;        // 0..11 = aktueller Zustand in timeline
+
+    function buildTimelineFromCurrent(){
+      timeline = [];
+      let r = rotIndex;
+      let f = faceIndex;
+      for(let i=0;i<12;i++){
+        timeline.push({ rot: r, face: f });
+        r = (r + 1) % 4;
+        f = (f + 1) % 3;
+      }
+      tPos = 0;
+    }
+
+    function ensureTimeline(){
+      if(!timeline || timeline.length !== 12) buildTimelineFromCurrent();
+    }
+
+    function getNeighborState(dir){
+      ensureTimeline();
+      const idx = (dir === "CW") ? ((tPos + 1) % 12) : ((tPos + 11) % 12);
+      return timeline[idx];
+    }
+
     function setRotationSnap(){
       const realDeg = rotDeg[rotIndex];
 
-      // W: normale Rotation, keine ExtraRotation
       wFaceGroup.style.setProperty("--rot", realDeg + "deg");
       wFaceGroup.style.setProperty("--extraRot", "0deg");
 
-      // Zwischenkipp: normale Rotation + ggf. ExtraRotation (-90)
       Object.values(kipGroups).forEach(g => {
         g.style.setProperty("--rot", realDeg + "deg");
         g.style.setProperty("--extraRot", kipExtraRotDeg + "deg");
       });
 
-      // Cube Shadow Layer (nur W sichtbar)
       cubeShadowLayer.style.setProperty("--rot", realDeg + "deg");
 
       updateShadowVisibility();
     }
 
-    // ====== FIX: CCW braucht korrektes toFace + kanonische kipGroup (nur 3 Gruppen) ======
-
-    function getNextFaceIndex(dir){
-      return (dir === "CW")
-        ? ((faceIndex + 1) % 3)
-        : ((faceIndex + 2) % 3); // -1 mod 3
+    function advanceFull(dir){
+      // Bewegung über Timeline statt Modulo-Logik => CCW ist echtes Zurückspulen
+      ensureTimeline();
+      tPos = (dir === "CW") ? ((tPos + 1) % 12) : ((tPos + 11) % 12);
+      rotIndex  = timeline[tPos].rot;
+      faceIndex = timeline[tPos].face;
+      setRotationSnap();
     }
+
+    // ====== FIX: CCW bekommt toFace aus Timeline + kanonische kipGroup (nur 3 Gruppen) ======
 
     function getCanonicalKipId(a, b){
       if((a === 0 && b === 1) || (a === 1 && b === 0)) return "0_1";
@@ -1474,37 +1490,30 @@
     const KIP_GROUP_LEFT_FACE  = { "0_1": 1, "1_2": 2, "2_0": 0 };
 
     function renderKipDir(dir){
-      // CCW: Bild vor Anzeige -90° drehen (wie bei dir)
       kipExtraRotDeg = (dir === "CCW") ? -90 : 0;
-
       setRotationSnap();
 
-      // 1) current + toFace korrekt bestimmen
       const fromFace = faceIndex;
-      const toFace   = getNextFaceIndex(dir);
 
-      // sets[] wird NICHT verändert – wir lesen nur aus
+      // >>> NEU: toFace aus Timeline-Nachbarzustand (nicht mehr gerechnet)
+      const neighbor = getNeighborState(dir);
+      const toFace   = neighbor.face;
+
       const curr     = sets[fromFace];
       const incoming = sets[toFace];
 
-      // 2) richtige der 3 Zwischenkippgruppen wählen (ohne irgendein Tauschen!)
       const kipId = getCanonicalKipId(fromFace, toFace);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      // 3) Entscheiden, welche Hälfte in dieser Gruppe "fromFace" ist.
       const rightFace = KIP_GROUP_RIGHT_FACE[kipId];
       const leftFace  = KIP_GROUP_LEFT_FACE[kipId];
 
       const currSlots     = (fromFace === rightFace) ? right : left;
       const incomingSlots = (toFace   === rightFace) ? right : left;
 
-      // current in die richtige feste Face-Hälfte (fixe Slot-Positionen => nie permutieren)
       for(let i=0;i<4;i++) renderNumber(currSlots[i], curr[i]);
-
-      // incoming-preview in die richtige feste Face-Hälfte
-      // WICHTIG: NICHT mehr "mapHiddenToVisible" (das war der Hauptgrund für falsche Flächen/Zahlen in CCW)
       for(let i=0;i<4;i++) renderNumber(incomingSlots[i], incoming[i]);
     }
 
@@ -1574,6 +1583,7 @@
 
       rotIndex  = 0;
       faceIndex = 0;
+      buildTimelineFromCurrent(); // <<< NEU
       setRotationSnap();
     }
 
@@ -1934,6 +1944,8 @@
       const savedFace = faceIndex;
 
       rotIndex = 0;
+      faceIndex = 0;
+      buildTimelineFromCurrent(); // <<< NEU: Timeline passend zum Reset
       setRotationSnap();
       showW();
       renderW();
@@ -1942,6 +1954,7 @@
 
       rotIndex = savedRot;
       faceIndex = savedFace;
+      buildTimelineFromCurrent(); // <<< NEU: Timeline passend zum Restore
       setRotationSnap();
       showW();
       renderW();
@@ -2019,16 +2032,9 @@
       ensureAssigned(2);
 
       rotIndex = 0;
-      faceIndex = 0;
-      setRotationSnap();
-
-      for(let i=0;i<4;i++){
-        rotIndex  = (rotIndex + 1) % 4;
-        faceIndex = (faceIndex + 1) % 3;
-      }
-
-      rotIndex = 0;
       faceIndex = 1;
+
+      buildTimelineFromCurrent(); // <<< NEU
       setRotationSnap();
 
       showW();
