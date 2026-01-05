@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DigiKipp – Schauen & Merken</title>
+
   <style>
     :root{
       --cols: 8;
@@ -460,15 +461,6 @@
     }
     .rotBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .rotBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
-    .rotBtn.selected{
-      background: rgba(249, 150, 30, 0.95);
-      border-color: rgba(0,0,0,0.85);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.32),
-        0 0 0 2px rgba(255,255,255,0.25) inset,
-        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-      transform: scale(1.05);
-    }
 
     .slot{
       position: absolute;
@@ -800,6 +792,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
@@ -975,7 +968,7 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
-
+    
     const rotationBtns = document.getElementById("rotationBtns");
     const btnCW = document.getElementById("btnCW");
     const btnCCW = document.getElementById("btnCCW");
@@ -1004,7 +997,14 @@
     };
 
     let activeKipId = "0_1";
-    function getKipId(fromFace, toFace){ return `${fromFace}_${toFace}`; }
+
+    // === NEU: Edge-basierte KipId (damit 0<->2 immer "2_0" ist) ===
+    function getEdgeKipId(a, b){
+      if((a === 0 && b === 1) || (a === 1 && b === 0)) return "0_1";
+      if((a === 1 && b === 2) || (a === 2 && b === 1)) return "1_2";
+      if((a === 2 && b === 0) || (a === 0 && b === 2)) return "2_0";
+      return "0_1";
+    }
 
     function setActiveKipGroup(kipId){
       activeKipId = kipId;
@@ -1083,6 +1083,7 @@
 
     // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
 
+    // ZF Mapping (Koordinate -> ZF1..ZF4) (Info, für dich/Debug, nicht zwingend)
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1090,15 +1091,18 @@
       "8D": 1, "8C": 2, "6A": 3, "5A": 4,
     };
 
+    // ZS Mapping: pro rotIndex (0..3) die Koordinaten von ZS1..ZS4
     const ZS_COORDS_BY_ROT_ZSINDEX = [
-      ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
-      ["2E","2F","3G","4G"], // rot 1
-      ["5G","6G","7F","7E"], // rot 2
-      ["7D","7C","6B","5B"], // rot 3
+      ["4B","3B","2C","2D"],
+      ["2E","2F","3G","4G"],
+      ["5G","6G","7F","7E"],
+      ["7D","7C","6B","5B"],
     ];
 
-    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
+    // DOM Slot Reihenfolge: S1,S2,S3,S4 entspricht in rotIndex 0 den Koords 3B,4B,2C,2D
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
 
+    // Farbfeld-Koordinaten (wie bisher) = Rendering bleibt exakt gleich
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
       'blau':    ['1F','8F','4A','5A'],
@@ -1302,7 +1306,6 @@
     }
 
     // ===== Rendering / Placement (bleibt wie bei dir) =====
-
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
     }
@@ -1398,6 +1401,12 @@
       return [f4, f3, f2, f1];
     }
 
+    // === NEU: (plausible) CCW-Vorschau-Mapping ===
+    function mapHiddenToVisible_CCW(face){
+      const [f1,f2,f3,f4] = face;
+      return [f2, f1, f4, f3];
+    }
+
     function renderNumber(span, n){
       if(!span) return;
       span.classList.remove("twodigit");
@@ -1414,85 +1423,31 @@
       else span.style.letterSpacing = "";
     }
 
-    // =========================
-    //   CW / CCW Logik (RING 6 STATES)
-    //   Faces: 0,2,4  |  Kips: 1,3,5
-    //   Mapping:
-    //     1 -> 0_1
-    //     3 -> 1_2
-    //     5 -> 2_0
-    //   CCW von Face 0 zeigt zuerst State 5 -> kip 2_0  (dein Fix)
-    // =========================
-
-    const ODD_STATE_TO_KIP = {
-      1: "0_1",
-      3: "1_2",
-      5: "2_0",
-    };
-
-    // state6 ist IMMER die aktuelle W-Lage (gerade): 0,2,4
-    // (die Zwischenlage wird nur zum Rendern verwendet)
-    let state6 = 0; // 0..5
-
-    function syncFaceIndexFromState(){
-      // state6 ist gerade -> 0,2,4 => 0,1,2
-      faceIndex = (state6 / 2) | 0;
-    }
-
-    function getNextFaceIndex(dir){
-      return (dir === "CW") ? ((faceIndex + 1) % 3) : ((faceIndex + 2) % 3);
-    }
-
-    function getOddStateForDir(dir){
-      // wenn wir in W stehen (state6 gerade), ist die nächste Zwischenlage:
-      // CW: +1 ; CCW: -1 (= +5 mod 6)
-      return (dir === "CW") ? ((state6 + 1) % 6) : ((state6 + 5) % 6);
-    }
-
-    function renderKipDir(dir){
+    // === NEU: renderKip für beliebige Transition (CW/CCW) ===
+    function renderKipBetween(fromFaceIndex, toFaceIndex, dir){
       setRotationSnap();
 
-      const currFace = faceIndex;              // aus state6 synchron
-      const nextFace = getNextFaceIndex(dir);  // wohin kippen wir
+      const curr = sets[fromFaceIndex];
+      const next = sets[toFaceIndex];
 
-      const odd = getOddStateForDir(dir);
-      const kipId = ODD_STATE_TO_KIP[odd];     // 1/3/5 -> 0_1/1_2/2_0 (fix)
+      const kipId = getEdgeKipId(fromFaceIndex, toFaceIndex);
       setActiveKipGroup(kipId);
-
-      const curr = sets[currFace];
-      const incoming = sets[nextFace];
 
       const { right, left } = getKipSlots(kipId);
 
-      // rechts: aktuelle Ausgangslage
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
 
-      // links: Vorschau der nächsten Lage
-      const nextPreview = mapHiddenToVisible_CW(incoming);
+      const nextPreview = (dir === +1)
+        ? mapHiddenToVisible_CW(next)
+        : mapHiddenToVisible_CCW(next);
+
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
     }
 
-    function advanceFull(dir){
-      if(dir === "CW"){
-        rotIndex  = (rotIndex + 1) % 4;
-        state6    = (state6 + 2) % 6; // von 0->2->4->0...
-      } else {
-        rotIndex  = (rotIndex + 3) % 4; // -1 mod 4
-        state6    = (state6 + 4) % 6;   // -2 mod 6
-      }
-      syncFaceIndexFromState();
-      setRotationSnap();
-    }
-
-    function renderW(){
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-    }
-
-    function renderWEmpty(){
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
+    // kompatibel: bisheriges renderKip() bleibt CW-Transition face -> face+1
+    function renderKip(){
+      const nextFaceIndex = (faceIndex + 1) % 3;
+      renderKipBetween(faceIndex, nextFaceIndex, +1);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1505,7 +1460,6 @@
       return pool.slice(0, count);
     }
 
-    // FIX: Kippspeed ist auf 3 fixiert, UI dazu ist gelöscht.
     const FIXED_SPEED = 3;
 
     function getTiming(){
@@ -1517,10 +1471,19 @@
     }
 
     const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
+    let rotIndex  = 0;     // 0..3
+    let faceIndex = 0;     // 0..2
 
-    // bleibt als Variable bestehen, wird aber IMMER aus state6 synchronisiert
-    let faceIndex = 0;
+    // === NEU: 6-Zustand-Phase (0..5): W0, Kip01, W1, Kip12, W2, Kip20 ===
+    // Phase entspricht genau deiner Sequenz:
+    // CW: 0->1->2->3->4->5->0
+    // CCW: 0->5->4->3->2->1->0
+    let phaseIndex = 0;    // 0..5
+
+    function syncPhaseFromFace(){
+      // W-Faces sind die geraden Phasen 0,2,4
+      phaseIndex = (faceIndex * 2) % 6;
+    }
 
     function setRotationSnap(){
       const deg = rotDeg[rotIndex];
@@ -1528,6 +1491,47 @@
       Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
       cubeShadowLayer.style.setProperty("--rot", deg + "deg");
       updateShadowVisibility();
+    }
+
+    function renderW(){
+      setRotationSnap();
+      const curr = sets[faceIndex];
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+      syncPhaseFromFace();
+    }
+
+    function renderWEmpty(){
+      setRotationSnap();
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
+      syncPhaseFromFace();
+    }
+
+    // === NEU: Schrittlogik (voller Schritt = Kip anzeigen + danach neue W-Lage) ===
+    async function runOneStep(dir, myToken){
+      // dir: +1 = CW, -1 = CCW
+      if(runningKipp) return;
+      runningKipp = true;
+
+      // Ausgang: W sichtbar (wir gehen von W -> Kip -> W)
+      const fromFace = faceIndex;
+      const toFace = (dir === +1) ? ((faceIndex + 1) % 3) : ((faceIndex + 2) % 3);
+
+      // 1) Kip-Zwischenzustand (odd: 1/3/5)
+      showKip();
+      renderKipBetween(fromFace, toFace, dir);
+      if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
+
+      // 2) Neue W-Lage (even: 0/2/4)
+      faceIndex = toFace;
+      rotIndex = (dir === +1) ? ((rotIndex + 1) % 4) : ((rotIndex + 3) % 4);
+      setRotationSnap();
+      showW();
+      renderW();
+
+      checkHitAndAnimate();
+      if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
+
+      runningKipp = false;
     }
 
     let planned = [
@@ -1562,9 +1566,9 @@
       assigned = [false,false,false];
 
       rotIndex  = 0;
-      state6    = 0;
-      syncFaceIndexFromState();
+      faceIndex = 0;
       setRotationSnap();
+      syncPhaseFromFace();
     }
 
     let runningPreview = false;
@@ -1590,7 +1594,6 @@
       btnSchauen.querySelector('.btnText').textContent = txt;
     }
 
-    // Preview läuft (wie gehabt) in CW
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
@@ -1612,19 +1615,29 @@
       ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      // CW-Vorschau bleibt wie gehabt (dein Ablauf)
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      // „advanceFullCW“ ersetzt durch harte CW-Schrittlogik (Face+Rot)
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+
+      showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+
+      showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
@@ -1635,10 +1648,13 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip();
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW");
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+
       showW();
       renderW();
 
@@ -1646,10 +1662,15 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+        setRotationSnap();
+
+        showW(); renderW();
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1660,10 +1681,15 @@
       }
 
       while(myToken === previewToken){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip();
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+        setRotationSnap();
+
+        showW(); renderW();
+
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1862,11 +1888,6 @@
 
       clearHitVisuals();
 
-      // Pending-Auswahl zurücksetzen (NEU)
-      pendingCount = null;
-      pendingDir = null;
-      refreshPendingUI();
-
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1881,7 +1902,7 @@
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleCountPick(num));
+        btn.addEventListener("click", () => handleAnzahlClick(num));
         kippAnzahlBtns.appendChild(btn);
       });
     }
@@ -1896,51 +1917,68 @@
 
     let runningKipp = false;
 
-    // ================
-    // Run kip cycles in chosen direction (NEU)
-    // ================
-    async function runKippCycles(count, dir){
-      if(runningKipp) return;
-      runningKipp = true;
-
+    async function runKippCyclesNoHit(count){
       const myToken = ++previewToken;
-
       for(let i = 0; i < count; i++){
-        showKip();
-        renderKipDir(dir);
-        if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
-
-        advanceFull(dir);
-        showW();
-        renderW();
-
-        checkHitAndAnimate();
-
-        if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
+        await runOneStep(+1, myToken);
       }
-
-      runningKipp = false;
     }
 
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0) (bleibt CW wie gehabt)
+    // Zwei-Tasten-Auswahl System
+    let selectedButtons = [];
+
+    function handleAnzahlClick(anzahl){
+      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button"))
+        .find(b => parseInt(b.dataset.anzahl) === anzahl);
+      if(!clickedBtn) return;
+
+      if(selectedButtons.includes(anzahl)){
+        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+
+        setAnzahlButtonsLocked(true);
+
+        runKippCyclesNoHit(totalKipps).finally(() => {
+          selectedButtons = [];
+          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+          setAnzahlButtonsLocked(false);
+        });
+        return;
+      }
+
+      if(selectedButtons.length < 2){
+        selectedButtons.push(anzahl);
+        clickedBtn.classList.add("selected");
+
+        if(selectedButtons.length === 2){
+          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
+
+          setAnzahlButtonsLocked(true);
+
+          runKippCyclesNoHit(totalKipps).finally(() => {
+            selectedButtons = [];
+            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
+            setAnzahlButtonsLocked(false);
+          });
+        }
+      }
+    }
+
+    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0) (CW)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
       const savedRot = rotIndex;
-      const savedState = state6;
+      const savedFace = faceIndex;
 
       rotIndex = 0;
-      state6   = 0;
-      syncFaceIndexFromState();
       setRotationSnap();
       showW();
       renderW();
 
-      await runKippCycles(4, "CW");
+      await runKippCyclesNoHit(4);
 
       rotIndex = savedRot;
-      state6   = savedState;
-      syncFaceIndexFromState();
+      faceIndex = savedFace;
       setRotationSnap();
       showW();
       renderW();
@@ -1953,6 +1991,23 @@
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
       checkHitAndAnimate();
+    });
+
+    // === NEU: CW/CCW Rotation Buttons (JETZT FUNKTIONAL) ===
+    btnCW.addEventListener("click", async () => {
+      if(runningPreview) return;
+      setAnzahlButtonsLocked(true);
+      const myToken = ++previewToken;
+      await runOneStep(+1, myToken);
+      setAnzahlButtonsLocked(false);
+    });
+
+    btnCCW.addEventListener("click", async () => {
+      if(runningPreview) return;
+      setAnzahlButtonsLocked(true);
+      const myToken = ++previewToken;
+      await runOneStep(-1, myToken);
+      setAnzahlButtonsLocked(false);
     });
 
     btnSchauen.addEventListener("click", async () => {
@@ -1995,7 +2050,7 @@
     modalConfirm.addEventListener("click", endGame);
 
     closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal) hideCloseModal();
+      if(e.target === closeModal) hideCloseModal;
     });
 
     endRestart.addEventListener("click", () => {
@@ -2019,10 +2074,18 @@
       ensureAssigned(1);
       ensureAssigned(2);
 
-      // WICHTIG: Start ist Face 0 (state6=0), damit CCW zuerst kip 2_0 zeigt
       rotIndex = 0;
-      state6   = 0;
-      syncFaceIndexFromState();
+      faceIndex = 0;
+      setRotationSnap();
+
+      // wie bisher
+      for(let i=0;i<4;i++){
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+      }
+
+      rotIndex = 0;
+      faceIndex = 1;
       setRotationSnap();
 
       showW();
@@ -2031,63 +2094,6 @@
       showKippAnzahlView();
     }
 
-    // ==========================
-    //  NEU: Auswahl-Logik
-    //  Zahl (1..6) + Richtung (CW/CCW) -> startet
-    //  Reihenfolge egal
-    // ==========================
-    let pendingCount = null; // 1..6
-    let pendingDir = null;   // "CW" | "CCW"
-
-    function refreshPendingUI(){
-      // Zahlbuttons highlight
-      kippAnzahlBtns.querySelectorAll("button").forEach(b => {
-        const n = parseInt(b.dataset.anzahl, 10);
-        b.classList.toggle("selected", pendingCount === n);
-      });
-
-      // Rotationsbuttons highlight
-      btnCW.classList.toggle("selected", pendingDir === "CW");
-      btnCCW.classList.toggle("selected", pendingDir === "CCW");
-    }
-
-    function tryStartPending(){
-      if(!pendingCount || !pendingDir) return;
-
-      const count = pendingCount;
-      const dir = pendingDir;
-
-      // lock + run
-      setAnzahlButtonsLocked(true);
-
-      runKippCycles(count, dir).finally(() => {
-        // nach Ablauf: Auswahl zurücksetzen
-        pendingCount = null;
-        pendingDir = null;
-        refreshPendingUI();
-        setAnzahlButtonsLocked(false);
-      });
-    }
-
-    function handleCountPick(n){
-      pendingCount = n;
-      refreshPendingUI();
-      tryStartPending();
-    }
-
-    btnCW.addEventListener("click", () => {
-      pendingDir = "CW";
-      refreshPendingUI();
-      tryStartPending();
-    });
-
-    btnCCW.addEventListener("click", () => {
-      pendingDir = "CCW";
-      refreshPendingUI();
-      tryStartPending();
-    });
-
-    // ===== Initialisierung =====
     window.addEventListener("load", () => {
       rebuild();
       fastInitAndEnterKippAnzahl();
