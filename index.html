@@ -440,9 +440,8 @@
     }
 
     .rotBtn{
-      /* Doppelte Breite wie 1-6 Button + 20px */
       width: calc((44px * 2 + 20px) * var(--uiscale));
-      height: calc(44px * var(--uiscale));  /* Gleiche Höhe wie 1-6 Button */
+      height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -456,10 +455,7 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-
-      /* (4) Icons 1.8× größer */
-      font-size: calc(24px * var(--uiscale) * 1.8);
-      line-height: 1;
+      font-size: calc(24px * var(--uiscale));
       font-weight: 1000;
       color: #7a3f2b;
     }
@@ -482,7 +478,6 @@
         -2px -2px 0 rgba(0,0,0,0.15) inset,
         0 6px 12px rgba(0,0,0,0.35),
         4px 4px 7px -2px rgba(0,0,0,0.30);
-      transition: filter 0.18s ease, transform 0.18s ease;
     }
 
     .slot .num{
@@ -601,7 +596,7 @@
     .titleLeft{
       position: absolute;
       top: 0;
-      font-size: clamp(100px, 14vmin, 180px); /* exakt wie Score */
+      font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
       color: rgba(234,215,190,0.96);
@@ -787,20 +782,13 @@
     }
     .endBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
 
-    /* =========================
-       HIT / PULSE VISUALS
-       ========================= */
-    @keyframes kippPulse{
-      0%   { transform: scale(1); filter: brightness(1); }
-      50%  { transform: scale(1.18); filter: brightness(1.15); }
-      100% { transform: scale(1); filter: brightness(1); }
+    /* ===== Treffer-Feedback (nur Effekt, keine Zahlenausrichtung) ===== */
+    @keyframes kippPulseGlow {
+      0%   { transform: scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      100% { transform: scale(1.09); filter: drop-shadow(0 0 14px rgba(255,255,255,0.95)); }
     }
-    .pulseNow{
-      animation: kippPulse 520ms ease-in-out 0s 2;
-    }
-    .slot.hitNow{
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35)) brightness(1.02);
-      transform: scale(1.01);
+    .kippPulse{
+      animation: kippPulseGlow 0.22s ease-in-out 0s 10 alternate;
     }
   </style>
 </head>
@@ -898,7 +886,7 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
+        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
         <div id="schauenView" class="hidden">
           <div class="schauenTop" id="schauenTop">
@@ -919,6 +907,7 @@
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
+          <!-- Rotation Buttons in Zeile 10 -->
           <div class="rotationBtns" id="rotationBtns">
             <button class="rotBtn" id="btnCW" type="button" aria-label="Clockwise Rotation">↻</button>
             <button class="rotBtn" id="btnCCW" type="button" aria-label="Counter-Clockwise Rotation">↺</button>
@@ -1062,7 +1051,6 @@
 
     const HEADER_ROW_OFFSET = 2;
     const colMap = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8};
-    const revColMap = {1:"A",2:"B",3:"C",4:"D",5:"E",6:"F",7:"G",8:"H"};
 
     function numVar(name){
       return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0;
@@ -1072,10 +1060,6 @@
       const row = parseInt(coord, 10);
       const colLetter = coord.replace(String(row), "");
       return { row, col: colMap[colLetter], colLetter };
-    }
-
-    function xyToCoord(row, col){
-      return `${row}${revColMap[col] || "A"}`;
     }
 
     // Zielzahlen-ROTATION:
@@ -1090,33 +1074,258 @@
 
     let currentTarget = null;
 
-    // =========================
-    // Brainy Target System (wie vereinbart)
-    // =========================
-    let targetsGenerated = 0;
-    const MAX_TARGETS = 10;
-    let usedNumbers = new Set();
-    let firstTargetDone = false;
+    // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
 
-    // Zwei-Tasten-Auswahl System
-    let selectedButtons = [];
+    // ZF Mapping (Koordinate -> ZF1..ZF4) (Info, für dich/Debug, nicht zwingend)
+    const ZF_INDEX_BY_COORD = {
+      "4A": 1, "3A": 2, "1C": 3, "1D": 4,
+      "1E": 1, "1F": 2, "3H": 3, "4H": 4,
+      "5H": 1, "6H": 2, "8F": 3, "8E": 4,
+      "8D": 1, "8C": 2, "6A": 3, "5A": 4,
+    };
 
-    function getVisibleNumbers(){
-      const curr = sets[faceIndex];
-      return [
-        { slotEl: slotElsW[0], num: curr[0] },
-        { slotEl: slotElsW[1], num: curr[1] },
-        { slotEl: slotElsW[2], num: curr[2] },
-        { slotEl: slotElsW[3], num: curr[3] },
-      ];
-    }
+    // ZS Mapping: pro rotIndex (0..3) die Koordinaten von ZS1..ZS4
+    // rotIndex 0: 4B,3B,2C,2D
+    // rotIndex 1: 2E,2F,3G,4G
+    // rotIndex 2: 5G,6G,7F,7E
+    // rotIndex 3: 7D,7C,6B,5B
+    const ZS_COORDS_BY_ROT_ZSINDEX = [
+      ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
+      ["2E","2F","3G","4G"], // rot 1
+      ["5G","6G","7F","7E"], // rot 2
+      ["7D","7C","6B","5B"], // rot 3
+    ];
 
+    // DOM Slot Reihenfolge: S1,S2,S3,S4 entspricht in rotIndex 0 den Koords 3B,4B,2C,2D
+    // Daraus folgt: S2 ist ZS1, S1 ist ZS2, S3 ist ZS3, S4 ist ZS4 (konstant über Rotation)
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
+
+    // Farbfeld-Koordinaten (wie bisher) = Rendering bleibt exakt gleich
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
       'blau':    ['1F','8F','4A','5A'],
       'gruen':   ['1C','8C','4H','5H'],
       'orange':  ['1D','1E','6A','6H']
     };
+
+    // Reverse map: Koordinate -> Farbe (für Ausschlusskriterium)
+    const COLOR_BY_ZF_COORD = (() => {
+      const m = {};
+      for(const [c, arr] of Object.entries(colorFieldCoords)){
+        for(const coord of arr) m[coord] = c;
+      }
+      return m;
+    })();
+
+    function isBorderAdjacent(zfCoord, zsCoord){
+      // nur A<->B, H<->G, 1<->2, 8<->7, gleiche Zeile/Spalte
+      const a = coordToXY(zfCoord);
+      const b = coordToXY(zsCoord);
+
+      // gleiche Zeile, Spalten A/B
+      if(a.row === b.row){
+        if((a.colLetter === "A" && b.colLetter === "B") || (a.colLetter === "B" && b.colLetter === "A")) return true;
+        if((a.colLetter === "H" && b.colLetter === "G") || (a.colLetter === "G" && b.colLetter === "H")) return true;
+      }
+      // gleiche Spalte, Zeilen 1/2 oder 8/7
+      if(a.colLetter === b.colLetter){
+        if((a.row === 1 && b.row === 2) || (a.row === 2 && b.row === 1)) return true;
+        if((a.row === 8 && b.row === 7) || (a.row === 7 && b.row === 8)) return true;
+      }
+      return false;
+    }
+
+    function getAdjacentZFCoordForZS(zsCoord){
+      // liefert die ZF-Koordinate, die über Rand benachbart ist (genau 1)
+      const p = coordToXY(zsCoord);
+      // Spalte B -> A
+      if(p.colLetter === "B") return `${p.row}A`;
+      // Spalte G -> H
+      if(p.colLetter === "G") return `${p.row}H`;
+      // Zeile 2 -> 1
+      if(p.row === 2) return `1${p.colLetter}`;
+      // Zeile 7 -> 8
+      if(p.row === 7) return `8${p.colLetter}`;
+      return null;
+    }
+
+    function getVisibleSlotInfos(){
+      // liefert pro DOM-Slot: { slotEl, spanEl, num, zsIndex, zsCoord }
+      const curr = sets[faceIndex];
+      const rot = rotIndex;
+      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot]; // [ZS1..ZS4]
+      const out = [];
+      for(let i=0;i<4;i++){
+        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i]; // 1..4
+        const zsCoord = zsCoords[zsIndex - 1];
+        out.push({
+          slotEl: slotElsW[i],
+          spanEl: slotTargetsW[i],
+          num: curr[i],
+          zsIndex,
+          zsCoord
+        });
+      }
+      return out;
+    }
+
+    function clearHitVisuals(){
+      // Slotfarbe zurück auf Beige + Puls-Klassen weg
+      for(const el of slotElsW){
+        el.style.removeProperty("--slot-fill");
+        const s = el.querySelector(".num > span");
+        if(s) s.classList.remove("kippPulse");
+      }
+      document.querySelectorAll(".targetNumber .targetNumSpan").forEach(s => s.classList.remove("kippPulse"));
+    }
+
+    function applyHitVisual(slotInfo, targetCoord){
+      // Slotfarbe auf Zielfarbe
+      if(currentTarget && currentTarget.color){
+        slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
+      }
+      // Pulsieren: Slotzahl + Zielzahl (an genau diesem ZF)
+      if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
+      const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
+      if(targetSpan) targetSpan.classList.add("kippPulse");
+
+      // Nach kurzer Zeit Puls wieder weg (Farbe darf gern bleiben, wenn du willst – hier bleibt sie kurz sichtbar)
+      setTimeout(() => {
+        if(slotInfo.spanEl) slotInfo.spanEl.classList.remove("kippPulse");
+        if(targetSpan) targetSpan.classList.remove("kippPulse");
+      }, 2600);
+    }
+
+    function checkHitAndAnimate(){
+      if(!currentTarget) return false;
+
+      const targetElems = Array.from(document.querySelectorAll(".targetNumber"));
+      if(targetElems.length === 0) return false;
+
+      const visibleSlots = getVisibleSlotInfos();
+
+      // Jede der 4 Zielzahlen sitzt auf einem ZF-Koordinatenfeld
+      for(const te of targetElems){
+        const zfCoord = te.dataset.coord;
+        if(!zfCoord) continue;
+
+        for(const si of visibleSlots){
+          if(si.num == null) continue;
+          if(si.num !== currentTarget.num) continue;
+          if(isBorderAdjacent(zfCoord, si.zsCoord)){
+            applyHitVisual(si, zfCoord);
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function getForbiddenPairsForCurrentState(){
+      // Liefert Set von "num|color" für alle sichtbaren Zahlen, die aktuell bereits an einer Zielfarbe "liegen"
+      const forbidden = new Set();
+      const visibleSlots = getVisibleSlotInfos();
+
+      for(const si of visibleSlots){
+        if(si.num == null) continue;
+        const zfCoord = getAdjacentZFCoordForZS(si.zsCoord);
+        if(!zfCoord) continue;
+        const col = COLOR_BY_ZF_COORD[zfCoord];
+        if(!col) continue;
+        forbidden.add(`${si.num}|${col}`);
+      }
+      return forbidden;
+    }
+
+    // Kartendeck-System (Zahlen 1..12 ohne Wiederholung)
+    let usedNumbers = new Set();
+    let drawsCount = 0;
+    const MAX_TARGETS = 10;
+
+    function resetTargetDeck(){
+      usedNumbers = new Set();
+      drawsCount = 0;
+    }
+
+    function pickRandom(arr){
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateTarget_NumberColor_WithExclusion(){
+      if(drawsCount >= MAX_TARGETS) return null;
+
+      const forbidden = getForbiddenPairsForCurrentState();
+      const visibleNums = getVisibleSlotInfos().map(s => s.num).filter(n => n != null);
+
+      // Kandidatenzahlen: Ziehung 1 nur aus sichtbar, danach aus 1..12 ohne Wiederholung
+      let numberCandidates;
+      if(drawsCount === 0){
+        numberCandidates = Array.from(new Set(visibleNums)).filter(n => !usedNumbers.has(n));
+      } else {
+        numberCandidates = [];
+        for(let n=1;n<=12;n++){
+          if(!usedNumbers.has(n)) numberCandidates.push(n);
+        }
+      }
+      if(numberCandidates.length === 0) return null;
+
+      // Wir ziehen zuerst eine Zielfarbe random (wie du wolltest),
+      // und suchen dazu eine Zahl, die nicht forbidden ist.
+      // Wenn nichts passt, wählen wir eine andere Farbe (ein paar Versuche), dann Fallback-Suche.
+      const colorTryOrder = allColors.slice();
+      // leichte Randomisierung
+      for(let i=colorTryOrder.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [colorTryOrder[i], colorTryOrder[j]] = [colorTryOrder[j], colorTryOrder[i]];
+      }
+
+      function findForColor(col){
+        const nums = numberCandidates.slice();
+        for(let i=nums.length-1;i>0;i--){
+          const j = Math.floor(Math.random()*(i+1));
+          [nums[i], nums[j]] = [nums[j], nums[i]];
+        }
+        for(const n of nums){
+          if(!forbidden.has(`${n}|${col}`)) return n;
+        }
+        return null;
+      }
+
+      let chosenColor = pickRandom(allColors);
+      let chosenNum = findForColor(chosenColor);
+
+      if(chosenNum == null){
+        for(const col of colorTryOrder){
+          chosenNum = findForColor(col);
+          if(chosenNum != null){
+            chosenColor = col;
+            break;
+          }
+        }
+      }
+
+      // Fallback: suche irgendein erlaubtes Paar (Farbe+Zahl)
+      if(chosenNum == null){
+        for(const col of colorTryOrder){
+          for(const n of numberCandidates){
+            if(!forbidden.has(`${n}|${col}`)){
+              chosenNum = n;
+              chosenColor = col;
+              break;
+            }
+          }
+          if(chosenNum != null) break;
+        }
+      }
+
+      if(chosenNum == null) return null;
+
+      usedNumbers.add(chosenNum);
+      drawsCount++;
+      return { num: chosenNum, color: chosenColor };
+    }
+
+    // ===== Rendering / Placement (bleibt wie bei dir) =====
 
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
@@ -1143,6 +1352,9 @@
 
         const container = document.createElement("div");
         container.className = "targetNumber";
+        container.dataset.coord = coord;     // NEU: Koordinate speichern (für Treffercheck)
+        container.dataset.zf = String(ZF_INDEX_BY_COORD[coord] || ""); // optional
+
         container.style.position = "absolute";
         container.style.left = x + "px";
         container.style.top = y + "px";
@@ -1155,6 +1367,7 @@
         container.style.pointerEvents = "none";
 
         const numSpan = document.createElement("span");
+        numSpan.className = "targetNumSpan"; // NEU: für Puls-Zugriff
         numSpan.style.fontWeight = "900";
         numSpan.style.color = "#111";
         numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
@@ -1168,186 +1381,12 @@
         numSpan.style.transform = `rotate(${rot}deg)`;
 
         if(target.num >= 10){
-          numSpan.style.letterSpacing = "-0.16em";
-          numSpan.style.transform = `rotate(${rot}deg) translateX(-0.10em)`;
+          numSpan.classList.add("twodigit");
         }
 
         container.appendChild(numSpan);
         colorsEl.appendChild(container);
       });
-    }
-
-    // =========================
-    // Trefferlogik: ZF==ZS über Rand-Nachbarschaft
-    // =========================
-
-    function colorToCssValue(color){
-      const styles = getComputedStyle(document.documentElement);
-      if(color === "violett") return styles.getPropertyValue("--violett").trim();
-      if(color === "blau")    return styles.getPropertyValue("--blau").trim();
-      if(color === "gruen")   return styles.getPropertyValue("--gruen").trim();
-      if(color === "orange")  return styles.getPropertyValue("--orange").trim();
-      return "#ead7be";
-    }
-
-    function parseBaseCoordFromSlotEl(slotEl){
-      // erwartet Klasse wie "s-3b"
-      const cls = Array.from(slotEl.classList).find(c => c.startsWith("s-"));
-      if(!cls) return null;
-      const raw = cls.slice(2); // "3b"
-      const row = parseInt(raw, 10);
-      const colLetter = raw.replace(String(row), "").toUpperCase();
-      const col = colMap[colLetter];
-      if(!row || !col) return null;
-      return { row, col };
-    }
-
-    function rotateCoordCW(row, col, times){
-      // 8x8, 1-indexed, Standardrotation um Zentrum: (r,c) -> (c, 9-r)
-      let r = row, c = col;
-      const t = ((times % 4) + 4) % 4;
-      for(let i=0;i<t;i++){
-        const nr = c;
-        const nc = 9 - r;
-        r = nr; c = nc;
-      }
-      return { row: r, col: c };
-    }
-
-    function isAdjacentBorder(slotRow, slotCol, targetRow, targetCol){
-      // Nur A<->B, G<->H, 1<->2, 7<->8
-      // Also: target ist Rand, slot ist direkt innen.
-      // Horizontal:
-      if(targetCol === 1 && slotCol === 2 && targetRow === slotRow) return true; // A-B
-      if(targetCol === 8 && slotCol === 7 && targetRow === slotRow) return true; // H-G
-      // Vertikal:
-      if(targetRow === 1 && slotRow === 2 && targetCol === slotCol) return true; // 1-2
-      if(targetRow === 8 && slotRow === 7 && targetCol === slotCol) return true; // 8-7
-      return false;
-    }
-
-    function getCurrentSlotCoordsAndNums(){
-      const vis = getVisibleNumbers();
-      return vis.map(v => {
-        const base = parseBaseCoordFromSlotEl(v.slotEl);
-        const rc = base ? rotateCoordCW(base.row, base.col, rotIndex) : null;
-        return { slotEl: v.slotEl, num: v.num, row: rc?.row, col: rc?.col };
-      });
-    }
-
-    function isGiftedHit(num, color){
-      // "geschenkter Treffer" = in aktueller Lage wäre es schon ein Treffer
-      const targets = colorFieldCoords[color] || [];
-      const slotList = getCurrentSlotCoordsAndNums();
-      for(const s of slotList){
-        if(s.num !== num) continue;
-        if(!s.row || !s.col) continue;
-        for(const t of targets){
-          const { row: tr, col: tc } = coordToXY(t);
-          if(isAdjacentBorder(s.row, s.col, tr, tc)) return true;
-        }
-      }
-      return false;
-    }
-
-    function checkHitNow(){
-      if(!currentTarget) return null;
-      const targets = colorFieldCoords[currentTarget.color] || [];
-      const slotList = getCurrentSlotCoordsAndNums();
-
-      for(const s of slotList){
-        if(s.num !== currentTarget.num) continue;
-        if(!s.row || !s.col) continue;
-
-        for(const t of targets){
-          const { row: tr, col: tc } = coordToXY(t);
-          if(isAdjacentBorder(s.row, s.col, tr, tc)){
-            return { slotEl: s.slotEl };
-          }
-        }
-      }
-      return null;
-    }
-
-    function clearPulses(){
-      document.querySelectorAll(".pulseNow").forEach(el => el.classList.remove("pulseNow"));
-      slotElsW.forEach(el => el.classList.remove("hitNow"));
-    }
-
-    function resetSlotFills(){
-      slotElsW.forEach(el => el.style.removeProperty("--slot-fill"));
-    }
-
-    function pulseHitVisual(slotEl, color){
-      clearPulses();
-
-      // Slot einfärben
-      slotEl.style.setProperty("--slot-fill", colorToCssValue(color));
-      slotEl.classList.add("hitNow");
-
-      // Slot-Zahl pulsieren
-      const slotSpan = slotEl.querySelector(".num > span");
-      if(slotSpan) slotSpan.classList.add("pulseNow");
-
-      // Zielzahlen pulsieren (alle 4)
-      document.querySelectorAll(".targetNumber span").forEach(s => s.classList.add("pulseNow"));
-
-      // Puls wieder entfernen (Farbe bleibt als Trefferindikator)
-      setTimeout(() => {
-        clearPulses();
-      }, 1200);
-    }
-
-    function randomPick(arr){
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    function generateNextTarget_Brainy(){
-      if(targetsGenerated >= MAX_TARGETS) return null;
-
-      // Kandidaten-Zahlen
-      let candidateNums = [];
-
-      if(!firstTargetDone){
-        // 1. Ziehung: eine der 4 sichtbaren Zahlen
-        const vis = getVisibleNumbers().map(v => v.num).filter(n => n != null);
-        const uniqueVis = Array.from(new Set(vis));
-        candidateNums = uniqueVis.filter(n => !usedNumbers.has(n));
-        if(candidateNums.length === 0) return null;
-      } else {
-        // weitere Ziehung: jede Zahl 1–12 außer bereits verwendete
-        for(let n=1; n<=12; n++){
-          if(!usedNumbers.has(n)) candidateNums.push(n);
-        }
-        if(candidateNums.length === 0) return null;
-      }
-
-      // Farbe fix random, aber "geschenkten Treffer" verhindern:
-      // Regel: Farbe darf bleiben, Zahl wird gewechselt.
-      // Wenn für diese Farbe keine Zahl möglich -> neue Farbe probieren.
-      let colorTry = 0;
-      while(colorTry < 16){
-        const color = randomPick(allColors);
-
-        const okNums = candidateNums.filter(n => !isGiftedHit(n, color));
-        if(okNums.length > 0){
-          const num = randomPick(okNums);
-          usedNumbers.add(num);
-          targetsGenerated++;
-          firstTargetDone = true;
-          return { num, color };
-        }
-
-        colorTry++;
-      }
-
-      // Notfall: wenn wirklich alles "gifted" wäre, dann nimm irgendeine Kombination (sollte praktisch nie passieren)
-      const fallbackColor = randomPick(allColors);
-      const num = randomPick(candidateNums);
-      usedNumbers.add(num);
-      targetsGenerated++;
-      firstTargetDone = true;
-      return { num, color: fallbackColor };
     }
 
     function updateShadowVisibility(){
@@ -1532,11 +1571,7 @@
 
       currentTarget = null;
       clearTargetNumbers();
-      usedNumbers = new Set();
-      firstTargetDone = false;
-      targetsGenerated = 0;
-      resetSlotFills();
-      clearPulses();
+      clearHitVisuals();
 
       buttonState = "running";
       setSchauenEnabled(false);
@@ -1662,14 +1697,14 @@
       const cellPx = numVar("--cell") || 142;
       const sizePx = numVar("--colorSize") || 126;
 
-      const demonstrate = [
+      const placements = [
         ["1C","c-gruen"],  ["1D","c-orange"], ["1E","c-orange"], ["1F","c-blau"],
         ["8C","c-gruen"],  ["8D","c-violett"],["8E","c-violett"],["8F","c-blau"],
         ["3A","c-violett"],["4A","c-blau"],   ["5A","c-blau"],   ["6A","c-orange"],
         ["3H","c-violett"],["4H","c-gruen"],  ["5H","c-gruen"],  ["6H","c-orange"],
       ];
 
-      for(const [coord, cls] of demonstrate){
+      for(const [coord, cls] of placements){
         placeColorSquare(coord, cls, cellPx, sizePx);
       }
     }
@@ -1677,16 +1712,18 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
+      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
       schauenTop.style.top = midY + "px";
 
+      // "SCHAU GENAU" Position + Größe: exakt über C–F
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      const leftEdgeC = (3 - 1) * cellPx;
-      const rightEdgeF = 6 * cellPx;
+      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
+      const rightEdgeF = 6 * cellPx;        // Spalte F endet
       const centerCF = (leftEdgeC + rightEdgeF) / 2;
       const widthCF = (rightEdgeF - leftEdgeC);
 
@@ -1694,13 +1731,13 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
+      // Header: X, DIGI-KIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
       const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
       score.style.right = "70px";
       score.style.top = headerY + "px";
-      const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
-      score.style.transform = `translateY(-50%) scale(${s})`;
+      score.style.transform = `translateY(-50%) scale(${getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75})`;
       score.style.transformOrigin = "top right";
 
       const title = document.getElementById("titleLeft");
@@ -1708,6 +1745,7 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
+      // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
       kippAnzahlBtns.style.top = row11CenterY + "px";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
@@ -1752,9 +1790,7 @@
     function positionRotationButtons(cellPx){
       const row = 10;
       const visualRow = row + HEADER_ROW_OFFSET;
-      let centerY = (visualRow - 1) * cellPx + cellPx / 2;
-      centerY -= 40;
-
+      const centerY = (visualRow - 1) * cellPx + cellPx / 2;
       rotationBtns.style.top = centerY + "px";
       rotationBtns.style.transform = "translate(-50%, -50%)";
     }
@@ -1782,13 +1818,10 @@
       setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
-      targetsGenerated = 0;
-      usedNumbers = new Set();
-      firstTargetDone = false;
+      resetTargetDeck();
       clearTargetNumbers();
+      clearHitVisuals();
       currentTarget = null;
-      resetSlotFills();
-      clearPulses();
 
       showW();
     }
@@ -1804,14 +1837,9 @@
 
       btnSchauGenau.disabled = false;
 
-      // Target System reset
-      targetsGenerated = 0;
-      usedNumbers = new Set();
-      firstTargetDone = false;
-      resetSlotFills();
-      clearPulses();
+      clearHitVisuals();
 
-      currentTarget = generateNextTarget_Brainy();
+      currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
 
@@ -1838,24 +1866,7 @@
 
     let runningKipp = false;
 
-    async function handleHitIfAny(){
-      const hit = checkHitNow();
-      if(!hit) return false;
-
-      // Feedback
-      pulseHitVisual(hit.slotEl, currentTarget.color);
-
-      // nächstes Ziel
-      currentTarget = generateNextTarget_Brainy();
-      if(currentTarget) placeTargetNumbers(currentTarget);
-      else {
-        // Ende (keine Targets mehr) -> Zielzahlen weg (optional)
-        // clearTargetNumbers();
-      }
-      return true;
-    }
-
-    async function runKippCyclesWithHits(count){
+    async function runKippCyclesNoHit(count){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1870,8 +1881,8 @@
         showW();
         renderW();
 
-        // Treffercheck immer auf W-Phase
-        await handleHitIfAny();
+        // NEU: nach jeder neuen Ausgangslage prüfen, ob Treffer da ist
+        checkHitAndAnimate();
 
         if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
       }
@@ -1879,9 +1890,10 @@
       runningKipp = false;
     }
 
-    function handleAnzahlClick(anzahl){
-      if(selectedLevel !== "brainy") return;
+    // Zwei-Tasten-Auswahl System
+    let selectedButtons = [];
 
+    function handleAnzahlClick(anzahl){
       const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button"))
         .find(b => parseInt(b.dataset.anzahl) === anzahl);
       if(!clickedBtn) return;
@@ -1891,7 +1903,7 @@
 
         setAnzahlButtonsLocked(true);
 
-        runKippCyclesWithHits(totalKipps).finally(() => {
+        runKippCyclesNoHit(totalKipps).finally(() => {
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
           setAnzahlButtonsLocked(false);
@@ -1908,7 +1920,7 @@
 
           setAnzahlButtonsLocked(true);
 
-          runKippCyclesWithHits(totalKipps).finally(() => {
+          runKippCyclesNoHit(totalKipps).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
             setAnzahlButtonsLocked(false);
@@ -1929,7 +1941,7 @@
       showW();
       renderW();
 
-      await runKippCyclesWithHits(4);
+      await runKippCyclesNoHit(4);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
@@ -1940,10 +1952,12 @@
       setAnzahlButtonsLocked(false);
     });
 
-    // Test Target: erzeugt neues Target (mit derselben Brainy-Logik)
     testTargetBtn.addEventListener("click", () => {
-      currentTarget = generateNextTarget_Brainy();
+      clearHitVisuals();
+      currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
+      // optional sofort checken:
+      checkHitAndAnimate();
     });
 
     // CW/CCW Rotation Buttons (vorerst ohne Funktion)
@@ -2009,15 +2023,10 @@
 
       selectedLevel = "brainy";
 
+      resetTargetDeck();
       clearTargetNumbers();
+      clearHitVisuals();
       currentTarget = null;
-
-      // Target System reset
-      targetsGenerated = 0;
-      usedNumbers = new Set();
-      firstTargetDone = false;
-      resetSlotFills();
-      clearPulses();
 
       reroll12_keepEmpty();
       ensureAssigned(0);
