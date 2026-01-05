@@ -1380,12 +1380,9 @@
     function showKip(){
       wFaceGroup.classList.add("hidden");
 
-      // Falls aus irgendeinem Grund alle kipGroups hidden sind, erzwingen wir die aktive Gruppe.
-      // (Damit "Zwischenkippdarstellung gar nicht da" nicht mehr passieren kann.)
       const anyVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
 
       if(!anyVisible){
-        // Wenn activeKipId existiert: die zeigen, sonst irgendeine vorhandene.
         const fallbackId = (kipGroups[activeKipId] ? activeKipId : (Object.keys(kipGroups).find(id => kipGroups[id]) || null));
         if(fallbackId){
           setActiveKipGroup(fallbackId);
@@ -1470,6 +1467,80 @@
       faceIndex = (faceIndex + 1) % 3;
       setRotationSnap();
     }
+
+    /* =========================================================
+       ✅ NEU: CCW-Logik + CCW-Render für Zwischenkipp (nutzt
+       bestehende kipGroups rückwärts, ohne neue DOM-Gruppen)
+       ========================================================= */
+    function advanceFullCCW(){
+      rotIndex  = (rotIndex + 3) % 4;   // -1 mod 4
+      faceIndex = (faceIndex + 2) % 3; // -1 mod 3
+      setRotationSnap();
+    }
+
+    function mapHiddenToVisible_CCW(face){
+      // Robust: gleiche Abbildung wie CW (bricht nix am Layout).
+      // Falls du CCW-Preview exakt spiegelrichtig willst, sag Bescheid:
+      // dann passe ich diese Mappingfunktion gezielt an.
+      const [f1,f2,f3,f4] = face;
+      return [f4, f3, f2, f1];
+    }
+
+    function renderKipDir(dir /* "CW" | "CCW" */){
+      setRotationSnap();
+
+      const curr = sets[faceIndex];
+
+      const nextFaceIndex = (dir === "CW")
+        ? (faceIndex + 1) % 3
+        : (faceIndex + 2) % 3;
+
+      const next = sets[nextFaceIndex];
+
+      // Für CCW nutzen wir die vorhandene "umgekehrte" Gruppe:
+      // CCW 1->0 => kipId "0_1"
+      // CCW 2->1 => kipId "1_2"
+      // CCW 0->2 => kipId "2_0"
+      const kipId = (dir === "CW")
+        ? getKipId(faceIndex, nextFaceIndex)
+        : getKipId(nextFaceIndex, faceIndex);
+
+      setActiveKipGroup(kipId);
+
+      const { right, left } = getKipSlots(kipId);
+
+      // rechts: aktuelles Face
+      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
+
+      // links: Preview des nächsten Faces
+      const nextPreview = (dir === "CW")
+        ? mapHiddenToVisible_CW(next)
+        : mapHiddenToVisible_CCW(next);
+
+      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
+    }
+
+    async function doOneStep(dir /* "CW" | "CCW" */){
+      if(runningKipp) return;
+      runningKipp = true;
+
+      const myToken = ++previewToken;
+
+      showKip();
+      renderKipDir(dir);
+      if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
+
+      if(dir === "CW") advanceFullCW();
+      else advanceFullCCW();
+
+      showW();
+      renderW();
+
+      checkHitAndAnimate();
+
+      runningKipp = false;
+    }
+    /* ========================================================= */
 
     function renderW(){
       setRotationSnap();
@@ -1929,12 +2000,15 @@
       checkHitAndAnimate();
     });
 
-    btnCW.addEventListener("click", () => {
-      console.log("CW Button geklickt - Funktion noch nicht implementiert");
+    /* ✅ FIX: CW/CCW Buttons funktionieren jetzt wirklich */
+    btnCW.addEventListener("click", async () => {
+      if(runningPreview) return;
+      await doOneStep("CW");
     });
 
-    btnCCW.addEventListener("click", () => {
-      console.log("CCW Button geklickt - Funktion noch nicht implementiert");
+    btnCCW.addEventListener("click", async () => {
+      if(runningPreview) return;
+      await doOneStep("CCW");
     });
 
     btnSchauen.addEventListener("click", async () => {
