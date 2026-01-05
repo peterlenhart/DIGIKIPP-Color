@@ -157,8 +157,6 @@
 
     /* =========================================
        Z-INDEX: 2 - Würfel-Schatten (vollflächig)
-       - dreht MIT dem Würfel (Pivot im Zentrum)
-       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
        ========================================= */
     .cubeShadowLayer{
       position: absolute;
@@ -1070,7 +1068,6 @@
     }
 
     // Zielzahlen-ROTATION:
-    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
     function getTargetRotationDeg(row, col){
       if(row === 1) return 0;
       if(row === 8) return 180;
@@ -1081,8 +1078,7 @@
 
     let currentTarget = null;
 
-    // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
-
+    // ======= Treffer-/Ausschluss-Logik =======
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1091,13 +1087,13 @@
     };
 
     const ZS_COORDS_BY_ROT_ZSINDEX = [
-      ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
+      ["4B","3B","2C","2D"], // rot 0
       ["2E","2F","3G","4G"], // rot 1
       ["5G","6G","7F","7E"], // rot 2
       ["7D","7C","6B","5B"], // rot 3
     ];
 
-    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
 
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
@@ -1219,7 +1215,7 @@
       return forbidden;
     }
 
-    // Kartendeck-System (Zahlen 1..12 ohne Wiederholung)
+    // Kartendeck-System
     let usedNumbers = new Set();
     let drawsCount = 0;
     const MAX_TARGETS = 10;
@@ -1301,8 +1297,7 @@
       return { num: chosenNum, color: chosenColor };
     }
 
-    // ===== Rendering / Placement (bleibt wie bei dir) =====
-
+    // ===== Rendering / Placement =====
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
     }
@@ -1365,13 +1360,22 @@
       });
     }
 
+    // =========================
+    //  NEU: Display-Rotation Override NUR für Zwischenkipp (CCW)
+    //  - CCW zeigt als erste Zwischenkippansicht dieselbe wie CW, aber vor Anzeige -90° (rotIndex+3)
+    // =========================
+    let kipDisplayRotOverride = null; // null = normal, sonst 0..3
+
     function updateShadowVisibility(){
       const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
+      // WICHTIG: wenn Zwischenkipp sichtbar ist, dann richten wir die Schatten-PNG Auswahl nach der DISPLAY-Rotation aus
+      const rotForKipShadow = (kipDisplayRotOverride != null) ? kipDisplayRotOverride : rotIndex;
+
       if(isKipVisible){
         allShadows.forEach((s, i) => {
-          if(i === rotIndex) s.classList.add("visible");
+          if(i === rotForKipShadow) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1383,6 +1387,9 @@
     }
 
     function showW(){
+      // beim Zurück zur Würfelansicht: Override weg
+      kipDisplayRotOverride = null;
+
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
       updateShadowVisibility();
@@ -1415,23 +1422,20 @@
     }
 
     // =========================
-    //   CW / CCW Logik (NEU)
-    //   - Zyklus wie von dir beschrieben
-    //   CW:  W0 -> kip0_1 -> W1 -> kip1_2 -> W2 -> kip2_0 -> W0 ...
-    //   CCW: W0 -> kip2_0 -> W2 -> kip1_2 -> W1 -> kip0_1 -> W0 ...
+    //   CW / CCW Logik
+    //   - REALER Zustand:
+    //     CW : rot+1, face+1
+    //     CCW: rot-1, face-1
+    //
+    //   - ZWISCHENKIPP-DARSTELLUNG:
+    //     CW : normale Rotation rotIndex
+    //     CCW: ZEIGE die *gleiche Zwischenkippdarstellung wie CW*,
+    //          aber vor dem Einblenden um -90° drehen:
+    //          displayRotIndex = (rotIndex + 3) % 4
     // =========================
 
-    function getNextFaceIndex(dir){
-      return (dir === "CW")
-        ? ((faceIndex + 1) % 3)
-        : ((faceIndex + 2) % 3); // -1 mod 3
-    }
-
-    function getKipIdForDir(dir){
-      const incoming = getNextFaceIndex(dir);
-      // CW: current_incoming (0_1,1_2,2_0)
-      // CCW: incoming_current (2_0,1_2,0_1)  -> exakt dein Zyklus
-      return (dir === "CW") ? getKipId(faceIndex, incoming) : getKipId(incoming, faceIndex);
+    function getNextFaceIndex_CW(){
+      return (faceIndex + 1) % 3;
     }
 
     function advanceFull(dir){
@@ -1445,19 +1449,49 @@
       setRotationSnap();
     }
 
+    const rotDeg = [0, 90, 180, 270];
+    let rotIndex  = 0;
+    let faceIndex = 0;
+
+    function setRotationSnap(){
+      // reale Rotation (Würfelansicht)
+      const realDeg = rotDeg[rotIndex];
+
+      // Zwischenkipp-Display-Rotation (nur wenn override gesetzt)
+      const kipRotIdx = (kipDisplayRotOverride != null) ? kipDisplayRotOverride : rotIndex;
+      const kipDeg = rotDeg[kipRotIdx];
+
+      // W
+      wFaceGroup.style.setProperty("--rot", realDeg + "deg");
+
+      // KIP (ggf. override)
+      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", kipDeg + "deg"));
+
+      // Cube Shadow Layer (wird ohnehin nur bei W sichtbar)
+      cubeShadowLayer.style.setProperty("--rot", realDeg + "deg");
+
+      updateShadowVisibility();
+    }
+
     function renderKipDir(dir){
+      // CCW: Zwischenkippansicht = CW-Zwischenkippansicht, aber -90° vor Anzeige
+      kipDisplayRotOverride = (dir === "CCW") ? ((rotIndex + 3) % 4) : null;
+
       setRotationSnap();
 
       const curr = sets[faceIndex];
-      const incomingIndex = getNextFaceIndex(dir);
+
+      // WICHTIG: Zwischenkipp-ID & Vorschau bleiben IMMER wie CW (gleiches Frame),
+      // nur die Anzeige-Rotation ist bei CCW -90°.
+      const incomingIndex = getNextFaceIndex_CW();
       const incoming = sets[incomingIndex];
 
-      const kipId = getKipIdForDir(dir);
+      const kipId = getKipId(faceIndex, incomingIndex);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      // rechts: aktuelle Ausgangslage (wie bisher)
+      // rechts: aktuelle Ausgangslage
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
 
       // links: Vorschau der nächsten Lage (wie bisher gemappt)
@@ -1466,12 +1500,14 @@
     }
 
     function renderW(){
+      kipDisplayRotOverride = null; // Sicherheit: im W niemals Override
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
     }
 
     function renderWEmpty(){
+      kipDisplayRotOverride = null;
       setRotationSnap();
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
     }
@@ -1486,7 +1522,7 @@
       return pool.slice(0, count);
     }
 
-    // FIX: Kippspeed ist auf 3 fixiert, UI dazu ist gelöscht.
+    // FIX: Kippspeed ist auf 3 fixiert
     const FIXED_SPEED = 3;
 
     function getTiming(){
@@ -1495,18 +1531,6 @@
       const kip  = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
-    }
-
-    const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
-    let faceIndex = 0;
-
-    function setRotationSnap(){
-      const deg = rotDeg[rotIndex];
-      wFaceGroup.style.setProperty("--rot", deg + "deg");
-      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
-      updateShadowVisibility();
     }
 
     let planned = [
@@ -1840,7 +1864,6 @@
 
       clearHitVisuals();
 
-      // Pending-Auswahl zurücksetzen (NEU)
       pendingCount = null;
       pendingDir = null;
       refreshPendingUI();
@@ -1874,9 +1897,6 @@
 
     let runningKipp = false;
 
-    // ================
-    // Run kip cycles in chosen direction (NEU)
-    // ================
     async function runKippCycles(count, dir){
       if(runningKipp) return;
       runningKipp = true;
@@ -1900,7 +1920,6 @@
       runningKipp = false;
     }
 
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0) (bleibt CW wie gehabt)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
@@ -1977,7 +1996,6 @@
       location.reload();
     });
 
-    // ===== Startlogik =====
     function fastInitAndEnterKippAnzahl(){
       cancelPreview();
       stopAtNextW = false;
@@ -2014,21 +2032,17 @@
     }
 
     // ==========================
-    //  NEU: Auswahl-Logik
-    //  Zahl (1..6) + Richtung (CW/CCW) -> startet
-    //  Reihenfolge egal
+    //  Auswahl-Logik
     // ==========================
     let pendingCount = null; // 1..6
     let pendingDir = null;   // "CW" | "CCW"
 
     function refreshPendingUI(){
-      // Zahlbuttons highlight
       kippAnzahlBtns.querySelectorAll("button").forEach(b => {
         const n = parseInt(b.dataset.anzahl, 10);
         b.classList.toggle("selected", pendingCount === n);
       });
 
-      // Rotationsbuttons highlight
       btnCW.classList.toggle("selected", pendingDir === "CW");
       btnCCW.classList.toggle("selected", pendingDir === "CCW");
     }
@@ -2039,11 +2053,9 @@
       const count = pendingCount;
       const dir = pendingDir;
 
-      // lock + run
       setAnzahlButtonsLocked(true);
 
       runKippCycles(count, dir).finally(() => {
-        // nach Ablauf: Auswahl zurücksetzen
         pendingCount = null;
         pendingDir = null;
         refreshPendingUI();
