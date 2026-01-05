@@ -1706,7 +1706,9 @@
       document.documentElement.style.setProperty("--scale", scale.toFixed(4));
       document.documentElement.style.setProperty("--gridW", gridW + "px");
 
-      const uiscale = 1 / (scale || 1);
+      // ✅ FIX: UI NICHT gegen die Layout-Skalierung zurückskalieren.
+      // Die UI liegt IN .layout und skaliert dadurch automatisch mit.
+      const uiscale = 1;
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
 
       return { cols, cell, gridW, scale };
