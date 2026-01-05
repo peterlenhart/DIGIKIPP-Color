@@ -371,7 +371,7 @@
       left: 50%;
       top: 0;
       transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale));
+      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
       height: calc(44px * var(--uiscale));
       display: none !important;
       pointer-events: none !important;
@@ -1172,7 +1172,7 @@
         slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
       }
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
-      const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
+      const targetSpan = document.querySelector(\`.targetNumber[data-coord="\${targetCoord}"] .targetNumSpan\`);
       if(targetSpan) targetSpan.classList.add("kippPulse");
 
       setTimeout(() => {
@@ -1390,7 +1390,6 @@
     }
 
     function showW(){
-      // Beim Zurück zur Würfelansicht: Zwischenkipp-Extra-Rotation weg
       kipExtraRotDeg = 0;
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
@@ -1402,6 +1401,26 @@
       wFaceGroup.classList.add("hidden");
       setRotationSnap();
       updateShadowVisibility();
+    }
+
+    // =========================
+    //  WICHTIGER FIX:
+    //  CW und CCW haben unterschiedliche "Backside-Preview"-Permutation
+    // =========================
+    function mapHiddenToVisible_CW(face){
+      const [f1,f2,f3,f4] = face;
+      return [f4, f3, f2, f1];
+    }
+
+    function mapHiddenToVisible_CCW(face){
+      // eigene Permutation für CCW (Backside-Preview von der anderen Seite)
+      // (keine Zuordnung, kein Swap von Faces – nur Reihenfolge innerhalb der 4 Zahlen)
+      const [f1,f2,f3,f4] = face;
+      return [f2, f1, f4, f3];
+    }
+
+    function mapHiddenToVisible(dir, face){
+      return (dir === "CCW") ? mapHiddenToVisible_CCW(face) : mapHiddenToVisible_CW(face);
     }
 
     function renderNumber(span, n){
@@ -1438,28 +1457,25 @@
     function setRotationSnap(){
       const realDeg = rotDeg[rotIndex];
 
-      // W: normale Rotation, keine ExtraRotation
       wFaceGroup.style.setProperty("--rot", realDeg + "deg");
       wFaceGroup.style.setProperty("--extraRot", "0deg");
 
-      // Zwischenkipp: normale Rotation + ggf. ExtraRotation (-90)
       Object.values(kipGroups).forEach(g => {
         g.style.setProperty("--rot", realDeg + "deg");
         g.style.setProperty("--extraRot", kipExtraRotDeg + "deg");
       });
 
-      // Cube Shadow Layer (nur W sichtbar)
       cubeShadowLayer.style.setProperty("--rot", realDeg + "deg");
 
       updateShadowVisibility();
     }
 
-    // ====== FIX: CCW braucht korrektes toFace + kanonische kipGroup (nur 3 Gruppen) ======
+    // ====== FIX: CCW wählt NUR die drei Gruppen 0_1 / 1_2 / 2_0 (paar-basiert) ======
 
     function getNextFaceIndex(dir){
       return (dir === "CW")
         ? ((faceIndex + 1) % 3)
-        : ((faceIndex + 2) % 3); // -1 mod 3
+        : ((faceIndex + 2) % 3);
     }
 
     function getCanonicalKipId(a, b){
@@ -1468,44 +1484,37 @@
       return "2_0"; // 0 & 2
     }
 
-    // In jeder kipGroup_X_Y ist die Zuordnung fix:
+    // In jeder kipGroup_X_Y ist die Zuordnung FIX:
     // right = Face X, left = Face Y
     const KIP_GROUP_RIGHT_FACE = { "0_1": 0, "1_2": 1, "2_0": 2 };
     const KIP_GROUP_LEFT_FACE  = { "0_1": 1, "1_2": 2, "2_0": 0 };
 
     function renderKipDir(dir){
-      // CCW: Bild vor Anzeige -90° drehen (wie bei dir)
       kipExtraRotDeg = (dir === "CCW") ? -90 : 0;
-
       setRotationSnap();
 
-      // 1) current + toFace korrekt bestimmen
       const fromFace = faceIndex;
       const toFace   = getNextFaceIndex(dir);
 
-      // sets[] wird NICHT verändert – wir lesen nur aus
       const curr     = sets[fromFace];
       const incoming = sets[toFace];
 
-      // 2) richtige der 3 Zwischenkippgruppen wählen (ohne irgendein Tauschen!)
       const kipId = getCanonicalKipId(fromFace, toFace);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      // 3) Entscheiden, welche Hälfte in dieser Gruppe "fromFace" ist.
       const rightFace = KIP_GROUP_RIGHT_FACE[kipId];
       const leftFace  = KIP_GROUP_LEFT_FACE[kipId];
 
       const currSlots     = (fromFace === rightFace) ? right : left;
       const incomingSlots = (toFace   === rightFace) ? right : left;
 
-      // current in die richtige feste Face-Hälfte (fixe Slot-Positionen => nie permutieren)
       for(let i=0;i<4;i++) renderNumber(currSlots[i], curr[i]);
 
-      // incoming-preview in die richtige feste Face-Hälfte
-      // WICHTIG: NICHT mehr "mapHiddenToVisible" (das war der Hauptgrund für falsche Flächen/Zahlen in CCW)
-      for(let i=0;i<4;i++) renderNumber(incomingSlots[i], incoming[i]);
+      // <<< FIX: CCW benutzt eigene Preview-Permutation >>>
+      const nextPreview = mapHiddenToVisible(dir, incoming);
+      for(let i=0;i<4;i++) renderNumber(incomingSlots[i], nextPreview[i]);
     }
 
     function renderW(){
