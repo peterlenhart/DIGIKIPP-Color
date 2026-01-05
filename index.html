@@ -273,9 +273,16 @@
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
 
+      /* WICHTIG:
+         - W: --extraRot bleibt 0deg
+         - Zwischenkipp (CCW): --extraRot = -90deg (gegen Uhrzeigersinn)
+         => Bild wird VOR dem Anzeigen gedreht, ohne irgendwas an Zahlen/Slots umzubauen
+      */
+      --extraRot: 0deg;
+
       transform:
         translate(var(--pivot-x), var(--pivot-y))
-        rotate(var(--rot))
+        rotate(calc(var(--rot) + var(--extraRot)))
         translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
@@ -1067,7 +1074,6 @@
       return { row, col: colMap[colLetter], colLetter };
     }
 
-    // Zielzahlen-ROTATION:
     function getTargetRotationDeg(row, col){
       if(row === 1) return 0;
       if(row === 8) return 180;
@@ -1078,7 +1084,6 @@
 
     let currentTarget = null;
 
-    // ======= Treffer-/Ausschluss-Logik =======
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1215,7 +1220,6 @@
       return forbidden;
     }
 
-    // Kartendeck-System
     let usedNumbers = new Set();
     let drawsCount = 0;
     const MAX_TARGETS = 10;
@@ -1297,7 +1301,6 @@
       return { num: chosenNum, color: chosenColor };
     }
 
-    // ===== Rendering / Placement =====
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
     }
@@ -1361,21 +1364,21 @@
     }
 
     // =========================
-    //  NEU: Display-Rotation Override NUR für Zwischenkipp (CCW)
-    //  - CCW zeigt als erste Zwischenkippansicht dieselbe wie CW, aber vor Anzeige -90° (rotIndex+3)
+    //  NEU: CCW-Zwischenkipp Anzeige-Rotation (Bild drehen, sonst nichts)
     // =========================
-    let kipDisplayRotOverride = null; // null = normal, sonst 0..3
+    let kipExtraRotDeg = 0; // 0 = normal, -90 = CCW Zwischenkipp Darstellung
 
     function updateShadowVisibility(){
       const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
-      // WICHTIG: wenn Zwischenkipp sichtbar ist, dann richten wir die Schatten-PNG Auswahl nach der DISPLAY-Rotation aus
-      const rotForKipShadow = (kipDisplayRotOverride != null) ? kipDisplayRotOverride : rotIndex;
+      // Schatten-Auswahl richtet sich nach DISPLAY-Lage (nicht nach kipId).
+      // CCW-Display ist -90° => Index +3
+      const shadowIndex = (kipExtraRotDeg === -90) ? ((rotIndex + 3) % 4) : rotIndex;
 
       if(isKipVisible){
         allShadows.forEach((s, i) => {
-          if(i === rotForKipShadow) s.classList.add("visible");
+          if(i === shadowIndex) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1387,16 +1390,17 @@
     }
 
     function showW(){
-      // beim Zurück zur Würfelansicht: Override weg
-      kipDisplayRotOverride = null;
-
+      // Beim Zurück zur Würfelansicht: Zwischenkipp-Extra-Rotation weg
+      kipExtraRotDeg = 0;
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
+      setRotationSnap();
       updateShadowVisibility();
     }
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
+      setRotationSnap();
       updateShadowVisibility();
     }
 
@@ -1421,19 +1425,6 @@
       else span.style.letterSpacing = "";
     }
 
-    // =========================
-    //   CW / CCW Logik
-    //   - REALER Zustand:
-    //     CW : rot+1, face+1
-    //     CCW: rot-1, face-1
-    //
-    //   - ZWISCHENKIPP-DARSTELLUNG:
-    //     CW : normale Rotation rotIndex
-    //     CCW: ZEIGE die *gleiche Zwischenkippdarstellung wie CW*,
-    //          aber vor dem Einblenden um -90° drehen:
-    //          displayRotIndex = (rotIndex + 3) % 4
-    // =========================
-
     function getNextFaceIndex_CW(){
       return (faceIndex + 1) % 3;
     }
@@ -1454,35 +1445,34 @@
     let faceIndex = 0;
 
     function setRotationSnap(){
-      // reale Rotation (Würfelansicht)
       const realDeg = rotDeg[rotIndex];
 
-      // Zwischenkipp-Display-Rotation (nur wenn override gesetzt)
-      const kipRotIdx = (kipDisplayRotOverride != null) ? kipDisplayRotOverride : rotIndex;
-      const kipDeg = rotDeg[kipRotIdx];
-
-      // W
+      // W: normale Rotation, keine ExtraRotation
       wFaceGroup.style.setProperty("--rot", realDeg + "deg");
+      wFaceGroup.style.setProperty("--extraRot", "0deg");
 
-      // KIP (ggf. override)
-      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", kipDeg + "deg"));
+      // Zwischenkipp: normale Rotation + ggf. ExtraRotation (-90)
+      Object.values(kipGroups).forEach(g => {
+        g.style.setProperty("--rot", realDeg + "deg");
+        g.style.setProperty("--extraRot", kipExtraRotDeg + "deg");
+      });
 
-      // Cube Shadow Layer (wird ohnehin nur bei W sichtbar)
+      // Cube Shadow Layer (nur W sichtbar)
       cubeShadowLayer.style.setProperty("--rot", realDeg + "deg");
 
       updateShadowVisibility();
     }
 
     function renderKipDir(dir){
-      // CCW: Zwischenkippansicht = CW-Zwischenkippansicht, aber -90° vor Anzeige
-      kipDisplayRotOverride = (dir === "CCW") ? ((rotIndex + 3) % 4) : null;
+      // DAS ist die “eine Zeile”: CCW -> Bild vor Anzeige -90° drehen
+      kipExtraRotDeg = (dir === "CCW") ? -90 : 0;
 
       setRotationSnap();
 
       const curr = sets[faceIndex];
 
-      // WICHTIG: Zwischenkipp-ID & Vorschau bleiben IMMER wie CW (gleiches Frame),
-      // nur die Anzeige-Rotation ist bei CCW -90°.
+      // Zwischenkipp-ID/Vorschau bleibt wie bisher (deine Logik),
+      // nur die Darstellung wird im CCW-Fall gedreht.
       const incomingIndex = getNextFaceIndex_CW();
       const incoming = sets[incomingIndex];
 
@@ -1491,23 +1481,21 @@
 
       const { right, left } = getKipSlots(kipId);
 
-      // rechts: aktuelle Ausgangslage
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
 
-      // links: Vorschau der nächsten Lage (wie bisher gemappt)
       const nextPreview = mapHiddenToVisible_CW(incoming);
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
     }
 
     function renderW(){
-      kipDisplayRotOverride = null; // Sicherheit: im W niemals Override
+      kipExtraRotDeg = 0;
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
     }
 
     function renderWEmpty(){
-      kipDisplayRotOverride = null;
+      kipExtraRotDeg = 0;
       setRotationSnap();
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
     }
@@ -1522,7 +1510,6 @@
       return pool.slice(0, count);
     }
 
-    // FIX: Kippspeed ist auf 3 fixiert
     const FIXED_SPEED = 3;
 
     function getTiming(){
@@ -1592,7 +1579,6 @@
       btnSchauen.querySelector('.btnText').textContent = txt;
     }
 
-    // Preview läuft (wie gehabt) in CW
     async function runSetNumbersCycle(){
       if(runningPreview) return;
       runningPreview = true;
@@ -1963,7 +1949,6 @@
       }
     });
 
-    // ===== Beenden-Logik =====
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
@@ -2031,11 +2016,8 @@
       showKippAnzahlView();
     }
 
-    // ==========================
-    //  Auswahl-Logik
-    // ==========================
-    let pendingCount = null; // 1..6
-    let pendingDir = null;   // "CW" | "CCW"
+    let pendingCount = null;
+    let pendingDir = null;
 
     function refreshPendingUI(){
       kippAnzahlBtns.querySelectorAll("button").forEach(b => {
@@ -2081,7 +2063,6 @@
       tryStartPending();
     });
 
-    // ===== Initialisierung =====
     window.addEventListener("load", () => {
       rebuild();
       fastInitAndEnterKippAnzahl();
