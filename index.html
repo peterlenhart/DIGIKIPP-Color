@@ -461,6 +461,15 @@
     }
     .rotBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .rotBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
+    .rotBtn.selected{
+      background: rgba(249, 150, 30, 0.95);
+      border-color: rgba(0,0,0,0.85);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.32),
+        0 0 0 2px rgba(255,255,255,0.25) inset,
+        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
+      transform: scale(1.05);
+    }
 
     .slot{
       position: absolute;
@@ -1062,6 +1071,8 @@
       return { row, col: colMap[colLetter], colLetter };
     }
 
+    // Zielzahlen-ROTATION:
+    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
     function getTargetRotationDeg(row, col){
       if(row === 1) return 0;
       if(row === 8) return 180;
@@ -1072,6 +1083,8 @@
 
     let currentTarget = null;
 
+    // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
+
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1080,13 +1093,13 @@
     };
 
     const ZS_COORDS_BY_ROT_ZSINDEX = [
-      ["4B","3B","2C","2D"],
-      ["2E","2F","3G","4G"],
-      ["5G","6G","7F","7E"],
-      ["7D","7C","6B","5B"],
+      ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
+      ["2E","2F","3G","4G"], // rot 1
+      ["5G","6G","7F","7E"], // rot 2
+      ["7D","7C","6B","5B"], // rot 3
     ];
 
-    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
 
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
@@ -1160,7 +1173,7 @@
         slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
       }
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
-      const targetSpan = document.querySelector(\`.targetNumber[data-coord="\${targetCoord}"] .targetNumSpan\`);
+      const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
       if(targetSpan) targetSpan.classList.add("kippPulse");
 
       setTimeout(() => {
@@ -1203,7 +1216,7 @@
         if(!zfCoord) continue;
         const col = COLOR_BY_ZF_COORD[zfCoord];
         if(!col) continue;
-        forbidden.add(\`\${si.num}|\${col}\`);
+        forbidden.add(`${si.num}|${col}`);
       }
       return forbidden;
     }
@@ -1251,7 +1264,7 @@
           [nums[i], nums[j]] = [nums[j], nums[i]];
         }
         for(const n of nums){
-          if(!forbidden.has(\`\${n}|\${col}\`)) return n;
+          if(!forbidden.has(`${n}|${col}`)) return n;
         }
         return null;
       }
@@ -1272,7 +1285,7 @@
       if(chosenNum == null){
         for(const col of colorTryOrder){
           for(const n of numberCandidates){
-            if(!forbidden.has(\`\${n}|\${col}\`)){
+            if(!forbidden.has(`${n}|${col}`)){
               chosenNum = n;
               chosenColor = col;
               break;
@@ -1288,6 +1301,8 @@
       drawsCount++;
       return { num: chosenNum, color: chosenColor };
     }
+
+    // ===== Rendering / Placement (bleibt wie bei dir) =====
 
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
@@ -1336,11 +1351,11 @@
         numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
         numSpan.style.lineHeight = "1";
 
-        const text = (target.num === 9 || target.num === 6) ? \`\${target.num}.\` : String(target.num);
+        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
         numSpan.textContent = text;
 
         const rot = getTargetRotationDeg(row, col);
-        numSpan.style.transform = \`rotate(\${rot}deg)\`;
+        numSpan.style.transform = `rotate(${rot}deg)`;
 
         if(target.num >= 10){
           numSpan.classList.add("twodigit");
@@ -1351,20 +1366,13 @@
       });
     }
 
-    /* =========================================================
-       ✅ FIX: Für CCW-Zwischenkipp wird die Darstellung 270° gedreht
-       -> dafür nutzen wir temporär einen Rotations-Override nur während KIP sichtbar ist
-       ========================================================= */
-    let shadowRotOverride = null;
-
     function updateShadowVisibility(){
       const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
       if(isKipVisible){
-        const idx = (shadowRotOverride !== null) ? shadowRotOverride : rotIndex;
         allShadows.forEach((s, i) => {
-          if(i === idx) s.classList.add("visible");
+          if(i === rotIndex) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1378,31 +1386,25 @@
     function showW(){
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
-      shadowRotOverride = null; // wichtig: zurück auf normal
       updateShadowVisibility();
     }
 
-    // =========================
-    // FIX: Zwischenkipp IMMER einblenden
-    // =========================
     function showKip(){
       wFaceGroup.classList.add("hidden");
-
-      const anyVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
-
-      if(!anyVisible){
-        const fallbackId = (kipGroups[activeKipId] ? activeKipId : (Object.keys(kipGroups).find(id => kipGroups[id]) || null));
-        if(fallbackId){
-          setActiveKipGroup(fallbackId);
-        }
-      } else {
-        updateShadowVisibility();
-      }
+      updateShadowVisibility();
     }
 
     function mapHiddenToVisible_CW(face){
       const [f1,f2,f3,f4] = face;
       return [f4, f3, f2, f1];
+    }
+
+    function rotate4(arr, turnsCW){
+      const t = ((turnsCW % 4) + 4) % 4;
+      if(t === 0) return arr.slice();
+      if(t === 1) return [arr[3], arr[0], arr[1], arr[2]];
+      if(t === 2) return [arr[2], arr[3], arr[0], arr[1]];
+      return [arr[1], arr[2], arr[3], arr[0]];
     }
 
     function renderNumber(span, n){
@@ -1414,18 +1416,23 @@
         span.style.letterSpacing = "";
         return;
       }
-      const text = (n === 9 || n === 6) ? \`\${n}.\` : String(n);
+      const text = (n === 9 || n === 6) ? `${n}.` : String(n);
       span.textContent = text;
 
       if(n >= 10) span.classList.add("twodigit");
       else span.style.letterSpacing = "";
     }
 
-    function renderKip(){
+    // dir: +1 = CW, -1 = CCW
+    function renderKip(dir = +1){
       setRotationSnap();
 
       const curr = sets[faceIndex];
-      const nextFaceIndex = (faceIndex + 1) % 3;
+
+      const nextFaceIndex = (dir === +1)
+        ? (faceIndex + 1) % 3
+        : (faceIndex + 2) % 3;
+
       const next = sets[nextFaceIndex];
 
       const kipId = getKipId(faceIndex, nextFaceIndex);
@@ -1434,7 +1441,12 @@
       const { right, left } = getKipSlots(kipId);
 
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-      const nextPreview = mapHiddenToVisible_CW(next);
+
+      let nextPreview = mapHiddenToVisible_CW(next);
+      if(dir === -1){
+        // CCW = gleiche "verdeckte" Vorschau wie CW, aber 270° CW gedreht
+        nextPreview = rotate4(nextPreview, 3);
+      }
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
     }
 
@@ -1465,16 +1477,7 @@
     function setRotationSnap(){
       const deg = rotDeg[rotIndex];
       wFaceGroup.style.setProperty("--rot", deg + "deg");
-      Object.values(kipGroups).forEach(g => g && g.style.setProperty("--rot", deg + "deg"));
-      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
-      updateShadowVisibility();
-    }
-
-    // ✅ Neu: Rotation setzen mit beliebigem Index (für CCW-Zwischenkipp-Preview)
-    function setRotationSnapWithIndex(rotIdx){
-      const deg = rotDeg[rotIdx];
-      wFaceGroup.style.setProperty("--rot", deg + "deg");
-      Object.values(kipGroups).forEach(g => g && g.style.setProperty("--rot", deg + "deg"));
+      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
       cubeShadowLayer.style.setProperty("--rot", deg + "deg");
       updateShadowVisibility();
     }
@@ -1486,75 +1489,9 @@
     }
 
     function advanceFullCCW(){
-      rotIndex  = (rotIndex + 3) % 4;   // -1 mod 4
+      rotIndex  = (rotIndex + 3) % 4; // -1 mod 4
       faceIndex = (faceIndex + 2) % 3; // -1 mod 3
       setRotationSnap();
-    }
-
-    function mapHiddenToVisible_CCW(face){
-      const [f1,f2,f3,f4] = face;
-      return [f4, f3, f2, f1];
-    }
-
-    function renderKipDir(dir /* "CW" | "CCW" */){
-      // ✅ CCW-Zwischenkipp muss 270° gedreht angezeigt werden:
-      // also Preview-Rotation = (rotIndex + 3) % 4
-      if(dir === "CCW"){
-        const previewRot = (rotIndex + 3) % 4;
-        shadowRotOverride = previewRot;
-        setRotationSnapWithIndex(previewRot);
-      } else {
-        shadowRotOverride = null;
-        setRotationSnap();
-      }
-
-      const curr = sets[faceIndex];
-
-      const nextFaceIndex = (dir === "CW")
-        ? (faceIndex + 1) % 3
-        : (faceIndex + 2) % 3;
-
-      const next = sets[nextFaceIndex];
-
-      const kipId = (dir === "CW")
-        ? getKipId(faceIndex, nextFaceIndex)
-        : getKipId(nextFaceIndex, faceIndex);
-
-      setActiveKipGroup(kipId);
-
-      const { right, left } = getKipSlots(kipId);
-
-      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-
-      const nextPreview = (dir === "CW")
-        ? mapHiddenToVisible_CW(next)
-        : mapHiddenToVisible_CCW(next);
-
-      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
-    }
-
-    async function doOneStep(dir /* "CW" | "CCW" */){
-      if(runningKipp) return;
-      runningKipp = true;
-
-      const myToken = ++previewToken;
-
-      showKip();
-      renderKipDir(dir);
-      if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
-
-      // ✅ nach der Zwischenkipp-Phase wieder "normal" auf echten rotIndex zurück
-      shadowRotOverride = null;
-
-      if(dir === "CW") advanceFullCW();
-      else advanceFullCCW();
-
-      showW();
-      renderW();
-
-      checkHitAndAnimate();
-
-      runningKipp = false;
     }
 
     function renderW(){
@@ -1648,7 +1585,7 @@
       ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
@@ -1657,7 +1594,7 @@
       ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW(); showW(); renderWEmpty();
@@ -1671,7 +1608,7 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
       advanceFullCW();
@@ -1682,7 +1619,7 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKip();
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW(); showW(); renderW();
@@ -1696,7 +1633,7 @@
       }
 
       while(myToken === previewToken){
-        showKip(); renderKip();
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
         advanceFullCW(); showW(); renderW();
@@ -1921,11 +1858,54 @@
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
+      btnCW.disabled = locked;
+      btnCCW.disabled = locked;
     }
 
     let runningKipp = false;
 
-    async function runKippCyclesNoHit(count){
+    // ======= NEU: Dual-System Zahl 1–6 + Richtung CW/CCW (Reihenfolge egal) =======
+    let pendingCount = null; // 1..6
+    let pendingDir   = null; // +1 CW, -1 CCW
+
+    function setDir(dir){
+      pendingDir = dir;
+      btnCW.classList.toggle("selected", dir === +1);
+      btnCCW.classList.toggle("selected", dir === -1);
+      tryExecuteKipp();
+    }
+
+    function setCount(n){
+      pendingCount = n;
+      kippAnzahlBtns.querySelectorAll("button.squareBtn").forEach(b => {
+        const val = parseInt(b.dataset.anzahl, 10);
+        b.classList.toggle("selected", val === n);
+      });
+      tryExecuteKipp();
+    }
+
+    function clearPendingSelection(){
+      pendingCount = null;
+      kippAnzahlBtns.querySelectorAll("button.squareBtn").forEach(b => b.classList.remove("selected"));
+    }
+
+    function tryExecuteKipp(){
+      if(runningKipp) return;
+      if(pendingCount == null) return;
+      if(pendingDir == null) return;
+
+      const count = pendingCount;
+      const dir   = pendingDir;
+
+      setAnzahlButtonsLocked(true);
+
+      runKippCyclesNoHit(count, dir).finally(() => {
+        clearPendingSelection();
+        setAnzahlButtonsLocked(false);
+      });
+    }
+
+    async function runKippCyclesNoHit(count, dir){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1933,10 +1913,12 @@
 
       for(let i = 0; i < count; i++){
         showKip();
-        renderKip();
+        renderKip(dir);
         if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
-        advanceFullCW();
+        if(dir === +1) advanceFullCW();
+        else advanceFullCCW();
+
         showW();
         renderW();
 
@@ -1948,44 +1930,12 @@
       runningKipp = false;
     }
 
-    let selectedButtons = [];
-
+    // 1–6: EIN Klick = Auswahl (kein 2-Tasten-Summen-System)
     function handleAnzahlClick(anzahl){
-      const clickedBtn = Array.from(kippAnzahlBtns.querySelectorAll("button"))
-        .find(b => parseInt(b.dataset.anzahl) === anzahl);
-      if(!clickedBtn) return;
-
-      if(selectedButtons.includes(anzahl)){
-        const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-
-        setAnzahlButtonsLocked(true);
-
-        runKippCyclesNoHit(totalKipps).finally(() => {
-          selectedButtons = [];
-          kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-          setAnzahlButtonsLocked(false);
-        });
-        return;
-      }
-
-      if(selectedButtons.length < 2){
-        selectedButtons.push(anzahl);
-        clickedBtn.classList.add("selected");
-
-        if(selectedButtons.length === 2){
-          const totalKipps = selectedButtons.reduce((sum, val) => sum + val, 0);
-
-          setAnzahlButtonsLocked(true);
-
-          runKippCyclesNoHit(totalKipps).finally(() => {
-            selectedButtons = [];
-            kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
-            setAnzahlButtonsLocked(false);
-          });
-        }
-      }
+      setCount(anzahl);
     }
 
+    // "SCHAU GENAU" -> exakt 4x kippen (CW) (Q1,Q2,Q3,Q0)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
@@ -1997,7 +1947,7 @@
       showW();
       renderW();
 
-      await runKippCyclesNoHit(4);
+      await runKippCyclesNoHit(4, +1);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
@@ -2015,16 +1965,9 @@
       checkHitAndAnimate();
     });
 
-    /* ✅ FIX: CW/CCW Buttons */
-    btnCW.addEventListener("click", async () => {
-      if(runningPreview) return;
-      await doOneStep("CW");
-    });
-
-    btnCCW.addEventListener("click", async () => {
-      if(runningPreview) return;
-      await doOneStep("CCW");
-    });
+    // CW/CCW Rotation Buttons: setzt nur Richtung (die Zahl kann davor/danach gewählt werden)
+    btnCW.addEventListener("click", () => setDir(+1));
+    btnCCW.addEventListener("click", () => setDir(-1));
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
@@ -2040,6 +1983,7 @@
       }
     });
 
+    // ===== Beenden-Logik =====
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
@@ -2072,6 +2016,7 @@
       location.reload();
     });
 
+    // ===== Startlogik =====
     function fastInitAndEnterKippAnzahl(){
       cancelPreview();
       stopAtNextW = false;
