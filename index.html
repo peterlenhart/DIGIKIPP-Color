@@ -319,7 +319,120 @@
       pointer-events: none;
     }
 
-    /* ===== Buttons (Nummern) ===== */
+    /* ===== Starttitel (zwischen Zeile 9 & 10, zentriert) ===== */
+    .centerTitle{
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, -50%);
+      font-size: clamp(18px, 5.2vmin, 28px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.85),
+        0 6px 16px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      z-index: 25;
+      pointer-events: none;
+    }
+    .centerTitle.white{
+      color: rgba(255,255,255,0.98);
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.92),
+        0 7px 18px rgba(0,0,0,0.78);
+    }
+
+    /* ===== Pulsieren ohne Verschieben (keine transform-Animation) ===== */
+    @keyframes pulseGlow {
+      0% {
+        box-shadow:
+          0 10px 18px rgba(0,0,0,0.22),
+          0 0 0 1px rgba(255,255,255,0.18) inset,
+          0 0 0 0 rgba(255,255,255,0.00);
+        filter: brightness(1) saturate(1);
+      }
+      50% {
+        box-shadow:
+          0 10px 18px rgba(0,0,0,0.22),
+          0 0 0 1px rgba(255,255,255,0.18) inset,
+          0 0 20px 6px rgba(255,255,255,0.35);
+        filter: brightness(1.05) saturate(1.02);
+      }
+      100% {
+        box-shadow:
+          0 10px 18px rgba(0,0,0,0.22),
+          0 0 0 1px rgba(255,255,255,0.18) inset,
+          0 0 0 0 rgba(255,255,255,0.00);
+        filter: brightness(1) saturate(1);
+      }
+    }
+
+    /* Button "SCHAUEN & MERKEN" */
+    .schauenTop{
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: auto;
+    }
+
+    .btnSchauen{
+      width: calc(320px * var(--uiscale)); /* Startbutton breit */
+      height: calc(44px * var(--uiscale)); /* exakt wie Zahlentasten */
+      border-radius: calc(14px * var(--uiscale));
+      border: 2px solid rgba(0,0,0,0.65);
+      background: rgba(234,215,190,0.96);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.22),
+        0 0 0 1px rgba(255,255,255,0.18) inset;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+      pointer-events: auto;
+      padding: 0;
+    }
+    .btnSchauen:active{ filter: brightness(0.98); }
+    .btnSchauen[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
+
+    .btnSchauen.pulsing{
+      animation: pulseGlow 1.15s ease-in-out infinite;
+    }
+
+    .btnText{
+      font-size: calc(16px * var(--uiscale));
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      color: #7a3f2b;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+      white-space: nowrap;
+    }
+
+    /* "SCHAU GENAU" = Button im gleichen Stil (Höhe 44) - UNSICHTBAR */
+    .btnSchauGenau{
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, -50%);
+      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
+      height: calc(44px * var(--uiscale));
+      display: none !important;
+      pointer-events: none !important;
+    }
+    .btnSchauGenau:active{ transform: translate(-50%, -50%); filter: brightness(0.98); }
+    .btnSchauGenau[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
+
     .squareBtn{
       width: calc(44px * var(--uiscale));
       height: calc(44px * var(--uiscale));
@@ -336,8 +449,9 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
+      padding: 0;
     }
-    .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
+    .squareBtn:active{ filter: brightness(0.98); }
     .squareBtn.selected{
       background: rgba(249, 150, 30, 0.95);
       border-color: rgba(0,0,0,0.85);
@@ -345,7 +459,6 @@
         0 10px 18px rgba(0,0,0,0.32),
         0 0 0 2px rgba(255,255,255,0.25) inset,
         0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-      transform: scale(1.05);
     }
     .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
 
@@ -356,74 +469,12 @@
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
       font-size: calc(18px * var(--uiscale));
       line-height: 1;
-      white-space: nowrap;
-    }
-
-    /* Start-Button: gleicher Stil wie Zahlentasten, nur breiter */
-    .startBtn{
-      width: calc(320px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      padding: 0 calc(18px * var(--uiscale));
-    }
-
-    /* Pulsieren (Start-Button) */
-    @keyframes startPulse {
-      0%   { transform: translate(-50%, -50%) scale(1.00); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
-      50%  { transform: translate(-50%, -50%) scale(1.05); filter: drop-shadow(0 0 12px rgba(255,255,255,0.55)); }
-      100% { transform: translate(-50%, -50%) scale(1.00); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
-    }
-    .pulseStart{
-      animation: startPulse 1.25s ease-in-out infinite;
-    }
-
-    /* Button-Container im Startscreen (gleiche Höhe wie Zahlentasten, mittig) */
-    .schauenTop{
-      position: absolute;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: auto;
-      z-index: 30;
-    }
-
-    /* Start-Titel: zwischen Zeile 9 und 10, zentriert */
-    .startTitle{
-      position: absolute;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: clamp(54px, 10vmin, 96px);
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 3px 0 rgba(0,0,0,0.85),
-        0 8px 20px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      text-align: center;
-      z-index: 30;
-      pointer-events: none;
-    }
-
-    /* "SCHAU GENAU" bleibt unsichtbar */
-    .btnSchauGenau{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      display: none !important;
-      pointer-events: none !important;
     }
 
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       display: flex;
       flex-wrap: nowrap;
       gap: calc(24px * var(--uiscale));
@@ -598,7 +649,7 @@
       z-index: 100;
       padding: 0;
     }
-    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
+    .navBtn:active{ opacity: 0.8; }
     .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
 
     .closeIcon{
@@ -761,6 +812,39 @@
     .kippPulse{
       animation: kippPulseGlow 0.22s ease-in-out 0s 10 alternate;
     }
+
+    /* ===== Startfläche 2x2 (12D–13E) ===== */
+    .startPanel{
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: calc(2 * var(--cell));
+      height: calc(2 * var(--cell));
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill);
+      border-radius: 0;
+      box-shadow:
+        inset 0 0 0 5px var(--w1-innerframe);
+      z-index: 12;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .startPanel.visible{ opacity: 1; }
+
+    .startPanel .circleMark{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.55);
+      box-shadow:
+        0 1px 0 rgba(0,0,0,0.60),
+        0 4px 10px rgba(0,0,0,0.35);
+    }
   </style>
 </head>
 
@@ -770,6 +854,11 @@
       <div class="bgPNG" aria-hidden="true"></div>
       <div class="ball" aria-label="Kugel"></div>
       <div class="colors" id="colors" aria-hidden="true"></div>
+
+      <!-- Startfläche (12D–13E) -->
+      <div id="startPanel" class="startPanel" aria-hidden="true">
+        <div class="circleMark" aria-hidden="true"></div>
+      </div>
 
       <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
         <div class="cubeShadowClip">
@@ -859,14 +948,13 @@
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
-        <div id="schauenView" class="hidden">
-          <!-- Start-Titel: zwischen Zeile 9 und 10 -->
-          <div class="startTitle" id="startTitle">SCHAUKIPP-RUNDE</div>
+        <!-- Starttitel (zwischen 9 und 10) -->
+        <div class="centerTitle" id="centerTitle">SCHAU-KIPP-RUNDE</div>
 
-          <!-- Start-Button: gleicher Stil wie Zahlentasten, gleiche Höhe, gleiche Höhe wie zwischen 10/11 -->
+        <div id="schauenView" class="hidden">
           <div class="schauenTop" id="schauenTop">
-            <button id="btnSchauen" class="squareBtn startBtn pulseStart" type="button">
-              <span class="anzahlText">SCHAUEN &amp; MERKEN</span>
+            <button id="btnSchauen" class="btnSchauen pulsing" type="button">
+              <span class="btnText">SCHAUEN &amp; MERKEN</span>
             </button>
           </div>
 
@@ -876,8 +964,8 @@
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <button id="btnSchauGenau" class="btnSchauGenau" type="button">
-            <span class="anzahlText">SCHAU GENAU</span>
+          <button id="btnSchauGenau" class="btnSchauen btnSchauGenau" type="button">
+            <span class="btnText">SCHAU GENAU</span>
           </button>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
@@ -921,7 +1009,6 @@
     const schauenView  = document.getElementById("schauenView");
     const schauenTop   = document.getElementById("schauenTop");
     const btnSchauen   = document.getElementById("btnSchauen");
-    const startTitle   = document.getElementById("startTitle");
 
     const kippAnzahlView = document.getElementById("kippAnzahlView");
     const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
@@ -938,6 +1025,9 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
+
+    const centerTitle = document.getElementById("centerTitle");
+    const startPanel = document.getElementById("startPanel");
 
     const shadowQ0 = document.getElementById("shadowQ0");
     const shadowQ1 = document.getElementById("shadowQ1");
@@ -1472,7 +1562,6 @@
 
     let runningPreview = false;
     let previewToken = 0;
-    let stopAtNextW = false;
 
     async function waitOrPause(type, myToken){
       const startTime = Date.now();
@@ -1489,99 +1578,40 @@
     function setSchauenEnabled(enabled){
       btnSchauen.disabled = !enabled;
     }
-    function setSchauenText(txt){
-      btnSchauen.querySelector('.anzahlText').textContent = txt;
-    }
-
-    async function runSetNumbersCycle(){
-      if(runningPreview) return;
-      runningPreview = true;
-      const myToken = ++previewToken;
-
-      currentTarget = null;
-      clearTargetNumbers();
-      clearHitVisuals();
-
-      buttonState = "running";
-      setSchauenEnabled(false);
-      setSchauenText("SCHAUEN & MERKEN");
-
-      reroll12_keepEmpty();
-
-      showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(0); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(1); renderW();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW(); showW(); renderWEmpty();
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      ensureAssigned(2); renderW();
-
-      buttonState = "spielen";
-      setSchauenText("STOPP & SPIELEN?");
-      setSchauenEnabled(true);
-
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      showKip(); renderKip();
-      if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-      advanceFullCW();
-      showW();
-      renderW();
-
-      const EXTRA_CYCLES = 3;
-      if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-
-      for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW(); showW(); renderW();
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
-        }
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      while(myToken === previewToken){
-        showKip(); renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
-
-        advanceFullCW(); showW(); renderW();
-        if(stopAtNextW){
-          stopAtNextW = false;
-          runningPreview = false;
-          showKippAnzahlView();
-          return;
-        }
-        if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
-      }
-
-      runningPreview = false;
-    }
 
     function cancelPreview(){
       previewToken++;
       runningPreview = false;
     }
+
+    // ===== Start-Button Funktion: 4x kippen wie Taste "4" =====
+    let runningKipp = false;
+
+    async function runKippCyclesNoHit(count){
+      if(runningKipp) return;
+      runningKipp = true;
+
+      const myToken = ++previewToken;
+
+      for(let i = 0; i < count; i++){
+        showKip();
+        renderKip();
+        if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
+
+        // NUR Uhrzeigersinn
+        advanceFullCW();
+        showW();
+        renderW();
+
+        checkHitAndAnimate();
+
+        if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
+      }
+
+      runningKipp = false;
+    }
+
+    // ===== Rendering / Placement UI =====
 
     function setScaleToFitWidth(){
       const cols = numVar("--cols") || 8;
@@ -1641,20 +1671,24 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      // Raster-Definition: Buttons 1–6 liegen "zwischen Zeile 10 und 11" -> auf der Trennlinie (Top von Zeile 11)
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx; // Trennlinie 9/10 ist Top von Zeile 10
-      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx; // Trennlinie 10/11 ist Top von Zeile 11
+      // ----- Title: zwischen Zeile 9 und 10 (zentriert)
+      const row9VisualTop  = (((9  + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const mid910 = (row9VisualTop + row10VisualTop) / 2;
 
-      // Start-Button exakt auf gleicher Höhe wie Zahlentasten (zwischen 10/11)
-      schauenTop.style.top = row11VisualTop + "px";
-      schauenTop.style.left = "50%";
+      centerTitle.style.top = mid910 + "px";
 
-      // Start-Titel exakt zwischen Zeile 9 und 10 (Trennlinie 9/10)
-      if(startTitle){
-        startTitle.style.top = row10VisualTop + "px";
-      }
+      // ----- Zahlentasten: exakt zwischen 10 und 11
+      const row11VisualTop = (((11 + HEADER_ROW_OFFSET) - 1) * cellPx);
+      const row11CenterY = row11VisualTop + cellPx / 2;
 
-      // Bestehende Header-Elemente bleiben wie gehabt
+      kippAnzahlBtns.style.top = row11CenterY + "px";
+      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
+
+      // ----- Startbutton: gleiche Höhe wie Zahlentasten, +22px nach unten
+      schauenTop.style.top = (row11CenterY + 22) + "px";
+
+      // ----- Header
       const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
@@ -1668,12 +1702,9 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      // Zahlentasten: exakt zwischen Zeile 10 und 11
-      kippAnzahlBtns.style.top = row11VisualTop + "px";
-      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
-
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
+      positionStartPanel(cellPx);
     }
 
     function positionNavButtons(cellPx){
@@ -1708,6 +1739,19 @@
       testTargetBtn.style.pointerEvents = "auto";
     }
 
+    // 2x2 Fläche: 12D–13E
+    function positionStartPanel(cellPx){
+      const startRow = 12;
+      const startCol = 4; // D
+      const visualRow = startRow + HEADER_ROW_OFFSET;
+
+      const left = (startCol - 1) * cellPx;
+      const top  = (visualRow - 1) * cellPx;
+
+      startPanel.style.left = left + "px";
+      startPanel.style.top  = top  + "px";
+    }
+
     function rebuild(){
       const { cell, scale } = setScaleToFitWidth();
       const vh = window.innerHeight;
@@ -1727,8 +1771,6 @@
       kippAnzahlView.classList.add("hidden");
 
       selectedLevel = "brainy";
-      buttonState = "schauen";
-      setSchauenText("SCHAUEN & MERKEN");
       setSchauenEnabled(true);
 
       resetTargetDeck();
@@ -1736,8 +1778,11 @@
       clearHitVisuals();
       currentTarget = null;
 
+      // Start: Titel nicht weiß, Startpanel unsichtbar
+      centerTitle.classList.remove("white");
+      startPanel.classList.remove("visible");
+
       showW();
-      renderW();
     }
 
     function showKippAnzahlView(){
@@ -1769,7 +1814,6 @@
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        // EIN KLICK = sofort so viele CW-Kipps
         btn.addEventListener("click", () => handleAnzahlClick(num));
         kippAnzahlBtns.appendChild(btn);
       });
@@ -1779,32 +1823,6 @@
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
-    }
-
-    let runningKipp = false;
-
-    async function runKippCyclesNoHit(count){
-      if(runningKipp) return;
-      runningKipp = true;
-
-      const myToken = ++previewToken;
-
-      for(let i = 0; i < count; i++){
-        showKip();
-        renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
-
-        // NUR Uhrzeigersinn
-        advanceFullCW();
-        showW();
-        renderW();
-
-        checkHitAndAnimate();
-
-        if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
-      }
-
-      runningKipp = false;
     }
 
     // EIN-TASTEN-System: Taste 1–6 -> sofort genau so viele Kipp-Schritte (CW)
@@ -1847,18 +1865,23 @@
       checkHitAndAnimate();
     });
 
+    // ===== START-BUTTON: 4x kippen wie Taste "4" + Titel weiß + Startpanel sichtbar =====
     btnSchauen.addEventListener("click", async () => {
-      if(buttonState === "schauen"){
-        await runSetNumbersCycle();
-      } else if(buttonState === "spielen"){
-        const isWVisible = !wFaceGroup.classList.contains("hidden");
-        if(isWVisible){
-          cancelPreview();
-          showKippAnzahlView();
-        } else {
-          stopAtNextW = true;
-        }
-      }
+      // während Start-Kipps sperren
+      setSchauenEnabled(false);
+
+      // Titel weiß
+      centerTitle.classList.add("white");
+
+      // 2x2 Fläche sichtbar
+      startPanel.classList.add("visible");
+
+      // exakt 4 Kipps wie Taste 4
+      await runKippCyclesNoHit(4);
+
+      // danach in die Zahlentasten-Ansicht wechseln
+      showKippAnzahlView();
+      setSchauenEnabled(true);
     });
 
     // ===== Beenden-Logik =====
@@ -1895,9 +1918,8 @@
     });
 
     // ===== Startlogik =====
-    function initToStartScreen(){
+    function initStartScreen(){
       cancelPreview();
-      stopAtNextW = false;
 
       selectedLevel = "brainy";
 
@@ -1906,25 +1928,27 @@
       clearHitVisuals();
       currentTarget = null;
 
-      // Grundzustand vorbereiten, aber NICHT direkt in die Zahlentasten-Ansicht springen
+      // Würfelzustand initialisieren (wie bei dir)
       reroll12_keepEmpty();
       ensureAssigned(0);
       ensureAssigned(1);
       ensureAssigned(2);
 
       rotIndex = 0;
-      faceIndex = 1;   // wie vorher bei deinem Setup
+      faceIndex = 0;
       setRotationSnap();
 
+      // Start: W sichtbar + Zahlen gesetzt
       showW();
       renderW();
 
+      // Start-UI anzeigen
       showSchauenView();
     }
 
     window.addEventListener("load", () => {
       rebuild();
-      initToStartScreen();
+      initStartScreen();
       updateShadowVisibility();
     });
 
