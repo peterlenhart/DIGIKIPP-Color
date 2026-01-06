@@ -332,6 +332,19 @@
     .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
 
+    /* NEU: Kippzahl-Button während Lauf (braun + beige Zahl) */
+    .squareBtn.runSelected{
+      background: var(--ui-panel-bg) !important;
+      border-color: rgba(0,0,0,0.65);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.28),
+        0 0 0 1px rgba(255,255,255,0.08) inset;
+    }
+    .squareBtn.runSelected .anzahlText{
+      color: var(--ui-text) !important;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.40);
+    }
+
     /* Rot-braune Schrift (wie vorher) */
     .anzahlText{
       font-weight: 1000;
@@ -383,6 +396,11 @@
       pointer-events: none;
       font-size: calc(18px * var(--uiscale));
       transform: translate(-50%, -50%);
+    }
+    /* NEU: "klein" für Kippziel */
+    .hintSmall{
+      font-size: calc(14px * var(--uiscale)) !important;
+      opacity: 0.96;
     }
 
     /* 2x2 Ziel-Button */
@@ -553,6 +571,7 @@
 
     .hidden{ display:none !important; }
 
+    /* Score: nur "00" */
     .scoreDisplay{
       position: absolute;
       right: 0;
@@ -669,6 +688,7 @@
       transform: translateY(-50%);
     }
 
+    /* Modal bleibt (Close) */
     .modalOverlay{
       position: fixed;
       top: 0;
@@ -742,56 +762,6 @@
       color: rgba(255,255,255,0.95);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
-
-    .endOverlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.88);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      pointer-events: auto;
-    }
-    .endBox{
-      background: rgba(234,215,190,0.98);
-      border: 3px solid rgba(0,0,0,0.65);
-      border-radius: 22px;
-      padding: 40px 48px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
-      text-align: center;
-      max-width: 86%;
-    }
-    .endTitle{
-      font-size: clamp(22px, 5.5vmin, 36px);
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #2a160c;
-      margin-bottom: 18px;
-    }
-    .endSub{
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 600;
-      color: #4a2418;
-      margin-bottom: 28px;
-    }
-    .endBtn{
-      padding: 16px 40px;
-      border-radius: 14px;
-      border: 2px solid rgba(0,0,0,0.65);
-      font-size: clamp(16px, 4vmin, 22px);
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      background: #4a2418;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 0 rgba(0,0,0,0.45);
-      box-shadow: 0 8px 14px rgba(0,0,0,0.22);
-    }
-    .endBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
 
     @keyframes kippPulseGlow {
       0%   { transform: scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
@@ -893,14 +863,19 @@
       </div>
 
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
-        <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
+        <div class="scoreDisplay" id="scoreDisplay">00</div>
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
         <div class="hintTitle" id="hintTitle">SCHAUKIPP-RUNDE</div>
 
+        <!-- START / ERGEBNIS: gleicher Maskenplatz -->
         <div class="startBtnWrap" id="startBtnWrap">
           <button id="btnSchauen" class="squareBtn startBtn" type="button">
             <span class="anzahlText pulse" id="btnSchauenPulse">SCHAUEN &amp; MERKEN</span>
+          </button>
+
+          <button id="btnErgebnis" class="squareBtn startBtn hidden" type="button">
+            <span class="anzahlText" id="btnErgebnisText">ERGEBNIS</span>
           </button>
         </div>
 
@@ -941,20 +916,15 @@
     </div>
   </div>
 
-  <div id="endOverlay" class="endOverlay hidden">
-    <div class="endBox">
-      <div class="endTitle">SCHLUSSKIPP-RUNDE</div>
-      <div class="endSub">Du kannst jetzt neu starten.</div>
-      <button class="endBtn" id="endRestart">Neu starten</button>
-    </div>
-  </div>
-
   <script>
     const colorsEl = document.getElementById("colors");
 
-    const btnSchauen   = document.getElementById("btnSchauen");
-    const startBtnWrap = document.getElementById("startBtnWrap");
-    const hintTitle    = document.getElementById("hintTitle");
+    const btnSchauen     = document.getElementById("btnSchauen");
+    const btnSchauenPulse= document.getElementById("btnSchauenPulse");
+    const btnErgebnis    = document.getElementById("btnErgebnis");
+    const btnErgebnisText= document.getElementById("btnErgebnisText");
+    const startBtnWrap   = document.getElementById("startBtnWrap");
+    const hintTitle      = document.getElementById("hintTitle");
 
     const kippAnzahlView = document.getElementById("kippAnzahlView");
     const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
@@ -965,9 +935,6 @@
     const closeModal   = document.getElementById("closeModal");
     const modalCancel  = document.getElementById("modalCancel");
     const modalConfirm = document.getElementById("modalConfirm");
-
-    const endOverlay = document.getElementById("endOverlay");
-    const endRestart = document.getElementById("endRestart");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
 
@@ -1021,14 +988,10 @@
     ];
 
     // =========================================================
-    // NEU: "Hit-Memory" -> Zahl bleibt dauerhaft eingefärbt,
-    //      auf W und auf Zwischenkipp (from + incoming).
+    // Hit-Memory (Zahl bleibt dauerhaft eingefärbt)
     // =========================================================
     let lockedColorsByNumber = new Map(); // number -> colorName
-
-    function resetLockedColors(){
-      lockedColorsByNumber = new Map();
-    }
+    function resetLockedColors(){ lockedColorsByNumber = new Map(); }
 
     function applyPersistentFill(slotEl, n){
       if(!slotEl) return;
@@ -1040,11 +1003,10 @@
       if(col){
         slotEl.style.setProperty("--slot-fill", `var(--${col})`);
       } else {
-        slotEl.style.removeProperty("--slot-fill"); // zurück auf Beige
+        slotEl.style.removeProperty("--slot-fill");
       }
     }
 
-    // nur Puls/Animation löschen – NICHT die Farbe!
     function clearHitPulse(){
       document.querySelectorAll(".slot").forEach(el => {
         el.classList.remove("kippPulse");
@@ -1117,17 +1079,38 @@
     let targetRevealed = false;
     let started = false;
 
-    let uiMode = "START"; // START | TARGET | COUNT
+    let uiMode = "START"; // START | TARGET | COUNT | END
 
     // =========================
-    // NEU: Versuche pro Ziel (2 Versuche -> dann neues Ziel wählen)
+    // Versuche pro Ziel
     // =========================
     let attemptsForTarget = 0;
     const MAX_ATTEMPTS_PER_TARGET = 2;
 
-    function showHint(text){
+    // =========================
+    // NEU: 12 Kippziele + Score nur Treffer
+    // =========================
+    let hitsCount = 0;
+    function updateScore(){
+      const s = String(hitsCount).padStart(2,"0");
+      document.getElementById("scoreDisplay").textContent = s;
+    }
+
+    const ordinals = {
+      1:"Erstes",2:"Zweites",3:"Drittes",4:"Viertes",5:"Fünftes",6:"Sechstes",
+      7:"Siebtes",8:"Achtes",9:"Neuntes",10:"Zehntes",11:"Elftes"
+    };
+
+    function getTargetHintText(){
+      const nextIndex = drawsCount + 1; // 1..MAX_TARGETS
+      if(nextIndex >= MAX_TARGETS) return "LETZTES KIPPZIEL";
+      return `${ordinals[nextIndex] || (nextIndex + ".")} KIPPZIEL VON 12`;
+    }
+
+    function showHint(text, small=false){
       hintTitle.textContent = text;
       hintTitle.classList.remove("hidden");
+      hintTitle.classList.toggle("hintSmall", !!small);
     }
     function hideHint(){
       hintTitle.classList.add("hidden");
@@ -1189,20 +1172,15 @@
     }
 
     function applyHitVisual(slotInfo){
-      // Farbe NICHT temporär setzen/entfernen – die kommt jetzt über lockedColorsByNumber
       slotInfo.slotEl.classList.add("kippPulse");
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
-
       setTimeout(() => {
         slotInfo.slotEl.classList.remove("kippPulse");
         if(slotInfo.spanEl) slotInfo.spanEl.classList.remove("kippPulse");
       }, 2600);
     }
 
-    // =========================================================
-    // FIX: Treffererkennung = Zielzahl oben sichtbar UND
-    //      direktes Nachbar-Randfeld hat Zielfarbe
-    // =========================================================
+    // Treffererkennung + Score++
     function checkHitAndAnimate(){
       if(!currentTarget) return false;
 
@@ -1211,24 +1189,24 @@
       for(const si of visibleSlots){
         if(si.num == null) continue;
 
-        // 1) Zielzahl oben sichtbar?
         if(si.num !== currentTarget.num) continue;
 
-        // 2) Direktes Nachbar-Randfeld bestimmen
         const zfCoord = getAdjacentZFCoordForZS(si.zsCoord);
         if(!zfCoord) continue;
 
-        // 3) Passt Zielfarbe?
         const borderColor = COLOR_BY_ZF_COORD[zfCoord];
         if(borderColor !== currentTarget.color) continue;
 
-        // TREFFER -> ab jetzt: Zahl dauerhaft einfärben (W + Zwischenkipp)
+        // NEU: Score nur erhöhen, wenn Zahl vorher noch NICHT gelockt war
+        const wasAlreadyLocked = lockedColorsByNumber.has(currentTarget.num);
         lockedColorsByNumber.set(currentTarget.num, currentTarget.color);
-
-        // sofort auf dem sichtbaren Slot anwenden
         applyPersistentFill(si.slotEl, si.num);
 
-        // Treffer-Impuls
+        if(!wasAlreadyLocked){
+          hitsCount++;
+          updateScore();
+        }
+
         applyHitVisual(si);
         return true;
       }
@@ -1253,7 +1231,7 @@
 
     let usedNumbers = new Set();
     let drawsCount = 0;
-    const MAX_TARGETS = 10;
+    const MAX_TARGETS = 12; // <-- NEU
 
     function resetTargetDeck(){
       usedNumbers = new Set();
@@ -1285,7 +1263,6 @@
           if(!usedNumbers.has(n)) numberCandidates.push(n);
         }
       }
-
       if(numberCandidates.length === 0) return null;
 
       const colorTryOrder = allColors.slice();
@@ -1379,7 +1356,6 @@
       else span.style.letterSpacing = "";
     }
 
-    // NEU: Slot rendern inkl. persistenter Einfärbung
     function renderSlot(slotEl, spanEl, n){
       renderNumber(spanEl, n);
       applyPersistentFill(slotEl, n);
@@ -1400,7 +1376,7 @@
       // rechte Seite = aktuelle Face (from)
       for(let i=0;i<4;i++) renderSlot(rightEls[i], rightSpans[i], curr[i]);
 
-      // linke Seite = incoming Face (to) als Preview (mapHiddenToVisible_CW)
+      // linke Seite = incoming Face (to)
       const nextPreview = mapHiddenToVisible_CW(next);
       for(let i=0;i<4;i++) renderSlot(leftEls[i], leftSpans[i], nextPreview[i]);
     }
@@ -1459,7 +1435,6 @@
       [null,null,null,null],
       [null,null,null,null],
     ];
-    let assigned = [false,false,false];
 
     function reroll12_keepAssigned(){
       const twelve = getUniqueRandomNumbers(12, 1, 12);
@@ -1472,7 +1447,6 @@
         planned[1].slice(),
         planned[2].slice(),
       ];
-      assigned = [true,true,true];
 
       rotIndex  = 0;
       faceIndex = 0;
@@ -1526,6 +1500,7 @@
       runningKipp = false;
     }
 
+    // ---------- UI: Kippzahl Buttons ----------
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
@@ -1536,7 +1511,7 @@
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText pulse">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleAnzahlClick(num));
+        btn.addEventListener("click", () => handleAnzahlClick(num, btn));
         kippAnzahlBtns.appendChild(btn);
       });
     }
@@ -1547,10 +1522,15 @@
       targetPadBtn.disabled = locked;
     }
 
-    // =========================
-    // Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
-    // WICHTIG: Persistente Slotfarben bleiben!
-    // =========================
+    function markRunSelected(btn){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("runSelected"));
+      if(btn) btn.classList.add("runSelected");
+    }
+    function clearRunSelected(){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("runSelected"));
+    }
+
+    // ---------- Zielwahl Reset ----------
     function resetToNewTargetChoice(){
       attemptsForTarget = 0;
       currentTarget = null;
@@ -1560,31 +1540,83 @@
       showTargetSelectView();
     }
 
-    function handleAnzahlClick(anzahl){
-      if(!currentTarget) return; // ohne Ziel kein Kipp
+    // ---------- End Screen (Schluss Kipprunde) ----------
+    function showEndResultView(){
+      uiMode = "END";
+      // gleicher Platz wie Start: hint + breiter Button
+      startBtnWrap.classList.remove("hidden");
 
+      // Ergebnis-Button zeigen, Start-Button aus
+      btnSchauen.classList.add("hidden");
+      btnErgebnis.classList.remove("hidden");
+
+      // Hinweise / Controls ausblenden
+      kippAnzahlView.classList.add("hidden");
+      targetPadBtn.classList.add("hidden");
+      showBackIcon(false);
+
+      // Text + Maske
+      showHint("SCHLUSS KIPPRUNDE", false);
+
+      // Button initial
+      btnErgebnisText.textContent = "ERGEBNIS";
+      btnErgebnis.disabled = false;
+
+      // Alles andere inaktiv
       setAnzahlButtonsLocked(true);
+      closeBtn.disabled = false; // darf bleiben
+      positionUI();
+    }
+
+    async function runErgebnisPresentation(){
+      if(runningKipp) return;
+      btnErgebnis.disabled = true;
+      btnErgebnisText.textContent = "ERGEBNIS…";
+      // Präsentationskipp: 4 Kipps (wie Vorschau)
+      await runSchauKippSequence(4, { kipFactor: 2 });
+      btnErgebnisText.textContent = "NEU STARTEN";
+      btnErgebnis.disabled = false;
+
+      // Nach Präsentation: Klick => Restart
+      btnErgebnis.onclick = () => location.reload();
+    }
+
+    function handleAnzahlClick(anzahl, clickedBtn){
+      if(!currentTarget) return;
+      if(runningKipp) return;
+
+      // NEU: gewählten Button braun markieren, alles sperren
+      markRunSelected(clickedBtn);
+      setAnzahlButtonsLocked(true);
+
       attemptsForTarget++;
 
       runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
-        // NUR Impuls zurücksetzen, Farben bleiben
         clearHitPulse();
 
-        // Treffer nach Endlage prüfen
         const hit = checkHitAndAnimate();
 
+        // Lauf beendet -> Button wieder beige + alles aktiv (sofern nicht Ende)
+        clearRunSelected();
+
+        // Letztes Ziel fertig? (Treffer ODER Fehlkipp nach 2 Versuchen)
+        const isLastTarget = (drawsCount >= MAX_TARGETS);
+        const isTargetFinished = hit || (attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET);
+
+        if(isLastTarget && isTargetFinished){
+          await sleep(700);
+          showEndResultView();
+          return;
+        }
+
         if(hit){
-          // kurz warten, damit der Treffer sichtbar bleibt, dann neues Ziel
           await sleep(900);
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
-
-          // nach dem "lockedColorsByNumber"-Update einmal sauber neu zeichnen
           renderW();
           return;
         }
 
-        // kein Treffer
         if(attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET){
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
@@ -1628,8 +1660,14 @@
 
     function showStartView(){
       uiMode = "START";
+
       startBtnWrap.classList.remove("hidden");
-      showHint("SCHAUKIPP-RUNDE");
+      btnSchauen.classList.remove("hidden");
+      btnErgebnis.classList.add("hidden");
+
+      btnSchauenPulse.classList.add("pulse");
+
+      showHint("SCHAUKIPP-RUNDE", false);
 
       kippAnzahlView.classList.add("hidden");
       targetPadBtn.classList.add("hidden");
@@ -1650,8 +1688,19 @@
     }
 
     function showTargetSelectView(){
+      // wenn 12 Ziele schon gezogen => keine Zielwahl mehr (sollte erst nach Ende passieren)
+      if(drawsCount >= MAX_TARGETS){
+        showEndResultView();
+        return;
+      }
+
       uiMode = "TARGET";
-      showHint("KIPP-ZIEL");
+
+      // Hinweis: "Erstes ... von 12" (klein)
+      showHint(getTargetHintText(), true);
+
+      // Start/Ergebnis-Button ausblenden (in dieser Phase)
+      startBtnWrap.classList.add("hidden");
 
       kippAnzahlView.classList.add("hidden");
 
@@ -1670,15 +1719,17 @@
 
     function showKippCountView(){
       uiMode = "COUNT";
-      showHint("KIPP-ANZAHL");
+      showHint("KIPP-ANZAHL", false);
+
+      startBtnWrap.classList.add("hidden");
 
       targetPadBtn.classList.remove("pulse");
 
       kippAnzahlView.classList.remove("hidden");
       buildKippAnzahlButtons();
 
-      testTargetBtn.classList.remove("hidden");
-      testTargetBtn.disabled = false;
+      testTargetBtn.classList.add("hidden"); // im echten Spiel weg
+      testTargetBtn.disabled = true;
 
       showBackIcon(false);
 
@@ -1740,24 +1791,16 @@
       showTargetSelectView();
     });
 
+    btnErgebnis.addEventListener("click", () => {
+      // in END-View: erstes Mal = Präsentation, danach wird onclick auf reload umgebogen
+      runErgebnisPresentation();
+    });
+
     backBtn.addEventListener("click", () => {
       initPlayState();
     });
 
-    testTargetBtn.addEventListener("click", () => {
-      clearHitPulse();
-      currentTarget = generateTarget_NumberColor_WithExclusion();
-      if(!currentTarget) return;
-
-      attemptsForTarget = 0;
-
-      applyTargetToPad(currentTarget);
-      targetRevealed = true;
-      targetPadBtn.disabled = true;
-      showKippCountView();
-      checkHitAndAnimate();
-    });
-
+    // Close modal
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
@@ -1768,8 +1811,7 @@
     function endGame(){
       cancelPreview();
       hideCloseModal();
-      kippAnzahlView.classList.add("hidden");
-      endOverlay.classList.remove("hidden");
+      location.reload();
     }
 
     closeBtn.addEventListener("click", showCloseModal);
@@ -1779,10 +1821,6 @@
 
     closeModal.addEventListener("click", (e) => {
       if(e.target === closeModal) hideCloseModal();
-    });
-
-    endRestart.addEventListener("click", () => {
-      location.reload();
     });
 
     function setScaleToFitWidth(){
@@ -1870,20 +1908,19 @@
       const btnH = 44 * uiscale;
       startBtnWrap.style.top = (between10and11 - (btnH / 2)) + "px";
 
+      // Hint-Positionen
       if(uiMode === "TARGET"){
         hintTitle.style.top = row11CenterY + "px";
-      } else if(uiMode === "START"){
+      } else if(uiMode === "START" || uiMode === "COUNT"){
         const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
-
         hintTitle.style.top = (midBetween9and10 + 40) + "px";
-
-      } else if(uiMode === "COUNT"){
+      } else if(uiMode === "END"){
+        // wie START, aber ohne "klein"
         const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
-
         hintTitle.style.top = (midBetween9and10 + 40) + "px";
       } else {
         hintTitle.style.top = row11CenterY + "px";
@@ -1966,7 +2003,6 @@
       positionUI();
       updateShadowVisibility();
 
-      // nach Resize: sicherstellen, dass aktuelle Ansicht korrekt eingefärbt bleibt
       if(!wFaceGroup.classList.contains("hidden")) renderW();
       else renderKip();
     }
@@ -1980,13 +2016,18 @@
       started = false;
       attemptsForTarget = 0;
 
-      resetLockedColors(); // NEU: bei Neustart alles zurücksetzen
+      resetLockedColors();
+      hitsCount = 0;
+      updateScore();
 
       resetTargetPadUI();
 
       reroll12_keepAssigned();
       showW();
       renderW();
+
+      // Ergebnis-Button wieder normal machen (falls schon benutzt)
+      btnErgebnis.onclick = null;
 
       showStartView();
       updateShadowVisibility();
