@@ -1150,12 +1150,24 @@
       return out;
     }
 
+    // =========================================================
+    // FIX (DEIN KERNPUNKT):
+    // - clearHitVisuals darf NIE die Slot-Farbe löschen,
+    //   sondern nur die "Impuls"-Animation (kippPulse).
+    // - Slot-Farbe bleibt bis Spielende bestehen.
+    // =========================================================
     function clearHitVisuals(){
       for(const el of slotElsW){
-        el.style.removeProperty("--slot-fill");
         el.classList.remove("kippPulse");
         const s = el.querySelector(".num > span");
         if(s) s.classList.remove("kippPulse");
+      }
+    }
+
+    // Nur für echten Neustart: Slot-Farben wieder auf Beige zurück
+    function resetAllSlotFillsToBeige(){
+      for(const el of slotElsW){
+        el.style.removeProperty("--slot-fill");
       }
     }
 
@@ -1506,22 +1518,18 @@
     }
 
     // =========================
-    // NEU: Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
+    // Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
+    // Slotfarben bleiben jetzt erhalten (nur Pulse wird entfernt)
     // =========================
     function resetToNewTargetChoice(){
       attemptsForTarget = 0;
       currentTarget = null;
       targetRevealed = false;
       resetTargetPadUI();
-      clearHitVisuals();
+      clearHitVisuals();         // <-- löscht nur Pulse, NICHT Slotfarbe
       showTargetSelectView();
     }
 
-    // =========================================================
-    // FIX: Nach jedem Kipp -> Treffer prüfen
-    //      Treffer => neues Ziel wählen
-    //      2 Fehlversuche => neues Ziel wählen
-    // =========================================================
     function handleAnzahlClick(anzahl){
       if(!currentTarget) return; // ohne Ziel kein Kipp
 
@@ -1530,25 +1538,22 @@
 
       runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
         // Treffer nach Endlage prüfen
-        clearHitVisuals();
+        clearHitVisuals();       // <-- nur Pulse resetten
         const hit = checkHitAndAnimate();
 
         if(hit){
-          // kurz warten, damit der Treffer sichtbar bleibt, dann neues Ziel
           await sleep(900);
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
           return;
         }
 
-        // kein Treffer
         if(attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET){
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
           return;
         }
 
-        // sonst: weiter im COUNT-Modus bleiben, nächster Versuch möglich
         setAnzahlButtonsLocked(false);
       });
     }
@@ -1602,7 +1607,7 @@
       attemptsForTarget = 0;
 
       resetTargetPadUI();
-      clearHitVisuals();
+      clearHitVisuals();     // <-- nur Pulse entfernen (Slotfarbe bleibt, aber bei Neustart setzen wir separat zurück)
 
       positionUI();
     }
@@ -1655,7 +1660,6 @@
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(!currentTarget) return;
 
-      // NEU: bei neuem Ziel Versuche zurücksetzen
       attemptsForTarget = 0;
 
       applyTargetToPad(currentTarget);
@@ -1934,6 +1938,10 @@
       targetRevealed = false;
       started = false;
       attemptsForTarget = 0;
+
+      // WICHTIG: Nur beim echten Neustart werden Slotfarben zurückgesetzt
+      resetAllSlotFillsToBeige();
+      clearHitVisuals();
 
       resetTargetPadUI();
 
