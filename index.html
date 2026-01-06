@@ -1434,10 +1434,6 @@
       return (myToken === previewToken);
     }
 
-    // ===== Schauen&Merken Sequenz:
-    // 1) zuerst volle Fläche (W) sichtbar (Einblendezeit)
-    // 2) dann Zwischenkipp
-    // 3) dann nächstes W
     async function runSchauKippSequence(steps, opts = {}){
       if(runningKipp) return;
       runningKipp = true;
@@ -1445,18 +1441,15 @@
       const kipFactor = (opts && opts.kipFactor) ? opts.kipFactor : 1;
       const myToken = ++previewToken;
 
-      // zuerst volle Fläche anzeigen (Einblendezeit)
       showW();
       renderW();
       if(!await waitOrPause('w', myToken, 1)){ runningKipp=false; return; }
 
       for(let i=0;i<steps;i++){
-        // Zwischenkipp
         showKip();
         renderKip();
         if(!await waitOrPause('kip', myToken, kipFactor)){ runningKipp=false; return; }
 
-        // danach weiterdrehen + volle Fläche
         advanceFullCW();
         showW();
         renderW();
@@ -1470,7 +1463,6 @@
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
 
-      // 1–6 wieder beige + rot-braune Schrift
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
         btn.className = "squareBtn";
@@ -1568,7 +1560,9 @@
 
     function showKippCountView(){
       uiMode = "COUNT";
-      hideHint();
+
+      // HINWEIS in COUNT: "KIPP-ANZAHL" anzeigen
+      showHint("KIPP-ANZAHL");
 
       targetPadBtn.classList.remove("pulse");
 
@@ -1604,13 +1598,11 @@
       checkHitAndAnimate();
     });
 
-    // ===== FIX 1: Schauen&Merken startet auf Q0 und zeigt zuerst W (volle Fläche) =====
     btnSchauen.addEventListener("click", async () => {
       if(runningKipp) return;
 
       started = true;
 
-      // sicherstellen: Startlage Q0 + volle Fläche sichtbar
       cancelPreview();
       rotIndex = 0;
       faceIndex = 0;
@@ -1631,15 +1623,13 @@
       resetTargetPadUI();
       clearHitVisuals();
 
-      // 4 Kipps, aber mit Einblendezeit der vollen Fläche davor
       await runSchauKippSequence(4, { kipFactor: 2 });
 
       showTargetSelectView();
     });
 
-    // ===== FIX 2: Zurück -> auch NEUE Zahlen generieren (kompletter Reset) =====
     backBtn.addEventListener("click", () => {
-      initPlayState(); // erzeugt neue Zahlen + setzt UI sauber zurück
+      initPlayState();
     });
 
     testTargetBtn.addEventListener("click", () => {
@@ -1754,7 +1744,10 @@
       const row11CenterY   = row11VisualTop + (cellPx / 2);
       const between10and11 = row11VisualTop;
 
-      kippAnzahlBtns.style.top = row11CenterY + "px";
+      // ===== ÄNDERUNG 1: 1–6 Buttons 50px weiter rauf =====
+      const kippBtnsCenterY = row11CenterY - 50;
+
+      kippAnzahlBtns.style.top = kippBtnsCenterY + "px";
       kippAnzahlBtns.style.left = "50%";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
@@ -1762,13 +1755,19 @@
       const btnH = 44 * uiscale;
       startBtnWrap.style.top = (between10and11 - (btnH / 2)) + "px";
 
+      // ===== Hints =====
       if(uiMode === "TARGET"){
         hintTitle.style.top = row11CenterY + "px";
       } else if(uiMode === "START"){
         const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
-        hintTitle.style.top = midBetween9and10 + "px";
+
+        // ===== ÄNDERUNG 3: "SCHAUKIPP-RUNDE" 40px runter =====
+        hintTitle.style.top = (midBetween9and10 + 40) + "px";
+      } else if(uiMode === "COUNT"){
+        // ===== ÄNDERUNG 2: "KIPP-ANZAHL" 40px über den 1–6 Tasten =====
+        hintTitle.style.top = (kippBtnsCenterY - 40) + "px";
       } else {
         hintTitle.style.top = row11CenterY + "px";
       }
@@ -1861,7 +1860,6 @@
 
       resetTargetPadUI();
 
-      // NEUE Zahlen am Würfel
       reroll12_keepAssigned();
       showW();
       renderW();
