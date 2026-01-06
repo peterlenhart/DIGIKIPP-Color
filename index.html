@@ -1020,27 +1020,80 @@
       wFaceGroup.querySelector('[data-slot="S4"]'),
     ];
 
+    // =========================================================
+    // NEU: "Hit-Memory" -> Zahl bleibt dauerhaft eingefärbt,
+    //      auf W und auf Zwischenkipp (from + incoming).
+    // =========================================================
+    let lockedColorsByNumber = new Map(); // number -> colorName
+
+    function resetLockedColors(){
+      lockedColorsByNumber = new Map();
+    }
+
+    function applyPersistentFill(slotEl, n){
+      if(!slotEl) return;
+      if(n === null || n === undefined){
+        slotEl.style.removeProperty("--slot-fill");
+        return;
+      }
+      const col = lockedColorsByNumber.get(n);
+      if(col){
+        slotEl.style.setProperty("--slot-fill", `var(--${col})`);
+      } else {
+        slotEl.style.removeProperty("--slot-fill"); // zurück auf Beige
+      }
+    }
+
+    // nur Puls/Animation löschen – NICHT die Farbe!
+    function clearHitPulse(){
+      document.querySelectorAll(".slot").forEach(el => {
+        el.classList.remove("kippPulse");
+        const s = el.querySelector(".num > span");
+        if(s) s.classList.remove("kippPulse");
+      });
+    }
+
     const kipSlotCache = {};
     function getKipSlots(kipId){
       if(kipSlotCache[kipId]) return kipSlotCache[kipId];
       const g = kipGroups[kipId];
       if(!g){
-        kipSlotCache[kipId] = { right:[null,null,null,null], left:[null,null,null,null] };
+        kipSlotCache[kipId] = {
+          rightSpans:[null,null,null,null],
+          leftSpans:[null,null,null,null],
+          rightEls:[null,null,null,null],
+          leftEls:[null,null,null,null]
+        };
         return kipSlotCache[kipId];
       }
-      const right = [
+
+      const rightEls = [
+        g.querySelector('[data-slot="W1_1"]'),
+        g.querySelector('[data-slot="W1_2"]'),
+        g.querySelector('[data-slot="W1_3"]'),
+        g.querySelector('[data-slot="W1_4"]'),
+      ];
+      const leftEls = [
+        g.querySelector('[data-slot="W2_A"]'),
+        g.querySelector('[data-slot="W2_B"]'),
+        g.querySelector('[data-slot="W2_C"]'),
+        g.querySelector('[data-slot="W2_D"]'),
+      ];
+
+      const rightSpans = [
         g.querySelector('[data-slot="W1_1"] .num > span'),
         g.querySelector('[data-slot="W1_2"] .num > span'),
         g.querySelector('[data-slot="W1_3"] .num > span'),
         g.querySelector('[data-slot="W1_4"] .num > span'),
       ];
-      const left = [
+      const leftSpans = [
         g.querySelector('[data-slot="W2_A"] .num > span'),
         g.querySelector('[data-slot="W2_B"] .num > span'),
         g.querySelector('[data-slot="W2_C"] .num > span'),
         g.querySelector('[data-slot="W2_D"] .num > span'),
       ];
-      kipSlotCache[kipId] = { right, left };
+
+      kipSlotCache[kipId] = { rightSpans, leftSpans, rightEls, leftEls };
       return kipSlotCache[kipId];
     }
 
@@ -1071,45 +1124,6 @@
     // =========================
     let attemptsForTarget = 0;
     const MAX_ATTEMPTS_PER_TARGET = 2;
-
-    // =========================================================
-    // FIX: Treffer-Farbe NICHT an Slot-Position koppeln,
-    //      sondern dauerhaft an die Zahl (Hit-Memory).
-    //      Dadurch wird "8 wird grün beim Vorbeikippen" verhindert.
-    // =========================================================
-    const hitMemory = new Map(); // number -> color
-
-    function rememberHit(num, color){
-      if(num == null || !color) return;
-      // Letzter Treffer überschreibt (falls dieselbe Zahl später mit anderer Farbe geloggt würde)
-      hitMemory.set(num, color);
-    }
-
-    function applyPersistentSlotColors(){
-      // Nur in der W-Ansicht sollen Trefferfarben sichtbar sein
-      if(wFaceGroup.classList.contains("hidden")) return;
-
-      const visibleSlots = getVisibleSlotInfos();
-      for(const si of visibleSlots){
-        const col = hitMemory.get(si.num);
-        if(col){
-          si.slotEl.style.setProperty("--slot-fill", `var(--${col})`);
-        } else {
-          // wenn kein Treffer für diese Zahl: beige (default)
-          si.slotEl.style.removeProperty("--slot-fill");
-        }
-      }
-    }
-
-    function clearKipSlotFills(){
-      // In Kipp-Preview KEINE Trefferfarben anzeigen (sonst "Vorbeikippen-Färbung")
-      // -> Alles auf Default lassen.
-      for(const el of slotElsW){
-        el.style.removeProperty("--slot-fill");
-      }
-      // (Kip-Slots benutzen dieselbe .slot Klasse, sind aber in kipGroups.
-      // Wir setzen dort nichts, damit es garantiert beige bleibt.)
-    }
 
     function showHint(text){
       hintTitle.textContent = text;
@@ -1146,21 +1160,6 @@
       return m;
     })();
 
-    function isBorderAdjacent(zfCoord, zsCoord){
-      const a = coordToXY(zfCoord);
-      const b = coordToXY(zsCoord);
-
-      if(a.row === b.row){
-        if((a.colLetter === "A" && b.colLetter === "B") || (a.colLetter === "B" && b.colLetter === "A")) return true;
-        if((a.colLetter === "H" && b.colLetter === "G") || (a.colLetter === "G" && b.colLetter === "H")) return true;
-      }
-      if(a.colLetter === b.colLetter){
-        if((a.row === 1 && b.row === 2) || (a.row === 2 && b.row === 1)) return true;
-        if((a.row === 8 && b.row === 7) || (a.row === 7 && b.row === 8)) return true;
-      }
-      return false;
-    }
-
     function getAdjacentZFCoordForZS(zsCoord){
       const p = coordToXY(zsCoord);
       if(p.colLetter === "B") return `${p.row}A`;
@@ -1189,30 +1188,10 @@
       return out;
     }
 
-    // =========================================================
-    // FIX: Clear darf NICHT die persistente Trefferfarbe killen.
-    //      -> nur Pulse/Animation entfernen.
-    // =========================================================
-    function clearHitVisuals(){
-      for(const el of slotElsW){
-        el.classList.remove("kippPulse");
-        const s = el.querySelector(".num > span");
-        if(s) s.classList.remove("kippPulse");
-      }
-    }
-
     function applyHitVisual(slotInfo){
-      // Treffer dauerhaft merken (zahl-gebunden!)
-      if(currentTarget && currentTarget.num != null && currentTarget.color){
-        rememberHit(currentTarget.num, currentTarget.color);
-      }
-
-      // Pulse (kurz)
+      // Farbe NICHT temporär setzen/entfernen – die kommt jetzt über lockedColorsByNumber
       slotInfo.slotEl.classList.add("kippPulse");
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
-
-      // Sofort persistente Farben in der W-Ansicht setzen
-      applyPersistentSlotColors();
 
       setTimeout(() => {
         slotInfo.slotEl.classList.remove("kippPulse");
@@ -1243,7 +1222,13 @@
         const borderColor = COLOR_BY_ZF_COORD[zfCoord];
         if(borderColor !== currentTarget.color) continue;
 
-        // Treffer!
+        // TREFFER -> ab jetzt: Zahl dauerhaft einfärben (W + Zwischenkipp)
+        lockedColorsByNumber.set(currentTarget.num, currentTarget.color);
+
+        // sofort auf dem sichtbaren Slot anwenden
+        applyPersistentFill(si.slotEl, si.num);
+
+        // Treffer-Impuls
         applyHitVisual(si);
         return true;
       }
@@ -1366,15 +1351,11 @@
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
       updateShadowVisibility();
-      // Trefferfarben in W sofort korrekt setzen
-      applyPersistentSlotColors();
     }
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
       updateShadowVisibility();
-      // während Kipp niemals Trefferfarben anzeigen
-      clearKipSlotFills();
     }
 
     function mapHiddenToVisible_CW(face){
@@ -1398,6 +1379,12 @@
       else span.style.letterSpacing = "";
     }
 
+    // NEU: Slot rendern inkl. persistenter Einfärbung
+    function renderSlot(slotEl, spanEl, n){
+      renderNumber(spanEl, n);
+      applyPersistentFill(slotEl, n);
+    }
+
     function renderKip(){
       setRotationSnap();
 
@@ -1408,12 +1395,14 @@
       const kipId = getKipId(faceIndex, nextFaceIndex);
       setActiveKipGroup(kipId);
 
-      const { right, left } = getKipSlots(kipId);
+      const { rightSpans, leftSpans, rightEls, leftEls } = getKipSlots(kipId);
 
-      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
+      // rechte Seite = aktuelle Face (from)
+      for(let i=0;i<4;i++) renderSlot(rightEls[i], rightSpans[i], curr[i]);
+
+      // linke Seite = incoming Face (to) als Preview (mapHiddenToVisible_CW)
       const nextPreview = mapHiddenToVisible_CW(next);
-      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
-      // Kipp bleibt beige -> nix färben
+      for(let i=0;i<4;i++) renderSlot(leftEls[i], leftSpans[i], nextPreview[i]);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1457,9 +1446,7 @@
     function renderW(){
       setRotationSnap();
       const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-      // Nach jedem Render: Trefferfarben auf die *Zahl* anwenden
-      applyPersistentSlotColors();
+      for(let i=0;i<4;i++) renderSlot(slotElsW[i], slotTargetsW[i], curr[i]);
     }
 
     let planned = [
@@ -1562,24 +1549,17 @@
 
     // =========================
     // Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
-    // Trefferfarben bleiben (Hit-Memory) bis Spielende!
+    // WICHTIG: Persistente Slotfarben bleiben!
     // =========================
     function resetToNewTargetChoice(){
       attemptsForTarget = 0;
       currentTarget = null;
       targetRevealed = false;
       resetTargetPadUI();
-      clearHitVisuals(); // nur Pulse weg, nicht Farben
+      clearHitPulse();
       showTargetSelectView();
-      // W-Ansicht ggf. wieder korrekt färben
-      applyPersistentSlotColors();
     }
 
-    // =========================================================
-    // Nach jedem Kipp -> Treffer prüfen
-    // Treffer => neues Ziel wählen
-    // 2 Fehlversuche => neues Ziel wählen
-    // =========================================================
     function handleAnzahlClick(anzahl){
       if(!currentTarget) return; // ohne Ziel kein Kipp
 
@@ -1587,17 +1567,24 @@
       attemptsForTarget++;
 
       runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
-        // KEIN clearslotfill mehr! Nur Pulse resetten.
-        clearHitVisuals();
+        // NUR Impuls zurücksetzen, Farben bleiben
+        clearHitPulse();
+
+        // Treffer nach Endlage prüfen
         const hit = checkHitAndAnimate();
 
         if(hit){
+          // kurz warten, damit der Treffer sichtbar bleibt, dann neues Ziel
           await sleep(900);
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
+
+          // nach dem "lockedColorsByNumber"-Update einmal sauber neu zeichnen
+          renderW();
           return;
         }
 
+        // kein Treffer
         if(attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET){
           resetToNewTargetChoice();
           setAnzahlButtonsLocked(false);
@@ -1657,7 +1644,7 @@
       attemptsForTarget = 0;
 
       resetTargetPadUI();
-      clearHitVisuals();
+      clearHitPulse();
 
       positionUI();
     }
@@ -1676,7 +1663,7 @@
 
       targetRevealed = false;
       resetTargetPadUI();
-      clearHitVisuals();
+      clearHitPulse();
 
       positionUI();
     }
@@ -1695,10 +1682,7 @@
 
       showBackIcon(false);
 
-      clearHitVisuals();
-      // Persistente Farben zeigen, falls schon Treffer existieren
-      applyPersistentSlotColors();
-      // Optional: wenn Ziel sofort getroffen wäre, wird Hit korrekt geloggt
+      clearHitPulse();
       checkHitAndAnimate();
 
       positionUI();
@@ -1709,7 +1693,7 @@
 
       if(targetRevealed) return;
 
-      clearHitVisuals();
+      clearHitPulse();
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(!currentTarget) return;
 
@@ -1749,7 +1733,7 @@
       attemptsForTarget = 0;
 
       resetTargetPadUI();
-      clearHitVisuals();
+      clearHitPulse();
 
       await runSchauKippSequence(4, { kipFactor: 2 });
 
@@ -1761,7 +1745,7 @@
     });
 
     testTargetBtn.addEventListener("click", () => {
-      clearHitVisuals();
+      clearHitPulse();
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(!currentTarget) return;
 
@@ -1981,8 +1965,10 @@
       rebuildColors();
       positionUI();
       updateShadowVisibility();
-      // nach Resize: Trefferfarben neu anwenden
-      applyPersistentSlotColors();
+
+      // nach Resize: sicherstellen, dass aktuelle Ansicht korrekt eingefärbt bleibt
+      if(!wFaceGroup.classList.contains("hidden")) renderW();
+      else renderKip();
     }
 
     function initPlayState(){
@@ -1994,8 +1980,7 @@
       started = false;
       attemptsForTarget = 0;
 
-      // NEU: Treffer-Speicher komplett leeren (neues Spiel)
-      hitMemory.clear();
+      resetLockedColors(); // NEU: bei Neustart alles zurücksetzen
 
       resetTargetPadUI();
 
