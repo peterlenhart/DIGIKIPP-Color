@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DigiKipp – Schauen & Merken</title>
+
   <style>
     :root{
       --cols: 8;
@@ -157,6 +158,8 @@
 
     /* =========================================
        Z-INDEX: 2 - Würfel-Schatten (vollflächig)
+       - dreht MIT dem Würfel (Pivot im Zentrum)
+       - wird HART auf 2B–7G geclippt (kein Pixel nach außen)
        ========================================= */
     .cubeShadowLayer{
       position: absolute;
@@ -273,16 +276,9 @@
       --pivot-x: calc(4 * var(--cell));
       --pivot-y: calc((4 + 2) * var(--cell));
 
-      /* WICHTIG:
-         - W: --extraRot bleibt 0deg
-         - Zwischenkipp (CCW): --extraRot = -90deg (gegen Uhrzeigersinn)
-         => Bild wird VOR dem Anzeigen gedreht, ohne irgendwas an Zahlen/Slots umzubauen
-      */
-      --extraRot: 0deg;
-
       transform:
         translate(var(--pivot-x), var(--pivot-y))
-        rotate(calc(var(--rot) + var(--extraRot)))
+        rotate(var(--rot))
         translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
@@ -371,7 +367,7 @@
       left: 50%;
       top: 0;
       transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale));
+      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
       height: calc(44px * var(--uiscale));
       display: none !important;
       pointer-events: none !important;
@@ -805,6 +801,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="stage" id="stage">
     <div class="layout" id="layout">
@@ -980,7 +977,7 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
-
+    
     const rotationBtns = document.getElementById("rotationBtns");
     const btnCW = document.getElementById("btnCW");
     const btnCCW = document.getElementById("btnCCW");
@@ -1074,6 +1071,8 @@
       return { row, col: colMap[colLetter], colLetter };
     }
 
+    // Zielzahlen-ROTATION:
+    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
     function getTargetRotationDeg(row, col){
       if(row === 1) return 0;
       if(row === 8) return 180;
@@ -1084,6 +1083,8 @@
 
     let currentTarget = null;
 
+    // ======= Treffer-/Ausschluss-Logik (NEU, kein Rendering-Ändern) =======
+
     const ZF_INDEX_BY_COORD = {
       "4A": 1, "3A": 2, "1C": 3, "1D": 4,
       "1E": 1, "1F": 2, "3H": 3, "4H": 4,
@@ -1092,13 +1093,13 @@
     };
 
     const ZS_COORDS_BY_ROT_ZSINDEX = [
-      ["4B","3B","2C","2D"], // rot 0
+      ["4B","3B","2C","2D"], // rot 0: [ZS1, ZS2, ZS3, ZS4]
       ["2E","2F","3G","4G"], // rot 1
       ["5G","6G","7F","7E"], // rot 2
       ["7D","7C","6B","5B"], // rot 3
     ];
 
-    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
+    const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4]; // index 0..3 -> ZS index 1..4
 
     const colorFieldCoords = {
       'violett': ['3A','8D','8E','3H'],
@@ -1301,6 +1302,8 @@
       return { num: chosenNum, color: chosenColor };
     }
 
+    // ===== Rendering / Placement (bleibt wie bei dir) =====
+
     function clearTargetNumbers(){
       document.querySelectorAll('.targetNumber').forEach(el => el.remove());
     }
@@ -1363,22 +1366,13 @@
       });
     }
 
-    // =========================
-    //  CCW-Zwischenkipp Anzeige-Rotation (Bild drehen, sonst nichts)
-    // =========================
-    let kipExtraRotDeg = 0; // 0 = normal, -90 = CCW Zwischenkipp Darstellung
-
     function updateShadowVisibility(){
       const isKipVisible = Object.values(kipGroups).some(g => g && !g.classList.contains("hidden"));
       const isWVisible = !wFaceGroup.classList.contains("hidden");
 
-      // Schatten-Auswahl richtet sich nach DISPLAY-Lage (nicht nach kipId).
-      // CCW-Display ist -90° => Index +3
-      const shadowIndex = (kipExtraRotDeg === -90) ? ((rotIndex + 3) % 4) : rotIndex;
-
       if(isKipVisible){
         allShadows.forEach((s, i) => {
-          if(i === shadowIndex) s.classList.add("visible");
+          if(i === rotIndex) s.classList.add("visible");
           else s.classList.remove("visible");
         });
       } else {
@@ -1390,17 +1384,27 @@
     }
 
     function showW(){
-      kipExtraRotDeg = 0;
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
-      setRotationSnap();
       updateShadowVisibility();
     }
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
-      setRotationSnap();
       updateShadowVisibility();
+    }
+
+    function mapHiddenToVisible_CW(face){
+      const [f1,f2,f3,f4] = face;
+      return [f4, f3, f2, f1];
+    }
+
+    function rotate4(arr, turnsCW){
+      const t = ((turnsCW % 4) + 4) % 4;
+      if(t === 0) return arr.slice();
+      if(t === 1) return [arr[3], arr[0], arr[1], arr[2]];
+      if(t === 2) return [arr[2], arr[3], arr[0], arr[1]];
+      return [arr[1], arr[2], arr[3], arr[0]];
     }
 
     function renderNumber(span, n){
@@ -1419,115 +1423,31 @@
       else span.style.letterSpacing = "";
     }
 
-    const rotDeg = [0, 90, 180, 270];
-    let rotIndex  = 0;
-    let faceIndex = 0;
-
-    // =========================
-    //  NEU: 12er Timeline (Rotation+Face) + Spulen
-    // =========================
-    let timeline = null; // Array[12] of {rot, face}
-    let tPos = 0;        // 0..11 = aktueller Zustand in timeline
-
-    function buildTimelineFromCurrent(){
-      timeline = [];
-      let r = rotIndex;
-      let f = faceIndex;
-      for(let i=0;i<12;i++){
-        timeline.push({ rot: r, face: f });
-        r = (r + 1) % 4;
-        f = (f + 1) % 3;
-      }
-      tPos = 0;
-    }
-
-    function ensureTimeline(){
-      if(!timeline || timeline.length !== 12) buildTimelineFromCurrent();
-    }
-
-    function getNeighborState(dir){
-      ensureTimeline();
-      const idx = (dir === "CW") ? ((tPos + 1) % 12) : ((tPos + 11) % 12);
-      return timeline[idx];
-    }
-
-    function setRotationSnap(){
-      const realDeg = rotDeg[rotIndex];
-
-      wFaceGroup.style.setProperty("--rot", realDeg + "deg");
-      wFaceGroup.style.setProperty("--extraRot", "0deg");
-
-      Object.values(kipGroups).forEach(g => {
-        g.style.setProperty("--rot", realDeg + "deg");
-        g.style.setProperty("--extraRot", kipExtraRotDeg + "deg");
-      });
-
-      cubeShadowLayer.style.setProperty("--rot", realDeg + "deg");
-
-      updateShadowVisibility();
-    }
-
-    function advanceFull(dir){
-      // Bewegung über Timeline statt Modulo-Logik => CCW ist echtes Zurückspulen
-      ensureTimeline();
-      tPos = (dir === "CW") ? ((tPos + 1) % 12) : ((tPos + 11) % 12);
-      rotIndex  = timeline[tPos].rot;
-      faceIndex = timeline[tPos].face;
-      setRotationSnap();
-    }
-
-    // ====== FIX: CCW bekommt toFace aus Timeline + kanonische kipGroup (nur 3 Gruppen) ======
-
-    function getCanonicalKipId(a, b){
-      if((a === 0 && b === 1) || (a === 1 && b === 0)) return "0_1";
-      if((a === 1 && b === 2) || (a === 2 && b === 1)) return "1_2";
-      return "2_0"; // 0 & 2
-    }
-
-    // In jeder kipGroup_X_Y ist die Zuordnung fix:
-    // right = Face X, left = Face Y
-    const KIP_GROUP_RIGHT_FACE = { "0_1": 0, "1_2": 1, "2_0": 2 };
-    const KIP_GROUP_LEFT_FACE  = { "0_1": 1, "1_2": 2, "2_0": 0 };
-
-    function renderKipDir(dir){
-      kipExtraRotDeg = (dir === "CCW") ? -90 : 0;
+    // dir: +1 = CW, -1 = CCW
+    function renderKip(dir = +1){
       setRotationSnap();
 
-      const fromFace = faceIndex;
+      const curr = sets[faceIndex];
 
-      // >>> NEU: toFace aus Timeline-Nachbarzustand (nicht mehr gerechnet)
-      const neighbor = getNeighborState(dir);
-      const toFace   = neighbor.face;
+      const nextFaceIndex = (dir === +1)
+        ? (faceIndex + 1) % 3
+        : (faceIndex + 2) % 3;
 
-      const curr     = sets[fromFace];
-      const incoming = sets[toFace];
+      const next = sets[nextFaceIndex];
 
-      const kipId = getCanonicalKipId(fromFace, toFace);
+      const kipId = getKipId(faceIndex, nextFaceIndex);
       setActiveKipGroup(kipId);
 
       const { right, left } = getKipSlots(kipId);
 
-      const rightFace = KIP_GROUP_RIGHT_FACE[kipId];
-      const leftFace  = KIP_GROUP_LEFT_FACE[kipId];
+      for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
 
-      const currSlots     = (fromFace === rightFace) ? right : left;
-      const incomingSlots = (toFace   === rightFace) ? right : left;
-
-      for(let i=0;i<4;i++) renderNumber(currSlots[i], curr[i]);
-      for(let i=0;i<4;i++) renderNumber(incomingSlots[i], incoming[i]);
-    }
-
-    function renderW(){
-      kipExtraRotDeg = 0;
-      setRotationSnap();
-      const curr = sets[faceIndex];
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
-    }
-
-    function renderWEmpty(){
-      kipExtraRotDeg = 0;
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
+      let nextPreview = mapHiddenToVisible_CW(next);
+      if(dir === -1){
+        // CCW = gleiche "verdeckte" Vorschau wie CW, aber 270° CW gedreht
+        nextPreview = rotate4(nextPreview, 3);
+      }
+      for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1548,6 +1468,41 @@
       const kip  = Math.max(160, Math.round(hold * 0.50));
       const wfull = hold;
       return { holdMs: hold, kipMs: kip, wMs: wfull };
+    }
+
+    const rotDeg = [0, 90, 180, 270];
+    let rotIndex  = 0;
+    let faceIndex = 0;
+
+    function setRotationSnap(){
+      const deg = rotDeg[rotIndex];
+      wFaceGroup.style.setProperty("--rot", deg + "deg");
+      Object.values(kipGroups).forEach(g => g.style.setProperty("--rot", deg + "deg"));
+      cubeShadowLayer.style.setProperty("--rot", deg + "deg");
+      updateShadowVisibility();
+    }
+
+    function advanceFullCW(){
+      rotIndex  = (rotIndex + 1) % 4;
+      faceIndex = (faceIndex + 1) % 3;
+      setRotationSnap();
+    }
+
+    function advanceFullCCW(){
+      rotIndex  = (rotIndex + 3) % 4; // -1 mod 4
+      faceIndex = (faceIndex + 2) % 3; // -1 mod 3
+      setRotationSnap();
+    }
+
+    function renderW(){
+      setRotationSnap();
+      const curr = sets[faceIndex];
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+    }
+
+    function renderWEmpty(){
+      setRotationSnap();
+      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
     }
 
     let planned = [
@@ -1583,7 +1538,6 @@
 
       rotIndex  = 0;
       faceIndex = 0;
-      buildTimelineFromCurrent(); // <<< NEU
       setRotationSnap();
     }
 
@@ -1631,19 +1585,19 @@
       ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW"); showW(); renderWEmpty();
+      advanceFullCW(); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
@@ -1654,10 +1608,10 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKipDir("CW");
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFull("CW");
+      advanceFullCW();
       showW();
       renderW();
 
@@ -1665,10 +1619,10 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        advanceFullCW(); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1679,10 +1633,10 @@
       }
 
       while(myToken === previewToken){
-        showKip(); renderKipDir("CW");
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFull("CW"); showW(); renderW();
+        advanceFullCW(); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1881,10 +1835,6 @@
 
       clearHitVisuals();
 
-      pendingCount = null;
-      pendingDir = null;
-      refreshPendingUI();
-
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(currentTarget) placeTargetNumbers(currentTarget);
     }
@@ -1899,7 +1849,7 @@
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleCountPick(num));
+        btn.addEventListener("click", () => handleAnzahlClick(num));
         kippAnzahlBtns.appendChild(btn);
       });
     }
@@ -1914,7 +1864,48 @@
 
     let runningKipp = false;
 
-    async function runKippCycles(count, dir){
+    // ======= NEU: Dual-System Zahl 1–6 + Richtung CW/CCW (Reihenfolge egal) =======
+    let pendingCount = null; // 1..6
+    let pendingDir   = null; // +1 CW, -1 CCW
+
+    function setDir(dir){
+      pendingDir = dir;
+      btnCW.classList.toggle("selected", dir === +1);
+      btnCCW.classList.toggle("selected", dir === -1);
+      tryExecuteKipp();
+    }
+
+    function setCount(n){
+      pendingCount = n;
+      kippAnzahlBtns.querySelectorAll("button.squareBtn").forEach(b => {
+        const val = parseInt(b.dataset.anzahl, 10);
+        b.classList.toggle("selected", val === n);
+      });
+      tryExecuteKipp();
+    }
+
+    function clearPendingSelection(){
+      pendingCount = null;
+      kippAnzahlBtns.querySelectorAll("button.squareBtn").forEach(b => b.classList.remove("selected"));
+    }
+
+    function tryExecuteKipp(){
+      if(runningKipp) return;
+      if(pendingCount == null) return;
+      if(pendingDir == null) return;
+
+      const count = pendingCount;
+      const dir   = pendingDir;
+
+      setAnzahlButtonsLocked(true);
+
+      runKippCyclesNoHit(count, dir).finally(() => {
+        clearPendingSelection();
+        setAnzahlButtonsLocked(false);
+      });
+    }
+
+    async function runKippCyclesNoHit(count, dir){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1922,10 +1913,12 @@
 
       for(let i = 0; i < count; i++){
         showKip();
-        renderKipDir(dir);
+        renderKip(dir);
         if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
-        advanceFull(dir);
+        if(dir === +1) advanceFullCW();
+        else advanceFullCCW();
+
         showW();
         renderW();
 
@@ -1937,6 +1930,12 @@
       runningKipp = false;
     }
 
+    // 1–6: EIN Klick = Auswahl (kein 2-Tasten-Summen-System)
+    function handleAnzahlClick(anzahl){
+      setCount(anzahl);
+    }
+
+    // "SCHAU GENAU" -> exakt 4x kippen (CW) (Q1,Q2,Q3,Q0)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
@@ -1944,17 +1943,14 @@
       const savedFace = faceIndex;
 
       rotIndex = 0;
-      faceIndex = 0;
-      buildTimelineFromCurrent(); // <<< NEU: Timeline passend zum Reset
       setRotationSnap();
       showW();
       renderW();
 
-      await runKippCycles(4, "CW");
+      await runKippCyclesNoHit(4, +1);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
-      buildTimelineFromCurrent(); // <<< NEU: Timeline passend zum Restore
       setRotationSnap();
       showW();
       renderW();
@@ -1968,6 +1964,10 @@
       if(currentTarget) placeTargetNumbers(currentTarget);
       checkHitAndAnimate();
     });
+
+    // CW/CCW Rotation Buttons: setzt nur Richtung (die Zahl kann davor/danach gewählt werden)
+    btnCW.addEventListener("click", () => setDir(+1));
+    btnCCW.addEventListener("click", () => setDir(-1));
 
     btnSchauen.addEventListener("click", async () => {
       if(buttonState === "schauen"){
@@ -1983,6 +1983,7 @@
       }
     });
 
+    // ===== Beenden-Logik =====
     function showCloseModal(){
       cancelPreview();
       closeModal.classList.remove("hidden");
@@ -2015,6 +2016,7 @@
       location.reload();
     });
 
+    // ===== Startlogik =====
     function fastInitAndEnterKippAnzahl(){
       cancelPreview();
       stopAtNextW = false;
@@ -2032,9 +2034,16 @@
       ensureAssigned(2);
 
       rotIndex = 0;
-      faceIndex = 1;
+      faceIndex = 0;
+      setRotationSnap();
 
-      buildTimelineFromCurrent(); // <<< NEU
+      for(let i=0;i<4;i++){
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+      }
+
+      rotIndex = 0;
+      faceIndex = 1;
       setRotationSnap();
 
       showW();
@@ -2042,53 +2051,6 @@
 
       showKippAnzahlView();
     }
-
-    let pendingCount = null;
-    let pendingDir = null;
-
-    function refreshPendingUI(){
-      kippAnzahlBtns.querySelectorAll("button").forEach(b => {
-        const n = parseInt(b.dataset.anzahl, 10);
-        b.classList.toggle("selected", pendingCount === n);
-      });
-
-      btnCW.classList.toggle("selected", pendingDir === "CW");
-      btnCCW.classList.toggle("selected", pendingDir === "CCW");
-    }
-
-    function tryStartPending(){
-      if(!pendingCount || !pendingDir) return;
-
-      const count = pendingCount;
-      const dir = pendingDir;
-
-      setAnzahlButtonsLocked(true);
-
-      runKippCycles(count, dir).finally(() => {
-        pendingCount = null;
-        pendingDir = null;
-        refreshPendingUI();
-        setAnzahlButtonsLocked(false);
-      });
-    }
-
-    function handleCountPick(n){
-      pendingCount = n;
-      refreshPendingUI();
-      tryStartPending();
-    }
-
-    btnCW.addEventListener("click", () => {
-      pendingDir = "CW";
-      refreshPendingUI();
-      tryStartPending();
-    });
-
-    btnCCW.addEventListener("click", () => {
-      pendingDir = "CCW";
-      refreshPendingUI();
-      tryStartPending();
-    });
 
     window.addEventListener("load", () => {
       rebuild();
