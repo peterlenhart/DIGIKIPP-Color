@@ -352,6 +352,19 @@
       line-height: 1;
     }
 
+    /* Kippanzahl 1–6: schwarz, Schrift 90% weiß */
+    .countBtn{
+      background: rgba(0,0,0,1) !important;
+      border: 2px solid rgba(0,0,0,0.85);
+      box-shadow:
+        0 10px 18px rgba(0,0,0,0.32),
+        0 0 0 1px rgba(255,255,255,0.06) inset;
+    }
+    .countBtn .anzahlText{
+      color: rgba(255,255,255,0.90) !important;
+      text-shadow: none !important;
+    }
+
     /* Start-Button: breit, aber gleicher Stil wie squareBtn */
     .startBtnWrap{
       position: absolute;
@@ -384,7 +397,6 @@
     .hintTitle{
       position: absolute;
       left: 50%;
-      transform: translate(-50%, -50%);
       color: rgba(255,255,255,0.96);
       font-weight: 1000;
       letter-spacing: 0.08em;
@@ -396,6 +408,11 @@
       z-index: 60;
       pointer-events: none;
       font-size: calc(18px * var(--uiscale)); /* gleich groß wie Button-Schrift */
+      transform: translate(-50%, -50%); /* Default */
+    }
+    /* "auf die Zeilenlinie" (Top sitzt exakt auf der Linie) */
+    .hintOnLine{
+      transform: translate(-50%, 0) !important;
     }
 
     /* 2x2 Ziel-Button 10D–11E */
@@ -603,6 +620,19 @@
       pointer-events: none;
     }
 
+    /* Kippanzahl-Container */
+    .kippAnzahlBtns{
+      position: absolute;
+      display: flex;
+      gap: calc(10px * var(--uiscale));
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 80;
+    }
+    .kippAnzahlBtns.compact{ gap: calc(10px * var(--uiscale)); }
+
+    /* Nav Buttons (Close + Back) */
     .navBtn{
       position: absolute;
       width: calc(56px * var(--uiscale));
@@ -641,6 +671,37 @@
     }
     .closeIcon::before{ transform: translate(-50%, -50%) rotate(45deg); }
     .closeIcon::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+    /* Back Icon (Pfeil links) */
+    .backIcon{
+      position: relative;
+      width: calc(34px * var(--uiscale));
+      height: calc(34px * var(--uiscale));
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+    }
+    .backIcon::before{
+      content:"";
+      position:absolute;
+      left: 6%;
+      top: 50%;
+      width: 70%;
+      height: calc(5px * var(--uiscale));
+      background: rgba(234,215,190,0.96);
+      border-radius: calc(2.5px * var(--uiscale));
+      transform: translateY(-50%);
+    }
+    .backIcon::after{
+      content:"";
+      position:absolute;
+      left: 10%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border-top: calc(9px * var(--uiscale)) solid transparent;
+      border-bottom: calc(9px * var(--uiscale)) solid transparent;
+      border-right: calc(12px * var(--uiscale)) solid rgba(234,215,190,0.96);
+      transform: translateY(-50%);
+    }
 
     .modalOverlay{
       position: fixed;
@@ -896,17 +957,25 @@
           <div class="targetPadNum" id="targetPadNum"></div>
         </button>
 
+        <!-- Kippanzahl Buttons -->
         <div id="kippAnzahlView" class="hidden">
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
+          <!-- Test-Button bleibt (eine Zeile tiefer: Zeile 9) -->
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
           </button>
-
-          <button class="navBtn closeBtn" id="closeBtnAnzahl" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
-          </button>
         </div>
+
+        <!-- Zurück-Icon (ersetzt den alten Testbutton-Platz) -->
+        <button class="navBtn hidden" id="backBtn" aria-label="Zurück">
+          <div class="backIcon"></div>
+        </button>
+
+        <!-- Schließenkreuz: IMMER sichtbar -->
+        <button class="navBtn" id="closeBtn" aria-label="Spiel beenden">
+          <div class="closeIcon"></div>
+        </button>
       </div>
 
       <div class="grid" id="grid" aria-hidden="true"></div>
@@ -941,7 +1010,9 @@
 
     const kippAnzahlView = document.getElementById("kippAnzahlView");
     const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
-    const closeBtnAnzahl  = document.getElementById("closeBtnAnzahl");
+
+    const closeBtn = document.getElementById("closeBtn");   // IMMER sichtbar
+    const backBtn  = document.getElementById("backBtn");    // wird eingeblendet nach Schauen&Merken Zyklus
 
     const closeModal   = document.getElementById("closeModal");
     const modalCancel  = document.getElementById("modalCancel");
@@ -1055,6 +1126,9 @@
     // ======= Ablauf-State =======
     let targetRevealed = false; // Zielpad ist noch "Rückseite" bis Klick
     let started = false;        // Schauen&Merken gedrückt
+
+    // View-Mode für Hint-Position
+    let uiMode = "START"; // START | TARGET | COUNT
 
     function showHint(text){
       hintTitle.textContent = text;
@@ -1433,7 +1507,6 @@
       runningKipp = true;
 
       const kipFactor = (opts && opts.kipFactor) ? opts.kipFactor : 1;
-
       const myToken = ++previewToken;
 
       for(let i = 0; i < count; i++){
@@ -1459,7 +1532,7 @@
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
-        btn.className = "squareBtn";
+        btn.className = "squareBtn countBtn"; // schwarz + 90% weiß
         btn.dataset.anzahl = num;
         btn.type = "button";
         btn.innerHTML = `<span class="anzahlText pulse">${String(num)}</span>`; /* pulsieren */
@@ -1508,8 +1581,14 @@
       targetPadNum.style.opacity = "1";
     }
 
+    function showBackIcon(show){
+      if(show) backBtn.classList.remove("hidden");
+      else backBtn.classList.add("hidden");
+    }
+
     // ======= Ablauf-Views =======
     function showStartView(){
+      uiMode = "START";
       startBtnWrap.classList.remove("hidden");
       showHint("SCHAUKIPP-RUNDE");
 
@@ -1518,15 +1597,20 @@
       targetPadBtn.classList.remove("pulse");
       targetPadBtn.disabled = true;
 
+      showBackIcon(false); // kein Zurück im Start
+
       targetRevealed = false;
       started = false;
       currentTarget = null;
       resetTargetPadUI();
       clearHitVisuals();
+
+      positionUI(); // Hint-Position updaten
     }
 
     function showTargetSelectView(){
-      showHint("KIPP-ZIEL");
+      uiMode = "TARGET";
+      showHint("KIPP-ZIEL"); // muss in Zeile 12 sitzen
 
       kippAnzahlView.classList.add("hidden");
 
@@ -1534,13 +1618,18 @@
       targetPadBtn.classList.add("pulse");   /* Zielbett pulsiert */
       targetPadBtn.disabled = false;
 
+      showBackIcon(true); // nach abgeschlossenem Schauen&Merken Zyklus sichtbar
+
       targetRevealed = false;
       resetTargetPadUI();
       clearHitVisuals();
+
+      positionUI();
     }
 
     function showKippCountView(){
-      showHint("KIPP-ANZAHL");
+      uiMode = "COUNT";
+      hideHint(); // (Label nicht gefordert; Buttons sind Zeile 13)
 
       targetPadBtn.classList.remove("pulse"); /* nicht mehr pulsieren (aufgedeckt) */
 
@@ -1550,12 +1639,19 @@
       testTargetBtn.classList.remove("hidden");
       testTargetBtn.disabled = false;
 
+      showBackIcon(false); // verschwindet sobald Zielpad geklickt
+
       clearHitVisuals();
       checkHitAndAnimate();
+
+      positionUI();
     }
 
     // ======= Zielpad Click: erst "Aufdecken", dann Kippanzahl =======
     targetPadBtn.addEventListener("click", () => {
+      // Zurück-Icon MUSS verschwinden sobald Zielpad geklickt
+      showBackIcon(false);
+
       if(targetRevealed) return;
 
       clearHitVisuals();
@@ -1585,6 +1681,8 @@
       targetPadBtn.classList.add("hidden");
       targetPadBtn.disabled = true;
 
+      showBackIcon(false);
+
       targetRevealed = false;
       currentTarget = null;
       resetTargetPadUI();
@@ -1593,8 +1691,16 @@
       // 3) 4 Kipps (SCHAUKIPP-RUNDE: Zwischenkipp-Dauer x2)
       await runKippCyclesNoHit(4, { kipFactor: 2 });
 
-      // 4) danach: KIPP-ZIEL + Zielbett
+      // 4) danach: KIPP-ZIEL + Zielbett + Zurück-Icon
       showTargetSelectView();
+    });
+
+    // Zurück: NUR zurück zur Seite "SCHAUKIPP-RUNDE" + Button "SCHAUEN & MERKEN"
+    // (kein weiteres Zurück)
+    backBtn.addEventListener("click", () => {
+      cancelPreview();
+      // nur UI zurücksetzen – kein reload
+      showStartView();
     });
 
     testTargetBtn.addEventListener("click", () => {
@@ -1629,7 +1735,8 @@
       endOverlay.classList.remove("hidden");
     }
 
-    closeBtnAnzahl.addEventListener("click", showCloseModal);
+    // Schließenkreuz IMMER sichtbar
+    closeBtn.addEventListener("click", showCloseModal);
 
     modalCancel.addEventListener("click", hideCloseModal);
     modalConfirm.addEventListener("click", endGame);
@@ -1715,28 +1822,43 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      // Zeile 11 (Raster-Row)
-      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row11CenterY = row11VisualTop + cellPx / 2;
+      // ===== KIPP-ZIEL (Zeile 12) / Buttons (Zeile 13) =====
+      const row12VisualTop = ( (12 + HEADER_ROW_OFFSET) - 1 ) * cellPx; // LINE
+      const row13VisualTop = ( (13 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row13CenterY   = row13VisualTop + cellPx / 2;
 
-      // 1–6 Buttons sitzen genau hier:
-      kippAnzahlBtns.style.top = row11CenterY + "px";
+      // 1–6 Buttons: Zeile 13
+      kippAnzahlBtns.style.top = row13CenterY + "px";
       kippAnzahlBtns.style.left = "50%";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
-      // START-BUTTON: FIX nach deiner letzten Ansage: 142px nach Norden
-      startBtnWrap.style.top = (row11CenterY - 142) + "px";
+      // START-BUTTON: FIX nach deiner letzten Ansage: 142px nach Norden (bezogen auf Buttons-Row wie bisher)
+      // Wir orientieren uns weiterhin an der alten Logik (Buttons-Row) -> jetzt Zeile 13
+      startBtnWrap.style.top = (row13CenterY - 142) + "px";
 
-      // Hinweistext: zwischen Zeile 9 und 10 (unverändert)
-      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
-      hintTitle.style.top = midBetween9and10 + "px";
+      // Hint Position:
+      hintTitle.classList.remove("hintOnLine");
+
+      if(uiMode === "TARGET"){
+        // "KIPP-ZIEL" exakt auf Zeilenlinie Zeile 12
+        hintTitle.classList.add("hintOnLine");
+        hintTitle.style.top = row12VisualTop + "px";
+      } else if(uiMode === "START"){
+        // zwischen Zeile 9 und 10 (wie vorher)
+        const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+        const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+        const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
+        hintTitle.style.top = midBetween9and10 + "px";
+      } else {
+        // COUNT: Hint ist hidden, Position egal – trotzdem sauber setzen
+        hintTitle.style.top = row12VisualTop + "px";
+      }
 
       // Zielpad 10D–11E
       placeTargetPad_10D_11E(cellPx);
 
       positionNavButtons(cellPx);
+      positionBackButton(cellPx);
       positionTestButton(cellPx);
     }
 
@@ -1748,14 +1870,31 @@
 
       const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
 
-      closeBtnAnzahl.style.left = closeLeft + "px";
-      closeBtnAnzahl.style.top = closeTop + "px";
-      closeBtnAnzahl.style.transform = `translate(-50%, -50%) scale(${s})`;
-      closeBtnAnzahl.style.transformOrigin = "top left";
+      closeBtn.style.left = closeLeft + "px";
+      closeBtn.style.top = closeTop + "px";
+      closeBtn.style.transform = `translate(-50%, -50%) scale(${s})`;
+      closeBtn.style.transformOrigin = "top left";
+    }
+
+    function positionBackButton(cellPx){
+      // Back-Icon anstelle des alten T-Testbuttons-Platzes: (Row 8, Col 8)
+      const row = 8;
+      const col = 8;
+      const visualRow = row + HEADER_ROW_OFFSET;
+
+      const left = (col - 1) * cellPx + cellPx/2;
+      const top  = (visualRow - 1) * cellPx + cellPx/2;
+
+      backBtn.style.left = left + "px";
+      backBtn.style.top  = top + "px";
+      backBtn.style.transform = "translate(-50%, -50%)";
+      backBtn.style.zIndex = "30";
+      backBtn.style.pointerEvents = "auto";
     }
 
     function positionTestButton(cellPx){
-      const row = 8;
+      // T-Testbutton eine Zeile tiefer: Zeile 9, Col 8
+      const row = 9;
       const col = 8;
       const visualRow = row + HEADER_ROW_OFFSET;
 
