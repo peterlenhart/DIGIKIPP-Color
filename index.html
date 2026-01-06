@@ -1213,21 +1213,35 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
+    // =========================================================
+    // FIX: Randomlogik = KEINE sichtbaren Zahlen (nur verdeckte),
+    //      nur wenn es nicht anders möglich ist -> Fallback erlaubt
+    // =========================================================
     function generateTarget_NumberColor_WithExclusion(){
       if(drawsCount >= MAX_TARGETS) return null;
 
       const forbidden = getForbiddenPairsForCurrentState();
-      const visibleNums = getVisibleSlotInfos().map(s => s.num).filter(n => n != null);
 
-      let numberCandidates;
-      if(drawsCount === 0){
-        numberCandidates = Array.from(new Set(visibleNums)).filter(n => !usedNumbers.has(n));
-      } else {
-        numberCandidates = [];
+      // sichtbare Zahlen als Set (schnell + eindeutig)
+      const visibleSet = new Set(
+        getVisibleSlotInfos().map(s => s.num).filter(n => n != null)
+      );
+
+      // 1) Primär: nur verdeckte Zahlen (nicht sichtbar) + nicht benutzt
+      let numberCandidates = [];
+      for(let n=1;n<=12;n++){
+        if(usedNumbers.has(n)) continue;
+        if(visibleSet.has(n)) continue;     // <- Kernregel: NICHT sichtbar
+        numberCandidates.push(n);
+      }
+
+      // 2) Fallback: nur wenn wirklich keine verdeckte Zahl mehr möglich ist
+      if(numberCandidates.length === 0){
         for(let n=1;n<=12;n++){
           if(!usedNumbers.has(n)) numberCandidates.push(n);
         }
       }
+
       if(numberCandidates.length === 0) return null;
 
       const colorTryOrder = allColors.slice();
