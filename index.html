@@ -943,7 +943,6 @@
 
   <div id="endOverlay" class="endOverlay hidden">
     <div class="endBox">
-      <!-- End-Hinweistext geändert -->
       <div class="endTitle">SCHLUSSKIPP-RUNDE</div>
       <div class="endSub">Du kannst jetzt neu starten.</div>
       <button class="endBtn" id="endRestart">Neu starten</button>
@@ -1067,6 +1066,12 @@
 
     let uiMode = "START"; // START | TARGET | COUNT
 
+    // =========================
+    // NEU: Versuche pro Ziel (2 Versuche -> dann neues Ziel wählen)
+    // =========================
+    let attemptsForTarget = 0;
+    const MAX_ATTEMPTS_PER_TARGET = 2;
+
     function showHint(text){
       hintTitle.textContent = text;
       hintTitle.classList.remove("hidden");
@@ -1167,21 +1172,34 @@
       }, 2600);
     }
 
+    // =========================================================
+    // FIX: Treffererkennung = Zielzahl oben sichtbar UND
+    //      direktes Nachbar-Randfeld hat Zielfarbe
+    // =========================================================
     function checkHitAndAnimate(){
       if(!currentTarget) return false;
+
       const visibleSlots = getVisibleSlotInfos();
 
-      const coords = colorFieldCoords[currentTarget.color] || [];
-      for(const zfCoord of coords){
-        for(const si of visibleSlots){
-          if(si.num == null) continue;
-          if(si.num !== currentTarget.num) continue;
-          if(isBorderAdjacent(zfCoord, si.zsCoord)){
-            applyHitVisual(si);
-            return true;
-          }
-        }
+      for(const si of visibleSlots){
+        if(si.num == null) continue;
+
+        // 1) Zielzahl oben sichtbar?
+        if(si.num !== currentTarget.num) continue;
+
+        // 2) Direktes Nachbar-Randfeld bestimmen
+        const zfCoord = getAdjacentZFCoordForZS(si.zsCoord);
+        if(!zfCoord) continue;
+
+        // 3) Passt Zielfarbe?
+        const borderColor = COLOR_BY_ZF_COORD[zfCoord];
+        if(borderColor !== currentTarget.color) continue;
+
+        // Treffer!
+        applyHitVisual(si);
+        return true;
       }
+
       return false;
     }
 
@@ -1213,29 +1231,22 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // =========================================================
-    // FIX: Randomlogik = KEINE sichtbaren Zahlen (nur verdeckte),
-    //      nur wenn es nicht anders möglich ist -> Fallback erlaubt
-    // =========================================================
     function generateTarget_NumberColor_WithExclusion(){
       if(drawsCount >= MAX_TARGETS) return null;
 
       const forbidden = getForbiddenPairsForCurrentState();
 
-      // sichtbare Zahlen als Set (schnell + eindeutig)
       const visibleSet = new Set(
         getVisibleSlotInfos().map(s => s.num).filter(n => n != null)
       );
 
-      // 1) Primär: nur verdeckte Zahlen (nicht sichtbar) + nicht benutzt
       let numberCandidates = [];
       for(let n=1;n<=12;n++){
         if(usedNumbers.has(n)) continue;
-        if(visibleSet.has(n)) continue;     // <- Kernregel: NICHT sichtbar
+        if(visibleSet.has(n)) continue;
         numberCandidates.push(n);
       }
 
-      // 2) Fallback: nur wenn wirklich keine verdeckte Zahl mehr möglich ist
       if(numberCandidates.length === 0){
         for(let n=1;n<=12;n++){
           if(!usedNumbers.has(n)) numberCandidates.push(n);
@@ -1421,7 +1432,6 @@
       ];
       assigned = [true,true,true];
 
-      // START: Q0 (rot=0) + FaceIndex=0
       rotIndex  = 0;
       faceIndex = 0;
       setRotationSnap();
@@ -1495,9 +1505,50 @@
       targetPadBtn.disabled = locked;
     }
 
+    // =========================
+    // NEU: Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
+    // =========================
+    function resetToNewTargetChoice(){
+      attemptsForTarget = 0;
+      currentTarget = null;
+      targetRevealed = false;
+      resetTargetPadUI();
+      clearHitVisuals();
+      showTargetSelectView();
+    }
+
+    // =========================================================
+    // FIX: Nach jedem Kipp -> Treffer prüfen
+    //      Treffer => neues Ziel wählen
+    //      2 Fehlversuche => neues Ziel wählen
+    // =========================================================
     function handleAnzahlClick(anzahl){
+      if(!currentTarget) return; // ohne Ziel kein Kipp
+
       setAnzahlButtonsLocked(true);
-      runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(() => {
+      attemptsForTarget++;
+
+      runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
+        // Treffer nach Endlage prüfen
+        clearHitVisuals();
+        const hit = checkHitAndAnimate();
+
+        if(hit){
+          // kurz warten, damit der Treffer sichtbar bleibt, dann neues Ziel
+          await sleep(900);
+          resetToNewTargetChoice();
+          setAnzahlButtonsLocked(false);
+          return;
+        }
+
+        // kein Treffer
+        if(attemptsForTarget >= MAX_ATTEMPTS_PER_TARGET){
+          resetToNewTargetChoice();
+          setAnzahlButtonsLocked(false);
+          return;
+        }
+
+        // sonst: weiter im COUNT-Modus bleiben, nächster Versuch möglich
         setAnzahlButtonsLocked(false);
       });
     }
@@ -1548,6 +1599,8 @@
       targetRevealed = false;
       started = false;
       currentTarget = null;
+      attemptsForTarget = 0;
+
       resetTargetPadUI();
       clearHitVisuals();
 
@@ -1575,8 +1628,6 @@
 
     function showKippCountView(){
       uiMode = "COUNT";
-
-      // HINWEIS in COUNT: "KIPP-ANZAHL" anzeigen
       showHint("KIPP-ANZAHL");
 
       targetPadBtn.classList.remove("pulse");
@@ -1603,6 +1654,9 @@
       clearHitVisuals();
       currentTarget = generateTarget_NumberColor_WithExclusion();
       if(!currentTarget) return;
+
+      // NEU: bei neuem Ziel Versuche zurücksetzen
+      attemptsForTarget = 0;
 
       applyTargetToPad(currentTarget);
 
@@ -1635,6 +1689,8 @@
 
       targetRevealed = false;
       currentTarget = null;
+      attemptsForTarget = 0;
+
       resetTargetPadUI();
       clearHitVisuals();
 
@@ -1650,6 +1706,10 @@
     testTargetBtn.addEventListener("click", () => {
       clearHitVisuals();
       currentTarget = generateTarget_NumberColor_WithExclusion();
+      if(!currentTarget) return;
+
+      attemptsForTarget = 0;
+
       applyTargetToPad(currentTarget);
       targetRevealed = true;
       targetPadBtn.disabled = true;
@@ -1759,9 +1819,6 @@
       const row11CenterY   = row11VisualTop + (cellPx / 2);
       const between10and11 = row11VisualTop;
 
-      // =========================
-      // FIX 1: 1–6 Buttons exakt auf die Linie vom START-Button (zwischen Row 10 und 11)
-      // =========================
       const kippBtnsCenterY = between10and11;
 
       kippAnzahlBtns.style.top = kippBtnsCenterY + "px";
@@ -1772,7 +1829,6 @@
       const btnH = 44 * uiscale;
       startBtnWrap.style.top = (between10and11 - (btnH / 2)) + "px";
 
-      // ===== Hints =====
       if(uiMode === "TARGET"){
         hintTitle.style.top = row11CenterY + "px";
       } else if(uiMode === "START"){
@@ -1780,13 +1836,9 @@
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
 
-        // "SCHAUKIPP-RUNDE" bleibt wie bei dir
         hintTitle.style.top = (midBetween9and10 + 40) + "px";
 
       } else if(uiMode === "COUNT"){
-        // =========================
-        // FIX 2: "KIPP-ANZAHL" exakt auf gleicher Höhe wie "SCHAUKIPP-RUNDE" im START-Modus
-        // =========================
         const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
@@ -1881,6 +1933,7 @@
       currentTarget = null;
       targetRevealed = false;
       started = false;
+      attemptsForTarget = 0;
 
       resetTargetPadUI();
 
