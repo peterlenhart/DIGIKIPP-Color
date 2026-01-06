@@ -319,62 +319,7 @@
       pointer-events: none;
     }
 
-    /* Button "SCHAUEN & MERKEN" */
-    .schauenTop{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: auto;
-    }
-
-    .btnSchauen{
-      width: calc(260px * var(--uiscale));
-      height: calc(44px * var(--uiscale));
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      pointer-events: auto;
-    }
-    .btnSchauen:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .btnSchauen[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
-    .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
-      color: #7a3f2b;
-      text-align: center;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-    }
-
-    /* "SCHAU GENAU" = Button im gleichen Stil (Höhe 44) - UNSICHTBAR */
-    .btnSchauGenau{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
-      height: calc(44px * var(--uiscale));
-      display: none !important;
-      pointer-events: none !important;
-    }
-    .btnSchauGenau:active{ transform: translate(-50%, -50%) scale(0.98); filter: brightness(0.98); }
-    .btnSchauGenau[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
+    /* ===== Buttons (Nummern) ===== */
     .squareBtn{
       width: calc(44px * var(--uiscale));
       height: calc(44px * var(--uiscale));
@@ -411,12 +356,74 @@
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
       font-size: calc(18px * var(--uiscale));
       line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Start-Button: gleicher Stil wie Zahlentasten, nur breiter */
+    .startBtn{
+      width: calc(320px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
+      padding: 0 calc(18px * var(--uiscale));
+    }
+
+    /* Pulsieren (Start-Button) */
+    @keyframes startPulse {
+      0%   { transform: translate(-50%, -50%) scale(1.00); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      50%  { transform: translate(-50%, -50%) scale(1.05); filter: drop-shadow(0 0 12px rgba(255,255,255,0.55)); }
+      100% { transform: translate(-50%, -50%) scale(1.00); filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+    }
+    .pulseStart{
+      animation: startPulse 1.25s ease-in-out infinite;
+    }
+
+    /* Button-Container im Startscreen (gleiche Höhe wie Zahlentasten, mittig) */
+    .schauenTop{
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: auto;
+      z-index: 30;
+    }
+
+    /* Start-Titel: zwischen Zeile 9 und 10, zentriert */
+    .startTitle{
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(54px, 10vmin, 96px);
+      font-weight: 1000;
+      letter-spacing: 0.06em;
+      color: rgba(234,215,190,0.96);
+      text-shadow:
+        0 3px 0 rgba(0,0,0,0.85),
+        0 8px 20px rgba(0,0,0,0.70);
+      user-select: none;
+      white-space: nowrap;
+      line-height: 1;
+      text-align: center;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    /* "SCHAU GENAU" bleibt unsichtbar */
+    .btnSchauGenau{
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, -50%);
+      width: calc(320px * var(--uiscale));
+      height: calc(44px * var(--uiscale));
+      display: none !important;
+      pointer-events: none !important;
     }
 
     .kippAnzahlBtns{
       position: absolute;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translate(-50%, -50%);
       display: flex;
       flex-wrap: nowrap;
       gap: calc(24px * var(--uiscale));
@@ -853,9 +860,13 @@
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
         <div id="schauenView" class="hidden">
+          <!-- Start-Titel: zwischen Zeile 9 und 10 -->
+          <div class="startTitle" id="startTitle">SCHAUKIPP-RUNDE</div>
+
+          <!-- Start-Button: gleicher Stil wie Zahlentasten, gleiche Höhe, gleiche Höhe wie zwischen 10/11 -->
           <div class="schauenTop" id="schauenTop">
-            <button id="btnSchauen" class="btnSchauen" type="button">
-              <span class="btnText">SCHAUEN & MERKEN</span>
+            <button id="btnSchauen" class="squareBtn startBtn pulseStart" type="button">
+              <span class="anzahlText">SCHAUEN &amp; MERKEN</span>
             </button>
           </div>
 
@@ -865,8 +876,8 @@
         </div>
 
         <div id="kippAnzahlView" class="hidden">
-          <button id="btnSchauGenau" class="btnSchauen btnSchauGenau" type="button">
-            <span class="btnText">SCHAU GENAU</span>
+          <button id="btnSchauGenau" class="btnSchauGenau" type="button">
+            <span class="anzahlText">SCHAU GENAU</span>
           </button>
 
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
@@ -910,6 +921,7 @@
     const schauenView  = document.getElementById("schauenView");
     const schauenTop   = document.getElementById("schauenTop");
     const btnSchauen   = document.getElementById("btnSchauen");
+    const startTitle   = document.getElementById("startTitle");
 
     const kippAnzahlView = document.getElementById("kippAnzahlView");
     const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
@@ -1478,7 +1490,7 @@
       btnSchauen.disabled = !enabled;
     }
     function setSchauenText(txt){
-      btnSchauen.querySelector('.btnText').textContent = txt;
+      btnSchauen.querySelector('.anzahlText').textContent = txt;
     }
 
     async function runSetNumbersCycle(){
@@ -1629,23 +1641,20 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const midY = (row9VisualTop + row10VisualTop) / 2;
-      schauenTop.style.top = midY + "px";
+      // Raster-Definition: Buttons 1–6 liegen "zwischen Zeile 10 und 11" -> auf der Trennlinie (Top von Zeile 11)
+      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx; // Trennlinie 9/10 ist Top von Zeile 10
+      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx; // Trennlinie 10/11 ist Top von Zeile 11
 
-      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
-      const row11Baseline = row11VisualTop + cellPx;
+      // Start-Button exakt auf gleicher Höhe wie Zahlentasten (zwischen 10/11)
+      schauenTop.style.top = row11VisualTop + "px";
+      schauenTop.style.left = "50%";
 
-      const leftEdgeC = (3 - 1) * cellPx;
-      const rightEdgeF = 6 * cellPx;
-      const centerCF = (leftEdgeC + rightEdgeF) / 2;
-      const widthCF = (rightEdgeF - leftEdgeC);
+      // Start-Titel exakt zwischen Zeile 9 und 10 (Trennlinie 9/10)
+      if(startTitle){
+        startTitle.style.top = row10VisualTop + "px";
+      }
 
-      btnSchauGenau.style.left = centerCF + "px";
-      btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
-      btnSchauGenau.style.width = widthCF + "px";
-
+      // Bestehende Header-Elemente bleiben wie gehabt
       const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
@@ -1659,8 +1668,8 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      const row11CenterY = row11VisualTop + cellPx / 2;
-      kippAnzahlBtns.style.top = row11CenterY + "px";
+      // Zahlentasten: exakt zwischen Zeile 10 und 11
+      kippAnzahlBtns.style.top = row11VisualTop + "px";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
@@ -1728,6 +1737,7 @@
       currentTarget = null;
 
       showW();
+      renderW();
     }
 
     function showKippAnzahlView(){
@@ -1885,7 +1895,7 @@
     });
 
     // ===== Startlogik =====
-    function fastInitAndEnterKippAnzahl(){
+    function initToStartScreen(){
       cancelPreview();
       stopAtNextW = false;
 
@@ -1896,33 +1906,25 @@
       clearHitVisuals();
       currentTarget = null;
 
+      // Grundzustand vorbereiten, aber NICHT direkt in die Zahlentasten-Ansicht springen
       reroll12_keepEmpty();
       ensureAssigned(0);
       ensureAssigned(1);
       ensureAssigned(2);
 
       rotIndex = 0;
-      faceIndex = 0;
-      setRotationSnap();
-
-      for(let i=0;i<4;i++){
-        rotIndex  = (rotIndex + 1) % 4;
-        faceIndex = (faceIndex + 1) % 3;
-      }
-
-      rotIndex = 0;
-      faceIndex = 1;
+      faceIndex = 1;   // wie vorher bei deinem Setup
       setRotationSnap();
 
       showW();
       renderW();
 
-      showKippAnzahlView();
+      showSchauenView();
     }
 
     window.addEventListener("load", () => {
       rebuild();
-      fastInitAndEnterKippAnzahl();
+      initToStartScreen();
       updateShadowVisibility();
     });
 
