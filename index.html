@@ -350,6 +350,7 @@
       text-shadow: 0 1px 0 rgba(255,255,255,0.35);
       font-size: calc(18px * var(--uiscale));
       line-height: 1;
+      display: inline-block;
     }
 
     /* Start-Button: breit, aber gleicher Stil wie squareBtn */
@@ -378,14 +379,16 @@
     .pulse{
       animation: pulseScale 0.9s ease-in-out 0s infinite alternate;
       will-change: transform, filter;
+      transform-origin: 50% 50%;
     }
 
-    /* Hinweistext "SCHAUKIPP-RUNDE" */
+    /* Hinweistext: "KIPP-ZIEL" (fix: gleiche Größe wie Button-Schrift, nicht vmin) */
     .hintTitle{
       position: absolute;
       left: 50%;
-      transform: translate(-50%, -50%);
-      color: rgba(255,255,255,0.96); /* WEISS */
+      transform: translate(-50%, -50%) scale(var(--uiscale)); /* gegen Layout-Scale */
+      transform-origin: 50% 50%;
+      color: rgba(255,255,255,0.96);
       font-weight: 1000;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -395,9 +398,8 @@
       white-space: nowrap;
       z-index: 60;
       pointer-events: none;
-      /* Hinweistext-Größe (nicht mikroskopisch):
-         Skaliert mit Viewport, aber bleibt lesbar */
-      font-size: clamp(28px, 5.2vmin, 54px);
+      font-size: 18px; /* Basis = wie .anzahlText (18px) */
+      line-height: 1;
     }
 
     /* 2x2 Ziel-Button 12D–13E */
@@ -423,14 +425,16 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      transform-origin: 50% 50%;
     }
-    .targetPadBtn:active{ transform: translate(-0px, -0px) scale(0.99); filter: brightness(0.98); }
+    .targetPadBtn:active{ transform: scale(0.99); filter: brightness(0.98); }
 
+    /* Kreis im Zielpad: 47px Durchmesser, Linienstärke ~ Button-Schriftgewicht (fixer Stroke) */
     .targetPadCircle{
-      width: 15px;
-      height: 15px;
+      width: calc(47px * var(--uiscale));
+      height: calc(47px * var(--uiscale));
       border-radius: 50%;
-      border: 2px solid var(--w1-innerframe); /* rot-braun */
+      border: calc(4px * var(--uiscale)) solid var(--w1-innerframe);
       box-sizing: border-box;
       pointer-events: none;
     }
@@ -443,7 +447,7 @@
       justify-content: center;
       font-weight: 900;
       color: #111;
-      font-size: calc(var(--cell) * 0.70); /* exakt Slot-Zahlengröße */
+      font-size: calc(var(--cell) * 0.78); /* formatfüllender am 2x2 Pad */
       letter-spacing: -0.02em;
       text-shadow: 0 2px 0 rgba(255,255,255,0.35);
       line-height: 1;
@@ -605,6 +609,7 @@
       pointer-events: none;
     }
 
+    /* (dein restliches UI / Modal / Endscreen unverändert) */
     .navBtn{
       position: absolute;
       width: calc(56px * var(--uiscale));
@@ -657,7 +662,6 @@
       z-index: 1000;
       pointer-events: auto;
     }
-
     .modalBox{
       background: rgba(234,215,190,0.98);
       border: 3px solid rgba(0,0,0,0.65);
@@ -670,7 +674,6 @@
       max-width: 85%;
       width: auto;
     }
-
     .modalTitle{
       font-size: clamp(22px, 5.5vmin, 36px);
       font-weight: 1000;
@@ -681,7 +684,6 @@
       text-transform: uppercase;
       white-space: nowrap;
     }
-
     .modalText{
       font-size: clamp(16px, 4vmin, 22px);
       font-weight: 600;
@@ -689,13 +691,11 @@
       margin-bottom: 32px;
       line-height: 1.5;
     }
-
     .modalBtns{
       display: flex;
       gap: 20px;
       justify-content: center;
     }
-
     .modalBtn{
       padding: 16px 40px;
       border-radius: 14px;
@@ -712,20 +712,17 @@
       white-space: nowrap;
     }
     .modalBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-
     .modalBtn.cancel{
       background: #a8927a;
       color: rgba(255,255,255,0.95);
       text-shadow: 0 1px 0 rgba(0,0,0,0.35);
     }
-
     .modalBtn.confirm{
       background: #d64545;
       color: rgba(255,255,255,0.95);
       text-shadow: 0 1px 0 rgba(0,0,0,0.45);
     }
 
-    /* Endscreen nach "Beenden" */
     .endOverlay{
       position: fixed;
       inset: 0;
@@ -882,19 +879,19 @@
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
-        <!-- Hinweistext -->
-        <div class="hintTitle" id="hintTitle">SCHAUKIPP-RUNDE</div>
+        <!-- Hinweistext (erst sichtbar NACH 4 Kipps) -->
+        <div class="hintTitle hidden" id="hintTitle">KIPP-ZIEL</div>
 
-        <!-- Start-Button (Style wie Zahlentasten, pulsiert, gleiche Höhe wie 1–6 + 22px) -->
+        <!-- Start-Button (pulsiert) -->
         <div class="startBtnWrap" id="startBtnWrap">
           <button id="btnSchauen" class="squareBtn startBtn" type="button">
             <span class="anzahlText pulse" id="btnSchauenPulse">SCHAUEN &amp; MERKEN</span>
           </button>
         </div>
 
-        <!-- 2x2 Ziel-Button 12D–13E -->
-        <button class="targetPadBtn" id="targetPadBtn" type="button" aria-label="Ziel erzeugen">
-          <div class="targetPadCircle" id="targetPadCircle"></div>
+        <!-- 2x2 Ziel-Button 12D–13E (erst sichtbar NACH 4 Kipps) -->
+        <button class="targetPadBtn hidden" id="targetPadBtn" type="button" aria-label="Ziel erzeugen">
+          <div class="targetPadCircle pulse" id="targetPadCircle"></div>
           <div class="targetPadNum" id="targetPadNum"></div>
         </button>
 
@@ -1042,28 +1039,15 @@
       return { row, col: colMap[colLetter], colLetter };
     }
 
-    // Zielzahlen-ROTATION:
-    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
-    function getTargetRotationDeg(row, col){
-      if(row === 1) return 0;
-      if(row === 8) return 180;
-      if(col === 1) return -90;
-      if(col === 8) return 90;
-      return 0;
-    }
-
     let currentTarget = null;
 
-    // ======= Treffer-/Ausschluss-Logik (nur Logik, kein Rendering ändern) =======
-
+    // ======= Treffer-/Ausschluss-Logik =======
     const ZS_COORDS_BY_ROT_ZSINDEX = [
       ["4B","3B","2C","2D"],
       ["2E","2F","3G","4G"],
       ["5G","6G","7F","7E"],
       ["7D","7C","6B","5B"],
     ];
-
-    // DOM Slots: S1,S2,S3,S4 -> ZS Index (1..4)
     const DOM_SLOT_TO_ZS_INDEX = [2, 1, 3, 4];
 
     const colorFieldCoords = {
@@ -1108,10 +1092,10 @@
     function getVisibleSlotInfos(){
       const curr = sets[faceIndex];
       const rot = rotIndex;
-      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot]; // [ZS1..ZS4]
+      const zsCoords = ZS_COORDS_BY_ROT_ZSINDEX[rot];
       const out = [];
       for(let i=0;i<4;i++){
-        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i]; // 1..4
+        const zsIndex = DOM_SLOT_TO_ZS_INDEX[i];
         const zsCoord = zsCoords[zsIndex - 1];
         out.push({
           slotEl: slotElsW[i],
@@ -1149,9 +1133,6 @@
     function checkHitAndAnimate(){
       if(!currentTarget) return false;
       const visibleSlots = getVisibleSlotInfos();
-
-      // Trefferlogik bleibt – Ziel-Randfelder sind nur unsichtbar, nicht entfernt.
-      // Wir prüfen weiterhin "adjacent" gegen alle Koords der Zielfarbe.
       const coords = colorFieldCoords[currentTarget.color] || [];
       for(const zfCoord of coords){
         for(const si of visibleSlots){
@@ -1376,12 +1357,6 @@
     ];
     let assigned = [false,false,false];
 
-    function ensureAssigned(idx){
-      if(assigned[idx]) return;
-      sets[idx] = planned[idx].slice();
-      assigned[idx] = true;
-    }
-
     function reroll12_keepAssigned(){
       const twelve = getUniqueRandomNumbers(12, 1, 12);
       planned[0] = twelve.slice(0,4);
@@ -1396,7 +1371,7 @@
       assigned = [true,true,true];
 
       rotIndex  = 0;
-      faceIndex = 1; /* wie bei deinem Play-Start */
+      faceIndex = 1;
       setRotationSnap();
     }
 
@@ -1457,6 +1432,7 @@
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       targetPadBtn.disabled = locked;
+      btnSchauen.disabled = locked;
     }
 
     function handleAnzahlClick(anzahl){
@@ -1469,14 +1445,23 @@
     function showKippAnzahlView(){
       kippAnzahlView.classList.remove("hidden");
       buildKippAnzahlButtons();
-      testTargetBtn.classList.remove("hidden");
-      testTargetBtn.disabled = false;
-
+      testTargetBtn.classList.add("hidden"); /* Debug aus */
       clearHitVisuals();
       checkHitAndAnimate();
     }
 
-    // ======= Zielpad-UI: initial sichtbar (beige + Kreis), Klick -> Zielfarbe + Zahl =======
+    // ======= Zielpad UI =======
+    function hideTargetPhase(){
+      hintTitle.classList.add("hidden");
+      targetPadBtn.classList.add("hidden");
+    }
+    function showTargetPhase(){
+      hintTitle.textContent = "KIPP-ZIEL";
+      hintTitle.classList.remove("hidden");
+      targetPadBtn.classList.remove("hidden");
+      resetTargetPadUI();
+    }
+
     function resetTargetPadUI(){
       targetPadBtn.style.background =
         `linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)), var(--slot-fill)`;
@@ -1496,7 +1481,7 @@
       // Kreis fällt weg
       targetPadCircle.style.display = "none";
 
-      // Zahl setzen in Slot-Größe
+      // Zahl formatfüllend
       const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
       targetPadNum.textContent = text;
 
@@ -1506,37 +1491,30 @@
       targetPadNum.style.opacity = "1";
     }
 
+    // Klick Zielpad: Zielfarbe + Zielzahl ins Pad, Rand-Zielzahlen bleiben unsichtbar (CSS)
     targetPadBtn.addEventListener("click", () => {
-      // neues Ziel
       clearHitVisuals();
       currentTarget = generateTarget_NumberColor_WithExclusion();
-
-      // Rand-Zielfelder sind per CSS unsichtbar – wir zeigen nur im Pad.
       applyTargetToPad(currentTarget);
-
-      // sofort Hit prüfen
       checkHitAndAnimate();
     });
 
-    // Start-Button: verhält sich wie "4" klicken (4 Kipps)
+    // Start-Button: 4 Kipps, dann Button weg, dann KIPP-ZIEL + Zielpad einblenden
     btnSchauen.addEventListener("click", async () => {
       if(runningKipp) return;
 
-      // Startbutton bleibt sichtbar (du wolltest keine extra View genannt),
-      // aber wir aktivieren sicher die 1–6 Ansicht (damit es “Spiel” ist).
-      showKippAnzahlView();
-
+      hideTargetPhase();
       setAnzahlButtonsLocked(true);
-      await runKippCyclesNoHit(4);
-      setAnzahlButtonsLocked(false);
-    });
 
-    testTargetBtn.addEventListener("click", () => {
-      // Debug: neues Ziel wie bisher, aber Randfelder bleiben unsichtbar.
-      clearHitVisuals();
-      currentTarget = generateTarget_NumberColor_WithExclusion();
-      applyTargetToPad(currentTarget);
-      checkHitAndAnimate();
+      // Button verschwindet sofort
+      startBtnWrap.classList.add("hidden");
+
+      await runKippCyclesNoHit(4);
+
+      setAnzahlButtonsLocked(false);
+
+      // Nach Ende: KIPP-ZIEL + Zielpad
+      showTargetPhase();
     });
 
     // ===== Beenden-Logik =====
@@ -1590,7 +1568,7 @@
       const uiscale = 1 / (scale || 1);
       document.documentElement.style.setProperty("--uiscale", uiscale.toFixed(4));
 
-      return { cols, cell, gridW, scale };
+      return { cols, cell, gridW, scale, uiscale };
     }
 
     function placeColorSquare(coord, cls, cellPx, sizePx){
@@ -1629,8 +1607,9 @@
       }
     }
 
-    function positionUI(){
+    function positionUI(scale){
       const cellPx = numVar("--cell") || 142;
+      const uiscale = numVar("--uiscale") || 1;
 
       // Header / Title / Score
       const headerY = 1.0 * cellPx;
@@ -1646,7 +1625,7 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      // Zeile 11 (Raster-Row) -> Mitte (zwischen 10 und 11 liegt der Tasten-Bereich)
+      // Zeile 11 -> Mitte
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11CenterY = row11VisualTop + cellPx / 2;
 
@@ -1655,8 +1634,9 @@
       kippAnzahlBtns.style.left = "50%";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
-      // START-BUTTON: exakt gleiche Höhe wie 1–6, aber +22px NACH SÜDEN
-      startBtnWrap.style.top = (row11CenterY + 22) + "px";
+      // START-BUTTON: 142px Richtung Norden (echte Screen-Pixel) => im Layout: 142 * uiscale
+      const northOffsetLayout = 142 * uiscale;
+      startBtnWrap.style.top = (row11CenterY - northOffsetLayout) + "px";
 
       // Hinweistext: exakt zwischen Zeile 9 und 10 (Zwischenlinie)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
@@ -1668,7 +1648,6 @@
       placeTargetPad_12D_13E(cellPx);
 
       positionNavButtons(cellPx);
-      positionTestButton(cellPx);
     }
 
     function positionNavButtons(cellPx){
@@ -1685,24 +1664,8 @@
       closeBtnAnzahl.style.transformOrigin = "top left";
     }
 
-    function positionTestButton(cellPx){
-      const row = 8;
-      const col = 8;
-      const visualRow = row + HEADER_ROW_OFFSET;
-
-      const left = (col - 1) * cellPx + cellPx/2;
-      const top  = (visualRow - 1) * cellPx + cellPx/2;
-
-      testTargetBtn.style.position = "absolute";
-      testTargetBtn.style.left = left + "px";
-      testTargetBtn.style.top = top + "px";
-      testTargetBtn.style.transform = "translate(-50%, -50%)";
-      testTargetBtn.style.zIndex = "30";
-      testTargetBtn.style.pointerEvents = "auto";
-    }
-
     function placeTargetPad_12D_13E(cellPx){
-      // 12D bis 13E => 2x2 Zellen, Start bei row=12 col=D(4)
+      // 12D bis 13E => 2x2, Start row=12 col=D(4)
       const row = 12;
       const col = 4; // D
       const visualRow = row + HEADER_ROW_OFFSET;
@@ -1725,7 +1688,7 @@
       document.documentElement.style.setProperty("--gridH", gridH + "px");
 
       rebuildColors();
-      positionUI();
+      positionUI(scale);
       updateShadowVisibility();
     }
 
@@ -1741,7 +1704,10 @@
       showW();
       renderW();
 
-      showKippAnzahlView(); // 1–6 sichtbar
+      showKippAnzahlView();     // 1–6 sichtbar
+      hideTargetPhase();        // KIPP-ZIEL + Pad unsichtbar
+      startBtnWrap.classList.remove("hidden"); // Startbutton sichtbar
+
       updateShadowVisibility();
     }
 
