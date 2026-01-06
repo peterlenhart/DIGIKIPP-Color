@@ -398,7 +398,7 @@
       font-size: calc(18px * var(--uiscale)); /* gleich groß wie Button-Schrift */
     }
 
-    /* 2x2 Ziel-Button 12D–13E */
+    /* 2x2 Ziel-Button 10D–11E */
     .targetPadBtn{
       position: absolute;
       box-sizing: border-box;
@@ -881,7 +881,7 @@
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
         <!-- Hinweistext -->
-        <div class="hintTitle" id="hintTitle">SCHAUEN &amp; MERKEN</div>
+        <div class="hintTitle" id="hintTitle">SCHAUKIPP-RUNDE</div>
 
         <!-- Start-Button -->
         <div class="startBtnWrap" id="startBtnWrap">
@@ -890,7 +890,7 @@
           </button>
         </div>
 
-        <!-- 2x2 Ziel-Button 12D–13E -->
+        <!-- 2x2 Ziel-Button 10D–11E -->
         <button class="targetPadBtn hidden" id="targetPadBtn" type="button" aria-label="Ziel erzeugen">
           <div class="targetPadCircle" id="targetPadCircle"></div>
           <div class="targetPadNum" id="targetPadNum"></div>
@@ -1414,11 +1414,13 @@
     let runningKipp = false;
     let previewToken = 0;
 
-    async function waitOrPause(type, myToken){
+    async function waitOrPause(type, myToken, kipFactor = 1){
       const startTime = Date.now();
       while(myToken === previewToken){
         const T = getTiming();
-        const targetMs = (type === 'kip') ? T.kipMs : T.wMs;
+        const base = (type === 'kip') ? T.kipMs : T.wMs;
+        const targetMs = (type === 'kip') ? Math.round(base * kipFactor) : base;
+
         const elapsed = Date.now() - startTime;
         if(elapsed >= targetMs) break;
         await sleep(50);
@@ -1426,16 +1428,18 @@
       return (myToken === previewToken);
     }
 
-    async function runKippCyclesNoHit(count){
+    async function runKippCyclesNoHit(count, opts = {}){
       if(runningKipp) return;
       runningKipp = true;
+
+      const kipFactor = (opts && opts.kipFactor) ? opts.kipFactor : 1;
 
       const myToken = ++previewToken;
 
       for(let i = 0; i < count; i++){
         showKip();
         renderKip();
-        if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
+        if(!await waitOrPause('kip', myToken, kipFactor)){ runningKipp=false; return; }
 
         advanceFullCW();
         showW();
@@ -1443,7 +1447,7 @@
 
         checkHitAndAnimate();
 
-        if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
+        if(!await waitOrPause('w', myToken, 1)){ runningKipp=false; return; }
       }
 
       runningKipp = false;
@@ -1458,7 +1462,7 @@
         btn.className = "squareBtn";
         btn.dataset.anzahl = num;
         btn.type = "button";
-        btn.innerHTML = `<span class="anzahlText pulse">${String(num)}</span>`; /* FIX: pulsieren */
+        btn.innerHTML = `<span class="anzahlText pulse">${String(num)}</span>`; /* pulsieren */
         btn.addEventListener("click", () => handleAnzahlClick(num));
         kippAnzahlBtns.appendChild(btn);
       });
@@ -1507,7 +1511,7 @@
     // ======= Ablauf-Views =======
     function showStartView(){
       startBtnWrap.classList.remove("hidden");
-      showHint("SCHAUEN & MERKEN");
+      showHint("SCHAUKIPP-RUNDE");
 
       kippAnzahlView.classList.add("hidden");
       targetPadBtn.classList.add("hidden");
@@ -1586,8 +1590,8 @@
       resetTargetPadUI();
       clearHitVisuals();
 
-      // 3) 4 Kipps
-      await runKippCyclesNoHit(4);
+      // 3) 4 Kipps (SCHAUKIPP-RUNDE: Zwischenkipp-Dauer x2)
+      await runKippCyclesNoHit(4, { kipFactor: 2 });
 
       // 4) danach: KIPP-ZIEL + Zielbett
       showTargetSelectView();
@@ -1723,14 +1727,14 @@
       // START-BUTTON: FIX nach deiner letzten Ansage: 142px nach Norden
       startBtnWrap.style.top = (row11CenterY - 142) + "px";
 
-      // Hinweistext: zwischen Zeile 9 und 10
+      // Hinweistext: zwischen Zeile 9 und 10 (unverändert)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
       hintTitle.style.top = midBetween9and10 + "px";
 
-      // Zielpad 12D–13E
-      placeTargetPad_12D_13E(cellPx);
+      // Zielpad 10D–11E
+      placeTargetPad_10D_11E(cellPx);
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
@@ -1766,8 +1770,8 @@
       testTargetBtn.style.pointerEvents = "auto";
     }
 
-    function placeTargetPad_12D_13E(cellPx){
-      const row = 12;
+    function placeTargetPad_10D_11E(cellPx){
+      const row = 10;
       const col = 4; // D
       const visualRow = row + HEADER_ROW_OFFSET;
 
