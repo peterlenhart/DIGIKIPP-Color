@@ -440,9 +440,8 @@
     }
 
     .rotBtn{
-      /* Doppelte Breite wie 1-6 Button + 20px */
       width: calc((44px * 2 + 20px) * var(--uiscale));
-      height: calc(44px * var(--uiscale));  /* Gleiche Höhe wie 1-6 Button */
+      height: calc(44px * var(--uiscale));
       border-radius: calc(14px * var(--uiscale));
       border: 2px solid rgba(0,0,0,0.65);
       background: rgba(234,215,190,0.96);
@@ -456,8 +455,6 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-
-      /* (4) Icons 1.8× größer */
       font-size: calc(24px * var(--uiscale) * 1.8);
       line-height: 1;
       font-weight: 1000;
@@ -600,7 +597,7 @@
     .titleLeft{
       position: absolute;
       top: 0;
-      font-size: clamp(100px, 14vmin, 180px); /* exakt wie Score */
+      font-size: clamp(100px, 14vmin, 180px);
       font-weight: 1000;
       letter-spacing: 0.02em;
       color: rgba(234,215,190,0.96);
@@ -881,7 +878,6 @@
       <!-- UI Layer -->
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
-        <!-- (2) DIGI-KIPP -> DIGIKIPP -->
         <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div id="schauenView" class="hidden">
@@ -964,7 +960,7 @@
 
     const testTargetBtn = document.getElementById("testTargetBtn");
     const btnSchauGenau = document.getElementById("btnSchauGenau");
-    
+
     const rotationBtns = document.getElementById("rotationBtns");
     const btnCW = document.getElementById("btnCW");
     const btnCCW = document.getElementById("btnCCW");
@@ -1002,10 +998,9 @@
     let activeKipId = "A";
 
     function getKipId(fromFace, toFace){
-      // Canonical: (0,1)->A, (1,2)->B, (2,0)->C (jeweils auch umgekehrt)
       if((fromFace === 0 && toFace === 1) || (fromFace === 1 && toFace === 0)) return "A";
       if((fromFace === 1 && toFace === 2) || (fromFace === 2 && toFace === 1)) return "B";
-      return "C"; // (2,0) oder (0,2)
+      return "C";
     }
 
     function setActiveKipGroup(kipId){
@@ -1071,8 +1066,6 @@
       return { row, col: colMap[colLetter], colLetter };
     }
 
-    // Zielzahlen-ROTATION:
-    // Zeile 1: 0, Zeile 8: 180, Spalte A: -90, Spalte H: +90
     function getTargetRotationDeg(row, col){
       if(row === 1) return 0;
       if(row === 8) return 180;
@@ -1083,12 +1076,10 @@
 
     let currentTarget = null;
 
-    // Kartendeck-System (48 Karten: 12 Zahlen × 4 Farben)
     let cardDeck = [];
     let targetsGenerated = 0;
     const MAX_TARGETS = 10;
 
-    // Zwei-Tasten-Auswahl System
     let selectedButtons = [];
 
     function getVisibleNumbers(){
@@ -1219,7 +1210,10 @@
       updateShadowVisibility();
     }
 
-    function mapHiddenToVisible_CW(face){
+    // Hinweis: Wenn du hier die "vertauschte" CCW-Orientierung brauchst,
+    // ändern wir NUR diese Mapping-Funktion für dir=-1 – alles andere bleibt stabil.
+    function mapHiddenToVisible(face, dir){
+      // CW-Variante: reverse
       const [f1,f2,f3,f4] = face;
       return [f4, f3, f2, f1];
     }
@@ -1240,11 +1234,15 @@
       else span.style.letterSpacing = "";
     }
 
-    function renderKip(){
+    function mod(n, m){
+      return ((n % m) + m) % m;
+    }
+
+    function renderKip(dir){
       setRotationSnap();
 
       const curr = sets[faceIndex];
-      const nextFaceIndex = (faceIndex + 1) % 3;
+      const nextFaceIndex = mod(faceIndex + (dir > 0 ? 1 : -1), 3);
       const next = sets[nextFaceIndex];
 
       const kipId = getKipId(faceIndex, nextFaceIndex);
@@ -1253,7 +1251,8 @@
       const { right, left } = getKipSlots(kipId);
 
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
-      const nextPreview = mapHiddenToVisible_CW(next);
+
+      const nextPreview = mapHiddenToVisible(next, dir);
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
     }
 
@@ -1267,7 +1266,6 @@
       return pool.slice(0, count);
     }
 
-    // FIX: Kippspeed ist auf 3 fixiert, UI dazu ist gelöscht.
     const FIXED_SPEED = 3;
 
     function getTiming(){
@@ -1290,9 +1288,14 @@
       updateShadowVisibility();
     }
 
-    function advanceFullCW(){
-      rotIndex  = (rotIndex + 1) % 4;
-      faceIndex = (faceIndex + 1) % 3;
+    function advanceFull(dir){
+      if(dir > 0){
+        rotIndex  = (rotIndex + 1) % 4;
+        faceIndex = (faceIndex + 1) % 3;
+      } else {
+        rotIndex  = (rotIndex + 3) % 4;  // -1 mod 4
+        faceIndex = (faceIndex + 2) % 3; // -1 mod 3
+      }
       setRotationSnap();
     }
 
@@ -1386,19 +1389,19 @@
       ensureAssigned(0); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFullCW(); showW(); renderWEmpty();
+      advanceFull(+1); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(1); renderW();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFullCW(); showW(); renderWEmpty();
+      advanceFull(+1); showW(); renderWEmpty();
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       ensureAssigned(2); renderW();
@@ -1409,10 +1412,10 @@
 
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
-      showKip(); renderKip();
+      showKip(); renderKip(+1);
       if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-      advanceFullCW();
+      advanceFull(+1);
       showW();
       renderW();
 
@@ -1420,10 +1423,10 @@
       if(!await waitOrPause('w', myToken)){ runningPreview=false; return; }
 
       for(let j=0; j<EXTRA_CYCLES; j++){
-        showKip(); renderKip();
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFullCW(); showW(); renderW();
+        advanceFull(+1); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1434,10 +1437,10 @@
       }
 
       while(myToken === previewToken){
-        showKip(); renderKip();
+        showKip(); renderKip(+1);
         if(!await waitOrPause('kip', myToken)){ runningPreview=false; return; }
 
-        advanceFullCW(); showW(); renderW();
+        advanceFull(+1); showW(); renderW();
         if(stopAtNextW){
           stopAtNextW = false;
           runningPreview = false;
@@ -1513,18 +1516,16 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      // Button "SCHAUEN & MERKEN" mittig (wie zuvor)
       const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const midY = (row9VisualTop + row10VisualTop) / 2;
       schauenTop.style.top = midY + "px";
 
-      // "SCHAU GENAU" Position + Größe: exakt über C–F
       const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
       const row11Baseline = row11VisualTop + cellPx;
 
-      const leftEdgeC = (3 - 1) * cellPx;   // Spalte C beginnt
-      const rightEdgeF = 6 * cellPx;        // Spalte F endet
+      const leftEdgeC = (3 - 1) * cellPx;
+      const rightEdgeF = 6 * cellPx;
       const centerCF = (leftEdgeC + rightEdgeF) / 2;
       const widthCF = (rightEdgeF - leftEdgeC);
 
@@ -1532,12 +1533,11 @@
       btnSchauGenau.style.top  = (row11Baseline - 85 - 230) + "px";
       btnSchauGenau.style.width = widthCF + "px";
 
-      // Header: X, DIGIKIPP und P00/80 alle auf Grenzlinie zwischen Zeile 01 und 02
-      const headerY = 1.0 * cellPx;  // Grenze zwischen Zeile 01 und 02
+      const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
-      score.style.right = "70px";          // (1) waagrechte Position unverändert
-      score.style.top = headerY + "px";    // (1) vertikal exakt wie X (gleicher headerY)
+      score.style.right = "70px";
+      score.style.top = headerY + "px";
       const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
       score.style.transform = `translateY(-50%) scale(${s})`;
       score.style.transformOrigin = "top right";
@@ -1547,18 +1547,16 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
-      // 1-6 Buttons in Zeile 11 positionieren
       const row11CenterY = row11VisualTop + cellPx / 2;
       kippAnzahlBtns.style.top = row11CenterY + "px";
       kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
 
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionRotationButtons(cellPx);  // CW/CCW Buttons
+      positionRotationButtons(cellPx);
     }
 
     function positionNavButtons(cellPx){
-      // Close links oben (Spalte A, Header) + 75% skaliert
       const closeCol = 1;
       const closeY = 1.0 * cellPx;
       const closeLeft = (closeCol - 1) * cellPx + cellPx / 2;
@@ -1575,8 +1573,8 @@
     }
 
     function positionTestButton(cellPx){
-      const row = 8;  // Zeile 8
-      const col = 8;  // Spalte H
+      const row = 8;
+      const col = 8;
       const visualRow = row + HEADER_ROW_OFFSET;
 
       const left = (col - 1) * cellPx + cellPx/2;
@@ -1591,14 +1589,10 @@
     }
 
     function positionRotationButtons(cellPx){
-      // CW/CCW Buttons in Zeile 10 zentrieren
       const row = 10;
       const visualRow = row + HEADER_ROW_OFFSET;
       let centerY = (visualRow - 1) * cellPx + cellPx / 2;
-
-      // (3) 40px Richtung Norden
       centerY -= 40;
-
       rotationBtns.style.top = centerY + "px";
       rotationBtns.style.transform = "translate(-50%, -50%)";
     }
@@ -1614,23 +1608,6 @@
       rebuildColors();
       positionUI();
       updateShadowVisibility();
-    }
-
-    function showSchauenView(){
-      currentView = "schauen";
-      schauenView.classList.remove("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      selectedLevel = "brainy";
-      buttonState = "schauen";
-      setSchauenText("SCHAUEN & MERKEN");
-      setSchauenEnabled(true);
-
-      targetsGenerated = 0;
-      clearTargetNumbers();
-      currentTarget = null;
-
-      showW();
     }
 
     function showKippAnzahlView(){
@@ -1651,7 +1628,6 @@
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
       kippAnzahlBtns.classList.add("compact");
-      // TEXT "EINE oder ZWEI Tasten wählen" ist gelöscht -> kein Subtitle mehr.
 
       [1, 2, 3, 4, 5, 6].forEach(num => {
         const btn = document.createElement("button");
@@ -1668,11 +1644,13 @@
       kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
       testTargetBtn.disabled = locked;
       btnSchauGenau.disabled = locked;
+      btnCW.disabled = locked;
+      btnCCW.disabled = locked;
     }
 
     let runningKipp = false;
 
-    async function runKippCyclesNoHit(count){
+    async function runKippCyclesNoHit(count, dir){
       if(runningKipp) return;
       runningKipp = true;
 
@@ -1680,16 +1658,26 @@
 
       for(let i = 0; i < count; i++){
         showKip();
-        renderKip();
+        renderKip(dir);
         if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
-        advanceFullCW();
+        advanceFull(dir);
         showW();
         renderW();
         if(!await waitOrPause('w', myToken)){ runningKipp=false; return; }
       }
 
       runningKipp = false;
+    }
+
+    async function runSingleManualKip(dir){
+      if(runningKipp || runningPreview) return;
+      setAnzahlButtonsLocked(true);
+      try{
+        await runKippCyclesNoHit(1, dir);
+      } finally {
+        setAnzahlButtonsLocked(false);
+      }
     }
 
     function handleAnzahlClick(anzahl){
@@ -1704,7 +1692,7 @@
 
         setAnzahlButtonsLocked(true);
 
-        runKippCyclesNoHit(totalKipps).finally(() => {
+        runKippCyclesNoHit(totalKipps, +1).finally(() => {
           selectedButtons = [];
           kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
           setAnzahlButtonsLocked(false);
@@ -1721,7 +1709,7 @@
 
           setAnzahlButtonsLocked(true);
 
-          runKippCyclesNoHit(totalKipps).finally(() => {
+          runKippCyclesNoHit(totalKipps, +1).finally(() => {
             selectedButtons = [];
             kippAnzahlBtns.querySelectorAll("button").forEach(b => b.classList.remove("selected"));
             setAnzahlButtonsLocked(false);
@@ -1730,7 +1718,7 @@
       }
     }
 
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0)
+    // "SCHAU GENAU" -> exakt 4x kippen (CW wie bisher)
     btnSchauGenau.addEventListener("click", async () => {
       setAnzahlButtonsLocked(true);
 
@@ -1742,7 +1730,7 @@
       showW();
       renderW();
 
-      await runKippCyclesNoHit(4);
+      await runKippCyclesNoHit(4, +1);
 
       rotIndex = savedRot;
       faceIndex = savedFace;
@@ -1758,15 +1746,15 @@
       if(currentTarget) placeTargetNumbers(currentTarget);
     });
 
-    // CW/CCW Rotation Buttons (vorerst ohne Funktion)
-    btnCW.addEventListener("click", () => {
-      console.log("CW Button geklickt - Funktion noch nicht implementiert");
-      // TODO: Clockwise Rotation implementieren
+    // ✅ CW/CCW Buttons sind jetzt aktiv:
+    // CW: 1 Schritt im Uhrzeigersinn
+    // CCW: 1 Schritt gegen den Uhrzeigersinn
+    btnCW.addEventListener("click", async () => {
+      await runSingleManualKip(+1);
     });
 
-    btnCCW.addEventListener("click", () => {
-      console.log("CCW Button geklickt - Funktion noch nicht implementiert");
-      // TODO: Counter-Clockwise Rotation implementieren
+    btnCCW.addEventListener("click", async () => {
+      await runSingleManualKip(-1);
     });
 
     btnSchauen.addEventListener("click", async () => {
