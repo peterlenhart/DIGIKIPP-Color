@@ -1072,6 +1072,45 @@
     let attemptsForTarget = 0;
     const MAX_ATTEMPTS_PER_TARGET = 2;
 
+    // =========================================================
+    // FIX: Treffer-Farbe NICHT an Slot-Position koppeln,
+    //      sondern dauerhaft an die Zahl (Hit-Memory).
+    //      Dadurch wird "8 wird grün beim Vorbeikippen" verhindert.
+    // =========================================================
+    const hitMemory = new Map(); // number -> color
+
+    function rememberHit(num, color){
+      if(num == null || !color) return;
+      // Letzter Treffer überschreibt (falls dieselbe Zahl später mit anderer Farbe geloggt würde)
+      hitMemory.set(num, color);
+    }
+
+    function applyPersistentSlotColors(){
+      // Nur in der W-Ansicht sollen Trefferfarben sichtbar sein
+      if(wFaceGroup.classList.contains("hidden")) return;
+
+      const visibleSlots = getVisibleSlotInfos();
+      for(const si of visibleSlots){
+        const col = hitMemory.get(si.num);
+        if(col){
+          si.slotEl.style.setProperty("--slot-fill", `var(--${col})`);
+        } else {
+          // wenn kein Treffer für diese Zahl: beige (default)
+          si.slotEl.style.removeProperty("--slot-fill");
+        }
+      }
+    }
+
+    function clearKipSlotFills(){
+      // In Kipp-Preview KEINE Trefferfarben anzeigen (sonst "Vorbeikippen-Färbung")
+      // -> Alles auf Default lassen.
+      for(const el of slotElsW){
+        el.style.removeProperty("--slot-fill");
+      }
+      // (Kip-Slots benutzen dieselbe .slot Klasse, sind aber in kipGroups.
+      // Wir setzen dort nichts, damit es garantiert beige bleibt.)
+    }
+
     function showHint(text){
       hintTitle.textContent = text;
       hintTitle.classList.remove("hidden");
@@ -1151,10 +1190,8 @@
     }
 
     // =========================================================
-    // FIX (DEIN KERNPUNKT):
-    // - clearHitVisuals darf NIE die Slot-Farbe löschen,
-    //   sondern nur die "Impuls"-Animation (kippPulse).
-    // - Slot-Farbe bleibt bis Spielende bestehen.
+    // FIX: Clear darf NICHT die persistente Trefferfarbe killen.
+    //      -> nur Pulse/Animation entfernen.
     // =========================================================
     function clearHitVisuals(){
       for(const el of slotElsW){
@@ -1164,19 +1201,18 @@
       }
     }
 
-    // Nur für echten Neustart: Slot-Farben wieder auf Beige zurück
-    function resetAllSlotFillsToBeige(){
-      for(const el of slotElsW){
-        el.style.removeProperty("--slot-fill");
-      }
-    }
-
     function applyHitVisual(slotInfo){
-      if(currentTarget && currentTarget.color){
-        slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
+      // Treffer dauerhaft merken (zahl-gebunden!)
+      if(currentTarget && currentTarget.num != null && currentTarget.color){
+        rememberHit(currentTarget.num, currentTarget.color);
       }
+
+      // Pulse (kurz)
       slotInfo.slotEl.classList.add("kippPulse");
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
+
+      // Sofort persistente Farben in der W-Ansicht setzen
+      applyPersistentSlotColors();
 
       setTimeout(() => {
         slotInfo.slotEl.classList.remove("kippPulse");
@@ -1330,11 +1366,15 @@
       Object.values(kipGroups).forEach(g => g.classList.add("hidden"));
       wFaceGroup.classList.remove("hidden");
       updateShadowVisibility();
+      // Trefferfarben in W sofort korrekt setzen
+      applyPersistentSlotColors();
     }
 
     function showKip(){
       wFaceGroup.classList.add("hidden");
       updateShadowVisibility();
+      // während Kipp niemals Trefferfarben anzeigen
+      clearKipSlotFills();
     }
 
     function mapHiddenToVisible_CW(face){
@@ -1373,6 +1413,7 @@
       for(let i=0;i<4;i++) renderNumber(right[i], curr[i]);
       const nextPreview = mapHiddenToVisible_CW(next);
       for(let i=0;i<4;i++) renderNumber(left[i], nextPreview[i]);
+      // Kipp bleibt beige -> nix färben
     }
 
     function getUniqueRandomNumbers(count, min, max){
@@ -1417,6 +1458,8 @@
       setRotationSnap();
       const curr = sets[faceIndex];
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
+      // Nach jedem Render: Trefferfarben auf die *Zahl* anwenden
+      applyPersistentSlotColors();
     }
 
     let planned = [
@@ -1519,17 +1562,24 @@
 
     // =========================
     // Reset auf Zielwahl (Zielbett wird beige + neues Ziel wählen)
-    // Slotfarben bleiben jetzt erhalten (nur Pulse wird entfernt)
+    // Trefferfarben bleiben (Hit-Memory) bis Spielende!
     // =========================
     function resetToNewTargetChoice(){
       attemptsForTarget = 0;
       currentTarget = null;
       targetRevealed = false;
       resetTargetPadUI();
-      clearHitVisuals();         // <-- löscht nur Pulse, NICHT Slotfarbe
+      clearHitVisuals(); // nur Pulse weg, nicht Farben
       showTargetSelectView();
+      // W-Ansicht ggf. wieder korrekt färben
+      applyPersistentSlotColors();
     }
 
+    // =========================================================
+    // Nach jedem Kipp -> Treffer prüfen
+    // Treffer => neues Ziel wählen
+    // 2 Fehlversuche => neues Ziel wählen
+    // =========================================================
     function handleAnzahlClick(anzahl){
       if(!currentTarget) return; // ohne Ziel kein Kipp
 
@@ -1537,8 +1587,8 @@
       attemptsForTarget++;
 
       runSchauKippSequence(anzahl, { kipFactor: 1 }).finally(async () => {
-        // Treffer nach Endlage prüfen
-        clearHitVisuals();       // <-- nur Pulse resetten
+        // KEIN clearslotfill mehr! Nur Pulse resetten.
+        clearHitVisuals();
         const hit = checkHitAndAnimate();
 
         if(hit){
@@ -1607,7 +1657,7 @@
       attemptsForTarget = 0;
 
       resetTargetPadUI();
-      clearHitVisuals();     // <-- nur Pulse entfernen (Slotfarbe bleibt, aber bei Neustart setzen wir separat zurück)
+      clearHitVisuals();
 
       positionUI();
     }
@@ -1646,6 +1696,9 @@
       showBackIcon(false);
 
       clearHitVisuals();
+      // Persistente Farben zeigen, falls schon Treffer existieren
+      applyPersistentSlotColors();
+      // Optional: wenn Ziel sofort getroffen wäre, wird Hit korrekt geloggt
       checkHitAndAnimate();
 
       positionUI();
@@ -1928,6 +1981,8 @@
       rebuildColors();
       positionUI();
       updateShadowVisibility();
+      // nach Resize: Trefferfarben neu anwenden
+      applyPersistentSlotColors();
     }
 
     function initPlayState(){
@@ -1939,9 +1994,8 @@
       started = false;
       attemptsForTarget = 0;
 
-      // WICHTIG: Nur beim echten Neustart werden Slotfarben zurückgesetzt
-      resetAllSlotFillsToBeige();
-      clearHitVisuals();
+      // NEU: Treffer-Speicher komplett leeren (neues Spiel)
+      hitMemory.clear();
 
       resetTargetPadUI();
 
