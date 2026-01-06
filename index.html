@@ -181,7 +181,6 @@
         translate(calc(-1 * var(--pivot-x)), calc(-1 * var(--pivot-y)));
       transform-origin: 0 0;
     }
-
     .cubeShadowLayer.visible{ opacity: 1; }
 
     .cubeShadowClip{
@@ -254,7 +253,6 @@
       opacity: 0;
       transition: opacity 0.1s ease;
     }
-
     .zwischenKippSchatten.visible{ opacity: 1; }
 
     #shadowQ0{ background-image: url("SchattenZwischenKipp_Q0.png"); }
@@ -319,120 +317,12 @@
       pointer-events: none;
     }
 
-    /* ===== Starttitel (zwischen Zeile 9 & 10, zentriert) ===== */
-    .centerTitle{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, -50%);
-      font-size: clamp(18px, 5.2vmin, 28px);
-      font-weight: 1000;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(234,215,190,0.96);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.85),
-        0 6px 16px rgba(0,0,0,0.70);
-      user-select: none;
-      white-space: nowrap;
-      line-height: 1;
-      z-index: 25;
-      pointer-events: none;
-    }
-    .centerTitle.white{
-      color: rgba(255,255,255,0.98);
-      text-shadow:
-        0 2px 0 rgba(0,0,0,0.92),
-        0 7px 18px rgba(0,0,0,0.78);
-    }
+    /* ======= TARGET-ANZEIGE AUF DEN RAND-FELDERN: UNSICHTBAR ======= */
+    .targetNumber{ display: none !important; }
 
-    /* ===== Pulsieren ohne Verschieben (keine transform-Animation) ===== */
-    @keyframes pulseGlow {
-      0% {
-        box-shadow:
-          0 10px 18px rgba(0,0,0,0.22),
-          0 0 0 1px rgba(255,255,255,0.18) inset,
-          0 0 0 0 rgba(255,255,255,0.00);
-        filter: brightness(1) saturate(1);
-      }
-      50% {
-        box-shadow:
-          0 10px 18px rgba(0,0,0,0.22),
-          0 0 0 1px rgba(255,255,255,0.18) inset,
-          0 0 20px 6px rgba(255,255,255,0.35);
-        filter: brightness(1.05) saturate(1.02);
-      }
-      100% {
-        box-shadow:
-          0 10px 18px rgba(0,0,0,0.22),
-          0 0 0 1px rgba(255,255,255,0.18) inset,
-          0 0 0 0 rgba(255,255,255,0.00);
-        filter: brightness(1) saturate(1);
-      }
-    }
-
-    /* Button "SCHAUEN & MERKEN" */
-    .schauenTop{
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      pointer-events: auto;
-    }
-
-    .btnSchauen{
-      width: calc(320px * var(--uiscale)); /* Startbutton breit */
-      height: calc(44px * var(--uiscale)); /* exakt wie Zahlentasten */
-      border-radius: calc(14px * var(--uiscale));
-      border: 2px solid rgba(0,0,0,0.65);
-      background: rgba(234,215,190,0.96);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.22),
-        0 0 0 1px rgba(255,255,255,0.18) inset;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
-      transition: filter 0.2s ease;
-      pointer-events: auto;
-      padding: 0;
-    }
-    .btnSchauen:active{ filter: brightness(0.98); }
-    .btnSchauen[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
-    .btnSchauen.pulsing{
-      animation: pulseGlow 1.15s ease-in-out infinite;
-    }
-
-    .btnText{
-      font-size: calc(16px * var(--uiscale));
-      font-weight: 1000;
-      letter-spacing: 0.06em;
-      line-height: 1.2;
-      color: #7a3f2b;
-      text-align: center;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-      white-space: nowrap;
-    }
-
-    /* "SCHAU GENAU" = Button im gleichen Stil (Höhe 44) - UNSICHTBAR */
-    .btnSchauGenau{
-      position: absolute;
-      left: 50%;
-      top: 0;
-      transform: translate(-50%, -50%);
-      width: calc(320px * var(--uiscale)); /* wird in positionUI() auf C–F überschrieben */
-      height: calc(44px * var(--uiscale));
-      display: none !important;
-      pointer-events: none !important;
-    }
-    .btnSchauGenau:active{ transform: translate(-50%, -50%); filter: brightness(0.98); }
-    .btnSchauGenau[disabled]{ opacity: 0.55; pointer-events: none; filter: saturate(0.8); }
-
+    /* =========
+       Button-Stil wie Zahlentasten
+       ========= */
     .squareBtn{
       width: calc(44px * var(--uiscale));
       height: calc(44px * var(--uiscale));
@@ -449,17 +339,8 @@
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
       pointer-events: auto;
-      padding: 0;
     }
-    .squareBtn:active{ filter: brightness(0.98); }
-    .squareBtn.selected{
-      background: rgba(249, 150, 30, 0.95);
-      border-color: rgba(0,0,0,0.85);
-      box-shadow:
-        0 10px 18px rgba(0,0,0,0.32),
-        0 0 0 2px rgba(255,255,255,0.25) inset,
-        0 0 0 4px rgba(249, 150, 30, 0.95) inset;
-    }
+    .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
     .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
 
     .anzahlText{
@@ -471,19 +352,110 @@
       line-height: 1;
     }
 
-    .kippAnzahlBtns{
+    /* Start-Button: breit, aber gleicher Stil wie squareBtn */
+    .startBtnWrap{
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      flex-wrap: nowrap;
-      gap: calc(24px * var(--uiscale));
-      pointer-events: auto;
-      z-index: 10;
-      justify-content: center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: none; /* Wrapper nicht klickbar */
+      z-index: 50;
     }
-    .kippAnzahlBtns.compact{ gap: calc(12px * var(--uiscale)); }
+    .startBtn{
+      pointer-events: auto;
+      width: calc(520px * var(--uiscale));
+      max-width: calc(7 * var(--cell));
+      height: calc(44px * var(--uiscale));
+    }
 
+    /* Pulsieren ohne Layout-Shift (nur scale) */
+    @keyframes pulseScale {
+      0%   { transform: scale(1);   filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+      100% { transform: scale(1.06); filter: drop-shadow(0 0 14px rgba(255,255,255,0.45)); }
+    }
+    .pulse{
+      animation: pulseScale 0.9s ease-in-out 0s infinite alternate;
+      will-change: transform, filter;
+    }
+
+    /* Hinweistext "SCHAUKIPP-RUNDE" */
+    .hintTitle{
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.96); /* WEISS */
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.75),
+        0 10px 22px rgba(0,0,0,0.55);
+      white-space: nowrap;
+      z-index: 60;
+      pointer-events: none;
+      /* Hinweistext-Größe (nicht mikroskopisch):
+         Skaliert mit Viewport, aber bleibt lesbar */
+      font-size: clamp(28px, 5.2vmin, 54px);
+    }
+
+    /* 2x2 Ziel-Button 12D–13E */
+    .targetPadBtn{
+      position: absolute;
+      box-sizing: border-box;
+      border-radius: 0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
+        var(--slot-fill); /* beige wie Slot */
+      /* Innenrahmen rot-braun */
+      box-shadow:
+        inset 0 0 0 6px var(--w1-innerframe),
+        0 10px 18px rgba(0,0,0,0.22);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      pointer-events: auto;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .targetPadBtn:active{ transform: translate(-0px, -0px) scale(0.99); filter: brightness(0.98); }
+
+    .targetPadCircle{
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2px solid var(--w1-innerframe); /* rot-braun */
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+
+    .targetPadNum{
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #111;
+      font-size: calc(var(--cell) * 0.70); /* exakt Slot-Zahlengröße */
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.35);
+      line-height: 1;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .targetPadNum.twodigit{
+      letter-spacing: -0.16em !important;
+      transform: translateX(-0.10em);
+    }
+
+    /* Slots */
     .slot{
       position: absolute;
       width: var(--cell);
@@ -649,7 +621,7 @@
       z-index: 100;
       padding: 0;
     }
-    .navBtn:active{ opacity: 0.8; }
+    .navBtn:active{ transform: scale(0.95); opacity: 0.8; }
     .navBtn[disabled]{ opacity: 0.35; pointer-events: none; filter: saturate(0.8); }
 
     .closeIcon{
@@ -812,39 +784,6 @@
     .kippPulse{
       animation: kippPulseGlow 0.22s ease-in-out 0s 10 alternate;
     }
-
-    /* ===== Startfläche 2x2 (12D–13E) ===== */
-    .startPanel{
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: calc(2 * var(--cell));
-      height: calc(2 * var(--cell));
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)),
-        var(--slot-fill);
-      border-radius: 0;
-      box-shadow:
-        inset 0 0 0 5px var(--w1-innerframe);
-      z-index: 12;
-      pointer-events: none;
-      opacity: 0;
-    }
-    .startPanel.visible{ opacity: 1; }
-
-    .startPanel .circleMark{
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 15px;
-      height: 15px;
-      transform: translate(-50%, -50%);
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.55);
-      box-shadow:
-        0 1px 0 rgba(0,0,0,0.60),
-        0 4px 10px rgba(0,0,0,0.35);
-    }
   </style>
 </head>
 
@@ -854,11 +793,6 @@
       <div class="bgPNG" aria-hidden="true"></div>
       <div class="ball" aria-label="Kugel"></div>
       <div class="colors" id="colors" aria-hidden="true"></div>
-
-      <!-- Startfläche (12D–13E) -->
-      <div id="startPanel" class="startPanel" aria-hidden="true">
-        <div class="circleMark" aria-hidden="true"></div>
-      </div>
 
       <div id="cubeShadowLayer" class="cubeShadowLayer" aria-hidden="true">
         <div class="cubeShadowClip">
@@ -948,26 +882,23 @@
         <div class="scoreDisplay" id="scoreDisplay">P00/80</div>
         <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
 
-        <!-- Starttitel (zwischen 9 und 10) -->
-        <div class="centerTitle" id="centerTitle">SCHAU-KIPP-RUNDE</div>
+        <!-- Hinweistext -->
+        <div class="hintTitle" id="hintTitle">SCHAUKIPP-RUNDE</div>
 
-        <div id="schauenView" class="hidden">
-          <div class="schauenTop" id="schauenTop">
-            <button id="btnSchauen" class="btnSchauen pulsing" type="button">
-              <span class="btnText">SCHAUEN &amp; MERKEN</span>
-            </button>
-          </div>
-
-          <button class="navBtn closeBtn" id="closeBtnSchauen" aria-label="Spiel beenden">
-            <div class="closeIcon"></div>
+        <!-- Start-Button (Style wie Zahlentasten, pulsiert, gleiche Höhe wie 1–6 + 22px) -->
+        <div class="startBtnWrap" id="startBtnWrap">
+          <button id="btnSchauen" class="squareBtn startBtn" type="button">
+            <span class="anzahlText pulse" id="btnSchauenPulse">SCHAUEN &amp; MERKEN</span>
           </button>
         </div>
 
-        <div id="kippAnzahlView" class="hidden">
-          <button id="btnSchauGenau" class="btnSchauen btnSchauGenau" type="button">
-            <span class="btnText">SCHAU GENAU</span>
-          </button>
+        <!-- 2x2 Ziel-Button 12D–13E -->
+        <button class="targetPadBtn" id="targetPadBtn" type="button" aria-label="Ziel erzeugen">
+          <div class="targetPadCircle" id="targetPadCircle"></div>
+          <div class="targetPadNum" id="targetPadNum"></div>
+        </button>
 
+        <div id="kippAnzahlView" class="hidden">
           <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
@@ -1006,14 +937,12 @@
   <script>
     const colorsEl = document.getElementById("colors");
 
-    const schauenView  = document.getElementById("schauenView");
-    const schauenTop   = document.getElementById("schauenTop");
     const btnSchauen   = document.getElementById("btnSchauen");
+    const startBtnWrap = document.getElementById("startBtnWrap");
+    const hintTitle    = document.getElementById("hintTitle");
 
     const kippAnzahlView = document.getElementById("kippAnzahlView");
     const kippAnzahlBtns = document.getElementById("kippAnzahlBtns");
-
-    const closeBtnSchauen = document.getElementById("closeBtnSchauen");
     const closeBtnAnzahl  = document.getElementById("closeBtnAnzahl");
 
     const closeModal   = document.getElementById("closeModal");
@@ -1024,10 +953,10 @@
     const endRestart = document.getElementById("endRestart");
 
     const testTargetBtn = document.getElementById("testTargetBtn");
-    const btnSchauGenau = document.getElementById("btnSchauGenau");
 
-    const centerTitle = document.getElementById("centerTitle");
-    const startPanel = document.getElementById("startPanel");
+    const targetPadBtn    = document.getElementById("targetPadBtn");
+    const targetPadCircle = document.getElementById("targetPadCircle");
+    const targetPadNum    = document.getElementById("targetPadNum");
 
     const shadowQ0 = document.getElementById("shadowQ0");
     const shadowQ1 = document.getElementById("shadowQ1");
@@ -1036,11 +965,6 @@
     const allShadows = [shadowQ0, shadowQ1, shadowQ2, shadowQ3];
 
     const cubeShadowLayer = document.getElementById("cubeShadowLayer");
-
-    let currentView = "level";
-    let selectedLevel = null;
-
-    let buttonState = "schauen";
 
     function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
 
@@ -1132,13 +1056,6 @@
 
     // ======= Treffer-/Ausschluss-Logik (nur Logik, kein Rendering ändern) =======
 
-    const ZF_INDEX_BY_COORD = {
-      "4A": 1, "3A": 2, "1C": 3, "1D": 4,
-      "1E": 1, "1F": 2, "3H": 3, "4H": 4,
-      "5H": 1, "6H": 2, "8F": 3, "8E": 4,
-      "8D": 1, "8C": 2, "6A": 3, "5A": 4,
-    };
-
     const ZS_COORDS_BY_ROT_ZSINDEX = [
       ["4B","3B","2C","2D"],
       ["2E","2F","3G","4G"],
@@ -1214,43 +1131,34 @@
         const s = el.querySelector(".num > span");
         if(s) s.classList.remove("kippPulse");
       }
-      document.querySelectorAll(".targetNumber .targetNumSpan").forEach(s => s.classList.remove("kippPulse"));
     }
 
-    function applyHitVisual(slotInfo, targetCoord){
+    function applyHitVisual(slotInfo){
       if(currentTarget && currentTarget.color){
         slotInfo.slotEl.style.setProperty("--slot-fill", `var(--${currentTarget.color})`);
       }
       slotInfo.slotEl.classList.add("kippPulse");
       if(slotInfo.spanEl) slotInfo.spanEl.classList.add("kippPulse");
 
-      const targetSpan = document.querySelector(`.targetNumber[data-coord="${targetCoord}"] .targetNumSpan`);
-      if(targetSpan) targetSpan.classList.add("kippPulse");
-
       setTimeout(() => {
         slotInfo.slotEl.classList.remove("kippPulse");
         if(slotInfo.spanEl) slotInfo.spanEl.classList.remove("kippPulse");
-        if(targetSpan) targetSpan.classList.remove("kippPulse");
       }, 2600);
     }
 
     function checkHitAndAnimate(){
       if(!currentTarget) return false;
-
-      const targetElems = Array.from(document.querySelectorAll(".targetNumber"));
-      if(targetElems.length === 0) return false;
-
       const visibleSlots = getVisibleSlotInfos();
 
-      for(const te of targetElems){
-        const zfCoord = te.dataset.coord;
-        if(!zfCoord) continue;
-
+      // Trefferlogik bleibt – Ziel-Randfelder sind nur unsichtbar, nicht entfernt.
+      // Wir prüfen weiterhin "adjacent" gegen alle Koords der Zielfarbe.
+      const coords = colorFieldCoords[currentTarget.color] || [];
+      for(const zfCoord of coords){
         for(const si of visibleSlots){
           if(si.num == null) continue;
           if(si.num !== currentTarget.num) continue;
           if(isBorderAdjacent(zfCoord, si.zsCoord)){
-            applyHitVisual(si, zfCoord);
+            applyHitVisual(si);
             return true;
           }
         }
@@ -1344,69 +1252,6 @@
       usedNumbers.add(chosenNum);
       drawsCount++;
       return { num: chosenNum, color: chosenColor };
-    }
-
-    // ===== Rendering / Placement (bleibt wie bei dir) =====
-
-    function clearTargetNumbers(){
-      document.querySelectorAll('.targetNumber').forEach(el => el.remove());
-    }
-
-    function placeTargetNumbers(target){
-      clearTargetNumbers();
-      const coords = colorFieldCoords[target.color];
-      if(!coords) return;
-
-      const cellPx = numVar("--cell") || 142;
-      const sizePx = numVar("--colorSize") || 126;
-
-      coords.forEach(coord => {
-        const { row, col } = coordToXY(coord);
-        const visualRow = row + HEADER_ROW_OFFSET;
-
-        const leftCell = (col - 1) * cellPx;
-        const topCell = (visualRow - 1) * cellPx;
-
-        const pad = (cellPx - sizePx) / 2;
-        const x = leftCell + pad;
-        const y = topCell + pad;
-
-        const container = document.createElement("div");
-        container.className = "targetNumber";
-        container.dataset.coord = coord;
-
-        container.style.position = "absolute";
-        container.style.left = x + "px";
-        container.style.top = y + "px";
-        container.style.width = sizePx + "px";
-        container.style.height = sizePx + "px";
-        container.style.display = "flex";
-        container.style.alignItems = "center";
-        container.style.justifyContent = "center";
-        container.style.zIndex = "8";
-        container.style.pointerEvents = "none";
-
-        const numSpan = document.createElement("span");
-        numSpan.className = "targetNumSpan";
-        numSpan.style.fontWeight = "900";
-        numSpan.style.color = "#111";
-        numSpan.style.fontSize = "calc(" + sizePx + "px * 0.70)";
-        numSpan.style.textShadow = "0 2px 0 rgba(255,255,255,0.35)";
-        numSpan.style.lineHeight = "1";
-
-        const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
-        numSpan.textContent = text;
-
-        const rot = getTargetRotationDeg(row, col);
-        numSpan.style.transform = `rotate(${rot}deg)`;
-
-        if(target.num >= 10){
-          numSpan.classList.add("twodigit");
-        }
-
-        container.appendChild(numSpan);
-        colorsEl.appendChild(container);
-      });
     }
 
     function updateShadowVisibility(){
@@ -1519,11 +1364,6 @@
       for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], curr[i]);
     }
 
-    function renderWEmpty(){
-      setRotationSnap();
-      for(let i=0;i<4;i++) renderNumber(slotTargetsW[i], null);
-    }
-
     let planned = [
       [null,null,null,null],
       [null,null,null,null],
@@ -1542,25 +1382,25 @@
       assigned[idx] = true;
     }
 
-    function reroll12_keepEmpty(){
+    function reroll12_keepAssigned(){
       const twelve = getUniqueRandomNumbers(12, 1, 12);
       planned[0] = twelve.slice(0,4);
       planned[1] = twelve.slice(4,8);
       planned[2] = twelve.slice(8,12);
 
       sets = [
-        [null,null,null,null],
-        [null,null,null,null],
-        [null,null,null,null],
+        planned[0].slice(),
+        planned[1].slice(),
+        planned[2].slice(),
       ];
-      assigned = [false,false,false];
+      assigned = [true,true,true];
 
       rotIndex  = 0;
-      faceIndex = 0;
+      faceIndex = 1; /* wie bei deinem Play-Start */
       setRotationSnap();
     }
 
-    let runningPreview = false;
+    let runningKipp = false;
     let previewToken = 0;
 
     async function waitOrPause(type, myToken){
@@ -1575,18 +1415,6 @@
       return (myToken === previewToken);
     }
 
-    function setSchauenEnabled(enabled){
-      btnSchauen.disabled = !enabled;
-    }
-
-    function cancelPreview(){
-      previewToken++;
-      runningPreview = false;
-    }
-
-    // ===== Start-Button Funktion: 4x kippen wie Taste "4" =====
-    let runningKipp = false;
-
     async function runKippCyclesNoHit(count){
       if(runningKipp) return;
       runningKipp = true;
@@ -1598,7 +1426,6 @@
         renderKip();
         if(!await waitOrPause('kip', myToken)){ runningKipp=false; return; }
 
-        // NUR Uhrzeigersinn
         advanceFullCW();
         showW();
         renderW();
@@ -1611,8 +1438,142 @@
       runningKipp = false;
     }
 
-    // ===== Rendering / Placement UI =====
+    function buildKippAnzahlButtons(){
+      kippAnzahlBtns.innerHTML = "";
+      kippAnzahlBtns.classList.add("compact");
 
+      [1, 2, 3, 4, 5, 6].forEach(num => {
+        const btn = document.createElement("button");
+        btn.className = "squareBtn";
+        btn.dataset.anzahl = num;
+        btn.type = "button";
+        btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
+        btn.addEventListener("click", () => handleAnzahlClick(num));
+        kippAnzahlBtns.appendChild(btn);
+      });
+    }
+
+    function setAnzahlButtonsLocked(locked){
+      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
+      testTargetBtn.disabled = locked;
+      targetPadBtn.disabled = locked;
+    }
+
+    function handleAnzahlClick(anzahl){
+      setAnzahlButtonsLocked(true);
+      runKippCyclesNoHit(anzahl).finally(() => {
+        setAnzahlButtonsLocked(false);
+      });
+    }
+
+    function showKippAnzahlView(){
+      kippAnzahlView.classList.remove("hidden");
+      buildKippAnzahlButtons();
+      testTargetBtn.classList.remove("hidden");
+      testTargetBtn.disabled = false;
+
+      clearHitVisuals();
+      checkHitAndAnimate();
+    }
+
+    // ======= Zielpad-UI: initial sichtbar (beige + Kreis), Klick -> Zielfarbe + Zahl =======
+    function resetTargetPadUI(){
+      targetPadBtn.style.background =
+        `linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)), var(--slot-fill)`;
+      targetPadCircle.style.display = "block";
+      targetPadNum.style.opacity = "0";
+      targetPadNum.textContent = "";
+      targetPadNum.classList.remove("twodigit");
+    }
+
+    function applyTargetToPad(target){
+      if(!target) return;
+
+      // Fläche einfärben in Zielfarbe
+      targetPadBtn.style.background =
+        `linear-gradient(135deg, rgba(255,255,255,0.14), rgba(0,0,0,0.05)), var(--${target.color})`;
+
+      // Kreis fällt weg
+      targetPadCircle.style.display = "none";
+
+      // Zahl setzen in Slot-Größe
+      const text = (target.num === 9 || target.num === 6) ? `${target.num}.` : String(target.num);
+      targetPadNum.textContent = text;
+
+      targetPadNum.classList.remove("twodigit");
+      if(target.num >= 10) targetPadNum.classList.add("twodigit");
+
+      targetPadNum.style.opacity = "1";
+    }
+
+    targetPadBtn.addEventListener("click", () => {
+      // neues Ziel
+      clearHitVisuals();
+      currentTarget = generateTarget_NumberColor_WithExclusion();
+
+      // Rand-Zielfelder sind per CSS unsichtbar – wir zeigen nur im Pad.
+      applyTargetToPad(currentTarget);
+
+      // sofort Hit prüfen
+      checkHitAndAnimate();
+    });
+
+    // Start-Button: verhält sich wie "4" klicken (4 Kipps)
+    btnSchauen.addEventListener("click", async () => {
+      if(runningKipp) return;
+
+      // Startbutton bleibt sichtbar (du wolltest keine extra View genannt),
+      // aber wir aktivieren sicher die 1–6 Ansicht (damit es “Spiel” ist).
+      showKippAnzahlView();
+
+      setAnzahlButtonsLocked(true);
+      await runKippCyclesNoHit(4);
+      setAnzahlButtonsLocked(false);
+    });
+
+    testTargetBtn.addEventListener("click", () => {
+      // Debug: neues Ziel wie bisher, aber Randfelder bleiben unsichtbar.
+      clearHitVisuals();
+      currentTarget = generateTarget_NumberColor_WithExclusion();
+      applyTargetToPad(currentTarget);
+      checkHitAndAnimate();
+    });
+
+    // ===== Beenden-Logik =====
+    function cancelPreview(){
+      previewToken++;
+      runningKipp = false;
+    }
+
+    function showCloseModal(){
+      cancelPreview();
+      closeModal.classList.remove("hidden");
+    }
+    function hideCloseModal(){
+      closeModal.classList.add("hidden");
+    }
+
+    function endGame(){
+      cancelPreview();
+      hideCloseModal();
+      kippAnzahlView.classList.add("hidden");
+      endOverlay.classList.remove("hidden");
+    }
+
+    closeBtnAnzahl.addEventListener("click", showCloseModal);
+
+    modalCancel.addEventListener("click", hideCloseModal);
+    modalConfirm.addEventListener("click", endGame);
+
+    closeModal.addEventListener("click", (e) => {
+      if(e.target === closeModal) hideCloseModal();
+    });
+
+    endRestart.addEventListener("click", () => {
+      location.reload();
+    });
+
+    // ===== Layout/Platzierung =====
     function setScaleToFitWidth(){
       const cols = numVar("--cols") || 8;
       const cell = numVar("--cell") || 142;
@@ -1671,24 +1632,7 @@
     function positionUI(){
       const cellPx = numVar("--cell") || 142;
 
-      // ----- Title: zwischen Zeile 9 und 10 (zentriert)
-      const row9VisualTop  = (((9  + HEADER_ROW_OFFSET) - 1) * cellPx);
-      const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
-      const mid910 = (row9VisualTop + row10VisualTop) / 2;
-
-      centerTitle.style.top = mid910 + "px";
-
-      // ----- Zahlentasten: exakt zwischen 10 und 11
-      const row11VisualTop = (((11 + HEADER_ROW_OFFSET) - 1) * cellPx);
-      const row11CenterY = row11VisualTop + cellPx / 2;
-
-      kippAnzahlBtns.style.top = row11CenterY + "px";
-      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
-
-      // ----- Startbutton: gleiche Höhe wie Zahlentasten, +22px nach unten
-      schauenTop.style.top = (row11CenterY + 22) + "px";
-
-      // ----- Header
+      // Header / Title / Score
       const headerY = 1.0 * cellPx;
 
       const score = document.getElementById("scoreDisplay");
@@ -1702,9 +1646,29 @@
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
+      // Zeile 11 (Raster-Row) -> Mitte (zwischen 10 und 11 liegt der Tasten-Bereich)
+      const row11VisualTop = ( (11 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row11CenterY = row11VisualTop + cellPx / 2;
+
+      // 1–6 Buttons sitzen genau hier:
+      kippAnzahlBtns.style.top = row11CenterY + "px";
+      kippAnzahlBtns.style.left = "50%";
+      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
+
+      // START-BUTTON: exakt gleiche Höhe wie 1–6, aber +22px NACH SÜDEN
+      startBtnWrap.style.top = (row11CenterY + 22) + "px";
+
+      // Hinweistext: exakt zwischen Zeile 9 und 10 (Zwischenlinie)
+      const row9VisualTop  = ( (9 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const row10VisualTop = ( (10 + HEADER_ROW_OFFSET) - 1 ) * cellPx;
+      const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
+      hintTitle.style.top = midBetween9and10 + "px";
+
+      // Zielpad 12D–13E (2x2)
+      placeTargetPad_12D_13E(cellPx);
+
       positionNavButtons(cellPx);
       positionTestButton(cellPx);
-      positionStartPanel(cellPx);
     }
 
     function positionNavButtons(cellPx){
@@ -1715,12 +1679,10 @@
 
       const s = getComputedStyle(document.documentElement).getPropertyValue("--headerScale").trim() || 0.75;
 
-      [closeBtnSchauen, closeBtnAnzahl].forEach(btn => {
-        btn.style.left = closeLeft + "px";
-        btn.style.top = closeTop + "px";
-        btn.style.transform = `translate(-50%, -50%) scale(${s})`;
-        btn.style.transformOrigin = "top left";
-      });
+      closeBtnAnzahl.style.left = closeLeft + "px";
+      closeBtnAnzahl.style.top = closeTop + "px";
+      closeBtnAnzahl.style.transform = `translate(-50%, -50%) scale(${s})`;
+      closeBtnAnzahl.style.transformOrigin = "top left";
     }
 
     function positionTestButton(cellPx){
@@ -1739,17 +1701,19 @@
       testTargetBtn.style.pointerEvents = "auto";
     }
 
-    // 2x2 Fläche: 12D–13E
-    function positionStartPanel(cellPx){
-      const startRow = 12;
-      const startCol = 4; // D
-      const visualRow = startRow + HEADER_ROW_OFFSET;
+    function placeTargetPad_12D_13E(cellPx){
+      // 12D bis 13E => 2x2 Zellen, Start bei row=12 col=D(4)
+      const row = 12;
+      const col = 4; // D
+      const visualRow = row + HEADER_ROW_OFFSET;
 
-      const left = (startCol - 1) * cellPx;
+      const left = (col - 1) * cellPx;
       const top  = (visualRow - 1) * cellPx;
 
-      startPanel.style.left = left + "px";
-      startPanel.style.top  = top  + "px";
+      targetPadBtn.style.left = left + "px";
+      targetPadBtn.style.top  = top + "px";
+      targetPadBtn.style.width  = (2 * cellPx) + "px";
+      targetPadBtn.style.height = (2 * cellPx) + "px";
     }
 
     function rebuild(){
@@ -1765,191 +1729,25 @@
       updateShadowVisibility();
     }
 
-    function showSchauenView(){
-      currentView = "schauen";
-      schauenView.classList.remove("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      selectedLevel = "brainy";
-      setSchauenEnabled(true);
-
-      resetTargetDeck();
-      clearTargetNumbers();
-      clearHitVisuals();
-      currentTarget = null;
-
-      // Start: Titel nicht weiß, Startpanel unsichtbar
-      centerTitle.classList.remove("white");
-      startPanel.classList.remove("visible");
-
-      showW();
-    }
-
-    function showKippAnzahlView(){
-      currentView = "anzahl";
-      schauenView.classList.add("hidden");
-      kippAnzahlView.classList.remove("hidden");
-
-      buildKippAnzahlButtons();
-      testTargetBtn.classList.remove("hidden");
-      testTargetBtn.disabled = false;
-
-      btnSchauGenau.disabled = false;
-
-      clearHitVisuals();
-
-      currentTarget = generateTarget_NumberColor_WithExclusion();
-      if(currentTarget) placeTargetNumbers(currentTarget);
-
-      checkHitAndAnimate();
-    }
-
-    function buildKippAnzahlButtons(){
-      kippAnzahlBtns.innerHTML = "";
-      kippAnzahlBtns.classList.add("compact");
-
-      [1, 2, 3, 4, 5, 6].forEach(num => {
-        const btn = document.createElement("button");
-        btn.className = "squareBtn";
-        btn.dataset.anzahl = num;
-        btn.type = "button";
-        btn.innerHTML = `<span class="anzahlText">${String(num)}</span>`;
-        btn.addEventListener("click", () => handleAnzahlClick(num));
-        kippAnzahlBtns.appendChild(btn);
-      });
-    }
-
-    function setAnzahlButtonsLocked(locked){
-      kippAnzahlBtns.querySelectorAll("button").forEach(b => b.disabled = locked);
-      testTargetBtn.disabled = locked;
-      btnSchauGenau.disabled = locked;
-    }
-
-    // EIN-TASTEN-System: Taste 1–6 -> sofort genau so viele Kipp-Schritte (CW)
-    function handleAnzahlClick(anzahl){
-      setAnzahlButtonsLocked(true);
-      runKippCyclesNoHit(anzahl).finally(() => {
-        setAnzahlButtonsLocked(false);
-      });
-    }
-
-    // "SCHAU GENAU" -> exakt 4x kippen (Q1,Q2,Q3,Q0)
-    btnSchauGenau.addEventListener("click", async () => {
-      setAnzahlButtonsLocked(true);
-
-      const savedRot = rotIndex;
-      const savedFace = faceIndex;
-
-      rotIndex = 0;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      await runKippCyclesNoHit(4);
-
-      rotIndex = savedRot;
-      faceIndex = savedFace;
-      setRotationSnap();
-      showW();
-      renderW();
-
-      setAnzahlButtonsLocked(false);
-    });
-
-    testTargetBtn.addEventListener("click", () => {
-      clearHitVisuals();
-
-      currentTarget = generateTarget_NumberColor_WithExclusion();
-      if(currentTarget) placeTargetNumbers(currentTarget);
-
-      checkHitAndAnimate();
-    });
-
-    // ===== START-BUTTON: 4x kippen wie Taste "4" + Titel weiß + Startpanel sichtbar =====
-    btnSchauen.addEventListener("click", async () => {
-      // während Start-Kipps sperren
-      setSchauenEnabled(false);
-
-      // Titel weiß
-      centerTitle.classList.add("white");
-
-      // 2x2 Fläche sichtbar
-      startPanel.classList.add("visible");
-
-      // exakt 4 Kipps wie Taste 4
-      await runKippCyclesNoHit(4);
-
-      // danach in die Zahlentasten-Ansicht wechseln
-      showKippAnzahlView();
-      setSchauenEnabled(true);
-    });
-
-    // ===== Beenden-Logik =====
-    function showCloseModal(){
-      cancelPreview();
-      closeModal.classList.remove("hidden");
-    }
-    function hideCloseModal(){
-      closeModal.classList.add("hidden");
-    }
-
-    function endGame(){
-      cancelPreview();
-      hideCloseModal();
-
-      schauenView.classList.add("hidden");
-      kippAnzahlView.classList.add("hidden");
-
-      endOverlay.classList.remove("hidden");
-    }
-
-    closeBtnSchauen.addEventListener("click", showCloseModal);
-    closeBtnAnzahl.addEventListener("click", showCloseModal);
-
-    modalCancel.addEventListener("click", hideCloseModal);
-    modalConfirm.addEventListener("click", endGame);
-
-    closeModal.addEventListener("click", (e) => {
-      if(e.target === closeModal) hideCloseModal();
-    });
-
-    endRestart.addEventListener("click", () => {
-      location.reload();
-    });
-
     // ===== Startlogik =====
-    function initStartScreen(){
+    function initPlayState(){
       cancelPreview();
 
-      selectedLevel = "brainy";
-
       resetTargetDeck();
-      clearTargetNumbers();
-      clearHitVisuals();
       currentTarget = null;
+      resetTargetPadUI();
 
-      // Würfelzustand initialisieren (wie bei dir)
-      reroll12_keepEmpty();
-      ensureAssigned(0);
-      ensureAssigned(1);
-      ensureAssigned(2);
-
-      rotIndex = 0;
-      faceIndex = 0;
-      setRotationSnap();
-
-      // Start: W sichtbar + Zahlen gesetzt
+      reroll12_keepAssigned();
       showW();
       renderW();
 
-      // Start-UI anzeigen
-      showSchauenView();
+      showKippAnzahlView(); // 1–6 sichtbar
+      updateShadowVisibility();
     }
 
     window.addEventListener("load", () => {
       rebuild();
-      initStartScreen();
-      updateShadowVisibility();
+      initPlayState();
     });
 
     window.addEventListener("resize", rebuild);
