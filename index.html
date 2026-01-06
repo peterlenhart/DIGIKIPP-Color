@@ -1744,8 +1744,10 @@
       const row11CenterY   = row11VisualTop + (cellPx / 2);
       const between10and11 = row11VisualTop;
 
-      // ===== ÄNDERUNG 1: 1–6 Buttons 50px weiter rauf =====
-      const kippBtnsCenterY = row11CenterY - 50;
+      // =========================
+      // FIX 1: 1–6 Buttons exakt auf die Linie vom START-Button (zwischen Row 10 und 11)
+      // =========================
+      const kippBtnsCenterY = between10and11;
 
       kippAnzahlBtns.style.top = kippBtnsCenterY + "px";
       kippAnzahlBtns.style.left = "50%";
@@ -1763,11 +1765,18 @@
         const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
         const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
 
-        // ===== ÄNDERUNG 3: "SCHAUKIPP-RUNDE" 40px runter =====
+        // "SCHAUKIPP-RUNDE" bleibt wie bei dir
         hintTitle.style.top = (midBetween9and10 + 40) + "px";
+
       } else if(uiMode === "COUNT"){
-        // ===== ÄNDERUNG 2: "KIPP-ANZAHL" 40px über den 1–6 Tasten =====
-        hintTitle.style.top = (kippBtnsCenterY - 40) + "px";
+        // =========================
+        // FIX 2: "KIPP-ANZAHL" exakt auf gleicher Höhe wie "SCHAUKIPP-RUNDE" im START-Modus
+        // =========================
+        const row9VisualTop  = (((9 + HEADER_ROW_OFFSET) - 1) * cellPx);
+        const row10VisualTop = (((10 + HEADER_ROW_OFFSET) - 1) * cellPx);
+        const midBetween9and10 = (row9VisualTop + row10VisualTop) / 2;
+
+        hintTitle.style.top = (midBetween9and10 + 40) + "px";
       } else {
         hintTitle.style.top = row11CenterY + "px";
       }
