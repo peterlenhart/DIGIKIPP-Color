@@ -818,7 +818,7 @@
       </div>
 
       <!-- Zwischenkipp-Gruppen (fixe IDs) -->
-      <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="0_1" aria-label="Kipp Gruppe 0_1">
+      <div id="kipGroup_0_1" class="kipGroup hidden" data-kip="A" aria-label="Kipp Gruppe A">
         <div class="kipScale">
           <div class="kipShadow" aria-hidden="true"></div>
           <div class="kipEdgeCore" aria-hidden="true"></div>
@@ -838,7 +838,7 @@
         </div>
       </div>
 
-      <div id="kipGroup_1_2" class="kipGroup hidden" data-kip="1_2" aria-label="Kipp Gruppe 1_2">
+      <div id="kipGroup_1_2" class="kipGroup hidden" data-kip="B" aria-label="Kipp Gruppe B">
         <div class="kipScale">
           <div class="kipShadow" aria-hidden="true"></div>
           <div class="kipEdgeCore" aria-hidden="true"></div>
@@ -858,7 +858,7 @@
         </div>
       </div>
 
-      <div id="kipGroup_2_0" class="kipGroup hidden" data-kip="2_0" aria-label="Kipp Gruppe 2_0">
+      <div id="kipGroup_2_0" class="kipGroup hidden" data-kip="C" aria-label="Kipp Gruppe C">
         <div class="kipScale">
           <div class="kipShadow" aria-hidden="true"></div>
           <div class="kipEdgeCore" aria-hidden="true"></div>
@@ -986,14 +986,27 @@
 
     const wFaceGroup = document.getElementById("wFaceGroup");
 
+    /* =========================
+       UMBENENNUNG: 0_1 / 1_2 / 2_0  ->  A / B / C
+       A = (0,1)
+       B = (1,2)
+       C = (2,0)
+       DOM-IDs bleiben absichtlich gleich (kipGroup_0_1 usw.), nur die Keys sind A/B/C.
+       ========================= */
     const kipGroups = {
-      "0_1": document.getElementById("kipGroup_0_1"),
-      "1_2": document.getElementById("kipGroup_1_2"),
-      "2_0": document.getElementById("kipGroup_2_0"),
+      "A": document.getElementById("kipGroup_0_1"),
+      "B": document.getElementById("kipGroup_1_2"),
+      "C": document.getElementById("kipGroup_2_0"),
     };
 
-    let activeKipId = "0_1";
-    function getKipId(fromFace, toFace){ return `${fromFace}_${toFace}`; }
+    let activeKipId = "A";
+
+    function getKipId(fromFace, toFace){
+      // Canonical: (0,1)->A, (1,2)->B, (2,0)->C (jeweils auch umgekehrt)
+      if((fromFace === 0 && toFace === 1) || (fromFace === 1 && toFace === 0)) return "A";
+      if((fromFace === 1 && toFace === 2) || (fromFace === 2 && toFace === 1)) return "B";
+      return "C"; // (2,0) oder (0,2)
+    }
 
     function setActiveKipGroup(kipId){
       activeKipId = kipId;
