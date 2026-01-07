@@ -1236,8 +1236,8 @@
     function resetTargetDeck(){
       usedNumbers = new Set();
       drawsCount = 0;
-      // --- NEU: Speed wieder auf normal ---
-      speedMul = 1;
+      // Timing wieder auf normal
+      targetTimeMul = 1;
     }
 
     function pickRandom(arr){
@@ -1307,8 +1307,8 @@
       usedNumbers.add(chosenNum);
       drawsCount++;
 
-      // --- NEU: Speed nach jedem neu gezogenen Kippziel aktualisieren ---
-      updateSpeedMulByDraws();
+      // Timing nach jedem neu gezogenen Kippziel aktualisieren
+      updateTargetTimeMulByDraws();
 
       return { num: chosenNum, color: chosenColor };
     }
@@ -1400,33 +1400,38 @@
     const FIXED_SPEED = 3;
 
     // =========================================================
-    // NEU: dynamische Speed pro Kippziel (1.0 -> 2.0)
+    // TIMING-PATCH (isoliert):
+    // Target-Min = 0.55  (Kippziel 12 => Zeiten 55% der Basis)
+    // Step Max   = 0.80  (innerhalb eines 1..6 Runs => Step 6 bis 80%)
     // =========================================================
-    let speedMul = 1; // 1 = normal, 2 = doppelt so schnell
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    const TARGET_MIN = 0.55;
+    const STEP_MAX   = 0.80;
 
-    function updateSpeedMulByDraws(){
-      // drawsCount ist nach dem Ziehen 1..12
+    let targetTimeMul = 1; // 1.00 -> 0.55
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function lerp(a,b,t){ return a + (b - a) * t; }
+
+    function updateTargetTimeMulByDraws(){
       const idx = clamp(drawsCount, 0, MAX_TARGETS);
-      if(idx <= 0){ speedMul = 1; return; }
+      if(idx <= 0){ targetTimeMul = 1; return; }
       const t = (MAX_TARGETS <= 1) ? 1 : (idx - 1) / (MAX_TARGETS - 1); // 0..1
-      speedMul = 1 + t * (2 - 1); // 1..2
+      targetTimeMul = lerp(1.0, TARGET_MIN, t); // 1.00 -> 0.55
     }
 
     function getTiming(){
       const v = FIXED_SPEED;
+
       // Basiszeiten bleiben wie gehabt:
       const baseHold = Math.max(520, Math.round(2400 - v * 450));
       const baseKip  = Math.max(160, Math.round(baseHold * 0.50));
       const baseW    = baseHold;
 
-      // --- NEU: Beschleunigung je Kippziel (nur Timing!) ---
-      const mul = clamp(speedMul || 1, 0.5, 4);
+      const mul = clamp(targetTimeMul || 1, TARGET_MIN, 1);
 
-      // Minimums bleiben sinnvoll, damit nix "zerreißt"
-      const hold = Math.max(260, Math.round(baseHold / mul));
-      const kip  = Math.max(120, Math.round(baseKip  / mul));
-      const wfull = Math.max(260, Math.round(baseW    / mul));
+      const hold = Math.max(260, Math.round(baseHold * mul));
+      const kip  = Math.max(120, Math.round(baseKip  * mul));
+      const wfull= Math.max(260, Math.round(baseW    * mul));
 
       return { holdMs: hold, kipMs: kip, wMs: wfull };
     }
@@ -1491,12 +1496,12 @@
       runningKipp = false;
     }
 
-    async function waitOrPause(type, myToken, kipFactor = 1){
+    async function waitOrPause(type, myToken, factor = 1){
       const startTime = Date.now();
       while(myToken === previewToken){
         const T = getTiming();
-        const base = (type === 'kip') ? T.kipMs : T.wMs;
-        const targetMs = (type === 'kip') ? Math.round(base * kipFactor) : base;
+        const base = (type === "kip") ? T.kipMs : T.wMs;
+        const targetMs = Math.max(40, Math.round(base * (factor || 1)));
 
         const elapsed = Date.now() - startTime;
         if(elapsed >= targetMs) break;
@@ -1514,17 +1519,23 @@
 
       showW();
       renderW();
-      if(!await waitOrPause('w', myToken, 1)){ runningKipp=false; return; }
+      if(!await waitOrPause("w", myToken, 1)){ runningKipp=false; return; }
+
+      const totalSteps = Math.max(1, steps);
 
       for(let i=0;i<steps;i++){
+        // Step-Beschleunigung: Step 1 -> 1.00, Step N -> STEP_MAX (0.80)
+        const tStep = (totalSteps <= 1) ? 0 : (i / (totalSteps - 1)); // 0..1
+        const stepMul = lerp(1.0, STEP_MAX, tStep); // 1.00 -> 0.80
+
         showKip();
         renderKip();
-        if(!await waitOrPause('kip', myToken, kipFactor)){ runningKipp=false; return; }
+        if(!await waitOrPause("kip", myToken, kipFactor * stepMul)){ runningKipp=false; return; }
 
         advanceFullCW();
         showW();
         renderW();
-        if(!await waitOrPause('w', myToken, 1)){ runningKipp=false; return; }
+        if(!await waitOrPause("w", myToken, stepMul)){ runningKipp=false; return; }
       }
 
       runningKipp = false;
