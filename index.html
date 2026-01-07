@@ -608,16 +608,47 @@
       pointer-events: none;
     }
 
-    .kippAnzahlBtns{
+    /* ===== Scrollbares KIPP-ANZAHL Band (1–11) ===== */
+    .kippAnzahlView{
       position: absolute;
+      pointer-events: auto;
+      z-index: 80;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .kippBand{
       display: flex;
       gap: calc(10px * var(--uiscale));
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       pointer-events: auto;
-      z-index: 80;
+
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+
+      padding: calc(6px * var(--uiscale));
+      border-radius: calc(16px * var(--uiscale));
+
+      /* Breite so, dass gescrollt werden muss */
+      width: calc(6.4 * var(--cell));
+      max-width: calc(7 * var(--cell));
+
+      /* sanfte Kante */
+      background: rgba(74,36,24,0.10);
+
+      scroll-snap-type: x mandatory;
+      touch-action: pan-x;
     }
-    .kippAnzahlBtns.compact{ gap: calc(10px * var(--uiscale)); }
+
+    .kippBand::-webkit-scrollbar{ height: 0px; }
+    .kippBand{ scrollbar-width: none; }
+
+    .kippBand > button{
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+    }
 
     .navBtn{
       position: absolute;
@@ -884,8 +915,8 @@
           <div class="targetPadNum" id="targetPadNum"></div>
         </button>
 
-        <div id="kippAnzahlView" class="hidden">
-          <div class="kippAnzahlBtns" id="kippAnzahlBtns"></div>
+        <div id="kippAnzahlView" class="hidden kippAnzahlView">
+          <div class="kippBand" id="kippAnzahlBtns"></div>
 
           <button class="squareBtn hidden" id="testTargetBtn" type="button" aria-label="Test Target">
             <span class="anzahlText">T</span>
@@ -1500,12 +1531,11 @@
       runningKipp = false;
     }
 
-    // ---------- UI: Kippzahl Buttons ----------
+    // ---------- UI: Kippzahl Band (1–11) ----------
     function buildKippAnzahlButtons(){
       kippAnzahlBtns.innerHTML = "";
-      kippAnzahlBtns.classList.add("compact");
 
-      [1, 2, 3, 4, 5, 6].forEach(num => {
+      for(let num = 1; num <= 11; num++){
         const btn = document.createElement("button");
         btn.className = "squareBtn";
         btn.dataset.anzahl = num;
@@ -1513,7 +1543,10 @@
         btn.innerHTML = `<span class="anzahlText pulse">${String(num)}</span>`;
         btn.addEventListener("click", () => handleAnzahlClick(num, btn));
         kippAnzahlBtns.appendChild(btn);
-      });
+      }
+
+      // Startposition: Band auf 1 scrollen
+      kippAnzahlBtns.scrollLeft = 0;
     }
 
     function setAnzahlButtonsLocked(locked){
@@ -1900,9 +1933,10 @@
 
       const kippBtnsCenterY = between10and11;
 
-      kippAnzahlBtns.style.top = kippBtnsCenterY + "px";
-      kippAnzahlBtns.style.left = "50%";
-      kippAnzahlBtns.style.transform = "translate(-50%, -50%)";
+      // Band-Position
+      kippAnzahlView.style.top = kippBtnsCenterY + "px";
+      kippAnzahlView.style.left = "50%";
+      kippAnzahlView.style.transform = "translate(-50%, -50%)";
 
       const uiscale = numVar("--uiscale") || 1;
       const btnH = 44 * uiscale;
@@ -2043,6 +2077,10 @@
     document.addEventListener("touchmove", (e) => {
       const inRange = e.target && e.target.closest && e.target.closest('input[type="range"]');
       if(inRange) return;
+
+      const inKippBand = e.target && e.target.closest && e.target.closest('#kippAnzahlBtns');
+      if(inKippBand) return;
+
       e.preventDefault();
     }, { passive:false });
   </script>
