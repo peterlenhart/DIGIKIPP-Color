@@ -330,7 +330,7 @@
       pointer-events: auto;
     }
     .squareBtn:active{ transform: scale(0.98); filter: brightness(0.98); }
-    .squareBtn[disabled]{ opacity: 0.45; pointer-events: none; filter: saturate(0.8); }
+    .squareBtn[disabled]{ opacity: 1; pointer-events: none; filter: saturate(0.8); }
 
     /* NEU: Kippzahl-Button während Lauf (braun + beige Zahl) */
     .squareBtn.runSelected{
@@ -864,7 +864,7 @@
 
       <div class="uiLayer" id="uiLayer" aria-hidden="true">
         <div class="scoreDisplay" id="scoreDisplay">00</div>
-        <div class="titleLeft" id="titleLeft">DIGI-KIPP</div>
+        <div class="titleLeft" id="titleLeft">DIGIKIPP</div>
 
         <div class="hintTitle" id="hintTitle">SCHAUKIPP-RUNDE</div>
 
@@ -1962,7 +1962,7 @@
       score.style.transformOrigin = "top right";
 
       const title = document.getElementById("titleLeft");
-      title.style.left = (3.5 * cellPx) + "px";
+      title.style.left = "50%";
       title.style.top = headerY + "px";
       title.style.transform = "translate(-50%, -50%)";
 
